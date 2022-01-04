@@ -19,8 +19,6 @@
 
 package io.github.dsheirer.dsp.filter.decimate;
 
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
-
 /**
  * No decimation filter.
  */
@@ -30,11 +28,5 @@ public class ComplexDecimateX0Filter implements IComplexDecimationFilter
     public float[] decimateComplex(float[] samples)
     {
         return samples;
-    }
-
-    @Override
-    public ReusableComplexBuffer decimate(ReusableComplexBuffer buffer)
-    {
-        return buffer;
     }
 }

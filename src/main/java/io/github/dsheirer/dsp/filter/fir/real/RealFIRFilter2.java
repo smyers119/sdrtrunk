@@ -1,18 +1,21 @@
-/*******************************************************************************
- * sdr-trunk
- * Copyright (C) 2014-2018 Dennis Sheirer
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by  the Free Software Foundation, either version 3 of the License, or  (at your option) any
- * later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,  but WITHOUT ANY WARRANTY; without even the implied
- * warranty of  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License  along with this program.
- * If not, see <http://www.gnu.org/licenses/>
- *
- ******************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
 package io.github.dsheirer.dsp.filter.fir.real;
 
 import io.github.dsheirer.dsp.filter.fir.FIRFilter;
@@ -25,6 +28,7 @@ import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
  * Note: filtering operations in this class are structured to leverage SIMD processor intrinsics when
  * available to the Java runtime.
  */
+@Deprecated //Use more optimized RealFIRFilter instead - Denny Jan2022
 public class RealFIRFilter2 extends FIRFilter
 {
     private ReusableBufferQueue mReusableBufferQueue = new ReusableBufferQueue("RealFIRFilter2");
@@ -102,6 +106,23 @@ public class RealFIRFilter2 extends FIRFilter
         return mAccumulator;
     }
 
+    /**
+     * Filters the samples array
+     * @param samples to filter
+     * @return filtered samples
+     */
+    public float[] filter(float[] samples)
+    {
+        float[] filtered = new float[samples.length];
+
+        for(int x = 0; x < filtered.length; x++)
+        {
+            filtered[x] = filter(samples[x]);
+        }
+
+        return filtered;
+    }
+
 
     /**
      * Filters the samples contained in the unfilteredBuffer and returns a new reusable buffer with the
@@ -115,18 +136,9 @@ public class RealFIRFilter2 extends FIRFilter
      */
     public ReusableFloatBuffer filter(ReusableFloatBuffer unfilteredBuffer)
     {
-        float[] unfilteredSamples = unfilteredBuffer.getSamples();
-
-        ReusableFloatBuffer filteredBuffer = mReusableBufferQueue.getBuffer(unfilteredSamples.length);
-        float[] filteredSamples = filteredBuffer.getSamples();
-
-        for(int x = 0; x < unfilteredSamples.length; x++)
-        {
-            filteredSamples[x] = filter(unfilteredSamples[x]);
-        }
-
+        float[] filtered = filter(unfilteredBuffer.getSamples());
+        ReusableFloatBuffer filteredBuffer = mReusableBufferQueue.getBuffer(filtered, unfilteredBuffer.getTimestamp());
         unfilteredBuffer.decrementUserCount();
-
         return filteredBuffer;
     }
 }

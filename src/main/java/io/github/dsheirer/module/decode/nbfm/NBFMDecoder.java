@@ -23,6 +23,7 @@ import io.github.dsheirer.channel.state.IDecoderStateEventProvider;
 import io.github.dsheirer.channel.state.State;
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.Window;
+import io.github.dsheirer.dsp.filter.decimate.ComplexDecimationReusableBufferWrapper;
 import io.github.dsheirer.dsp.filter.decimate.DecimationFilterFactory;
 import io.github.dsheirer.dsp.filter.decimate.IComplexDecimationFilter;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
@@ -57,7 +58,7 @@ public class NBFMDecoder extends PrimaryDecoder implements ISourceEventListener,
 	private static final int POWER_SQUELCH_RAMP = 4;
 
 	private ComplexFIRFilter2 mIQFilter;
-	private IComplexDecimationFilter mDecimationFilter;
+	private ComplexDecimationReusableBufferWrapper mDecimationFilter;
 	private SquelchingFMDemodulator mDemodulator = new SquelchingFMDemodulator(POWER_SQUELCH_ALPHA_DECAY,
 			POWER_SQUELCH_THRESHOLD_DB, POWER_SQUELCH_RAMP);
 	private RealResampler mResampler;
@@ -292,7 +293,8 @@ public class NBFMDecoder extends PrimaryDecoder implements ISourceEventListener,
 					decimatedSampleRate /= decimationRate;
 				}
 
-				mDecimationFilter = DecimationFilterFactory.getComplexDecimationFilter(decimationRate);
+				IComplexDecimationFilter filter = DecimationFilterFactory.getComplexDecimationFilter(decimationRate);
+				mDecimationFilter = new ComplexDecimationReusableBufferWrapper(filter);
 
 				if((decimatedSampleRate < (2.0 * mChannelBandwidth)))
 				{

@@ -1,6 +1,6 @@
 /*
  * *****************************************************************************
- * Copyright (C) 2014-2021 Dennis Sheirer
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -129,6 +129,11 @@ application {
         '--add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls']
 }
 
+tasks.withType(JavaCompile) {
+    options.compilerArgs.add("--add-modules=jdk.incubator.vector")
+}
+
+
 /**
  * Runtime JVM arguments.  JDK 17 has hidden a number of classes that are no longer exported from the
  * modules.  Some legacy support libraries still require access to these classes, so we explicitly
@@ -145,7 +150,8 @@ run {
     }
     else {
         //Note: controlsfx.jar requires access to hidden javaFX classes
-        jvmArgs = ['--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED']
+        jvmArgs = ['--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
+                   '--add-modules=jdk.incubator.vector']
     }
 }
 

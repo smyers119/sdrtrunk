@@ -17,17 +17,12 @@
  * ****************************************************************************
  */
 
-package io.github.dsheirer.dsp.filter.decimate;
+package io.github.dsheirer.dsp.filter.fir.complex;
 
 /**
- * Interface for a decimation filter for float array sample buffers
+ * Interface for a filter for float array sample buffers
  */
-public interface IComplexDecimationFilter
+public interface IComplexFilter
 {
-    /**
-     * Decimates an array of float complex samples
-     * @param samples to decimate
-     * @return decimated samples
-     */
-    float[] decimateComplex(float[] samples);
+    float[] filter(float[] samples);
 }
