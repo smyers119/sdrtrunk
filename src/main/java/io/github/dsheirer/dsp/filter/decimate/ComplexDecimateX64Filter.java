@@ -1,6 +1,6 @@
 /*
  * *****************************************************************************
- * Copyright (C) 2014-2021 Dennis Sheirer
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 package io.github.dsheirer.dsp.filter.decimate;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
-import io.github.dsheirer.dsp.filter.halfband.complex.ComplexHalfBandDecimationFilter;
+import io.github.dsheirer.dsp.window.WindowType;
 
 /**
  * Decimate by 64 filter for complex valued sample buffers.
@@ -30,16 +29,16 @@ public class ComplexDecimateX64Filter extends ComplexDecimateX32Filter
 {
     private static final int VALIDATION_LENGTH = 64 * 2;
     private static final int DECIMATE_BY_64_FILTER_LENGTH = 11;
-    private static final Window.WindowType DECIMATE_BY_64_WINDOW_TYPE = Window.WindowType.BLACKMAN;
-    private ComplexHalfBandDecimationFilter mFilter;
+    private static final WindowType DECIMATE_BY_64_WINDOW_TYPE = WindowType.BLACKMAN;
+    private IComplexDecimationFilter mFilter;
 
     /**
      * Constructs the decimation filter.
      */
     public ComplexDecimateX64Filter()
     {
-        mFilter = new ComplexHalfBandDecimationFilter(FilterFactory.getHalfBand(DECIMATE_BY_64_FILTER_LENGTH,
-                DECIMATE_BY_64_WINDOW_TYPE));
+        mFilter = FilterFactory.getComplexDecimationFilter(DECIMATE_BY_64_FILTER_LENGTH,
+                DECIMATE_BY_64_WINDOW_TYPE);
     }
 
     @Override
