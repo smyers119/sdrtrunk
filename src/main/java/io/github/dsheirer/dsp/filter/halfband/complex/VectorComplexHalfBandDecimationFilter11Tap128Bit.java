@@ -36,6 +36,7 @@ import jdk.incubator.vector.VectorSpecies;
  */
 public class VectorComplexHalfBandDecimationFilter11Tap128Bit implements IComplexDecimationFilter
 {
+    private static final int COEFFICIENT_LENGTH = 11;
     private static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_128;
     private static final VectorMask<Float> I_VECTOR_MASK = VectorUtilities.getIVectorMask(VECTOR_SPECIES);
     private static final VectorMask<Float> Q_VECTOR_MASK = VectorUtilities.getQVectorMask(VECTOR_SPECIES);
@@ -57,9 +58,9 @@ public class VectorComplexHalfBandDecimationFilter11Tap128Bit implements IComple
     {
         VectorUtilities.checkSpecies(VECTOR_SPECIES);
 
-        if(coefficients.length != 11)
+        if(coefficients.length != COEFFICIENT_LENGTH)
         {
-            throw new IllegalArgumentException("This half-band filter coefficients must be 11 taps long");
+            throw new IllegalArgumentException("This half-band filter coefficients must be " + COEFFICIENT_LENGTH + " taps long");
         }
 
         //Size the coefficients array to a multiple of the vector species length, large enough to hold the taps;

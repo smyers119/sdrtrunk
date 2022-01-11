@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  * ****************************************************************************
  */
-
 package io.github.dsheirer.dsp.filter.halfband.complex;
 
 import io.github.dsheirer.dsp.filter.decimate.IComplexDecimationFilter;
@@ -32,23 +31,24 @@ import jdk.incubator.vector.VectorSpecies;
  * This filter uses the Java Vector API for SIMD available in JDK 17+.
  *
  * This filter is optimized for:
- *  11-tap half-band filters
- *  512-bit/16-lane SIMD instructions (Intel AVX-512).
+ *  15-tap half-band filters
+ *  128-bit/4-lane SIMD instructions.
  */
-public class VectorComplexHalfBandDecimationFilter11Tap512Bit implements IComplexDecimationFilter
+public class VectorComplexHalfBandDecimationFilter15Tap128Bit implements IComplexDecimationFilter
 {
-    private static final int COEFFICIENT_LENGTH = 11;
-    private static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_512;
+    private static final int COEFFICIENT_LENGTH = 15;
+
+    private static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_128;
     private static final VectorMask<Float> I_VECTOR_MASK = VectorUtilities.getIVectorMask(VECTOR_SPECIES);
     private static final VectorMask<Float> Q_VECTOR_MASK = VectorUtilities.getQVectorMask(VECTOR_SPECIES);
-    private static final VectorMask<Float> MASK_0_x_2_x_4_5_6_x =
-            VectorMask.fromArray(VECTOR_SPECIES, new boolean[]{true,true,false,false,true,true,false,false,
-            true,true,true,true,true,true,false,false}, 0);
-    private static final VectorMask<Float> MASK_x_8_x_10_x_x_x_x =
-            VectorMask.fromArray(VECTOR_SPECIES, new boolean[]{false,false,true,true,false,false,true,true,
-            false,false,false,false,false,false,false,false}, 0);
+    private static final VectorMask<Float> MASK_RIGHT = VectorMask.fromArray(VECTOR_SPECIES, new boolean[]{true,true,false,false}, 0);
+    private static final VectorMask<Float> MASK_LEFT = VectorMask.fromArray(VECTOR_SPECIES, new boolean[]{false,false,true,true}, 0);
 
-    private float[] mCoefficients = new float[16];
+    private float[] mCoefficient0_2 = new float[4];
+    private float[] mCoefficient4_6 = new float[4];
+    private float[] mCoefficient7_8 = new float[4];
+    private float[] mCoefficient10_12 = new float[4];
+    private float[] mCoefficient14 = new float[4];
     private float[] mBuffer;
     private int mBufferOverlap;
 
@@ -58,7 +58,7 @@ public class VectorComplexHalfBandDecimationFilter11Tap512Bit implements IComple
      * @param coefficients of the half-band filter that is odd-length where all odd index coefficients are
      * zero valued except for the middle odd index coefficient which should be valued 0.5
      */
-    public VectorComplexHalfBandDecimationFilter11Tap512Bit(float[] coefficients)
+    public VectorComplexHalfBandDecimationFilter15Tap128Bit(float[] coefficients)
     {
         VectorUtilities.checkSpecies(VECTOR_SPECIES);
 
@@ -75,22 +75,29 @@ public class VectorComplexHalfBandDecimationFilter11Tap512Bit implements IComple
             arrayLength += VECTOR_SPECIES.length();
         }
 
-        //Re-arrange the coefficients for mirrored vector operations
-        mCoefficients[0] = coefficients[0];
-        mCoefficients[1] = coefficients[0];
-        mCoefficients[2] = coefficients[2];
-        mCoefficients[3] = coefficients[2];
-        mCoefficients[4] = coefficients[2];
-        mCoefficients[5] = coefficients[2];
-        mCoefficients[6] = coefficients[0];
-        mCoefficients[7] = coefficients[0];
-        mCoefficients[8] = coefficients[4];
-        mCoefficients[9] = coefficients[4];
-        mCoefficients[10] = coefficients[5];
-        mCoefficients[11] = coefficients[5];
-        mCoefficients[12] = coefficients[4];
-        mCoefficients[13] = coefficients[4];
-        //coefficients 14 and 15 are left zero
+        //Arrange the coefficients for loading as 4-lane vectors
+        mCoefficient0_2[0] = coefficients[0];
+        mCoefficient0_2[1] = coefficients[0];
+        mCoefficient0_2[2] = coefficients[2];
+        mCoefficient0_2[3] = coefficients[2];
+
+        mCoefficient4_6[0] = coefficients[4];
+        mCoefficient4_6[1] = coefficients[4];
+        mCoefficient4_6[2] = coefficients[6];
+        mCoefficient4_6[3] = coefficients[6];
+
+        mCoefficient7_8[0] = coefficients[7];
+        mCoefficient7_8[1] = coefficients[7];
+        mCoefficient7_8[2] = coefficients[8];
+        mCoefficient7_8[3] = coefficients[8];
+
+        mCoefficient10_12[0] = coefficients[10];
+        mCoefficient10_12[1] = coefficients[10];
+        mCoefficient10_12[2] = coefficients[12];
+        mCoefficient10_12[3] = coefficients[12];
+
+        mCoefficient14[0] = coefficients[14];
+        mCoefficient14[1] = coefficients[14];
 
         //Set buffer overlap to larger of the length of the SIMD lanes minus 2 or double the coefficient's length minus 2
         //to ensure we don't get an index out of bounds exception when loading samples from the buffer.
@@ -128,13 +135,27 @@ public class VectorComplexHalfBandDecimationFilter11Tap512Bit implements IComple
 
         float[] filtered = new float[samples.length / 2];
 
-        FloatVector filter = FloatVector.fromArray(VECTOR_SPECIES, mCoefficients, 0);
+        FloatVector filterA = FloatVector.fromArray(VECTOR_SPECIES, mCoefficient0_2, 0);
+        FloatVector filterB = FloatVector.fromArray(VECTOR_SPECIES, mCoefficient4_6, 0);
+        FloatVector filterC = FloatVector.fromArray(VECTOR_SPECIES, mCoefficient7_8, 0);
+        FloatVector filterD = FloatVector.fromArray(VECTOR_SPECIES, mCoefficient10_12, 0);
+        FloatVector filterE = FloatVector.fromArray(VECTOR_SPECIES, mCoefficient14, 0);
+
+        FloatVector fv0, fv2, fv4, fv6, fv7, fv10, fv12, fv14, accumulator;
 
         for(int bufferPointer = 0; bufferPointer < samples.length; bufferPointer += 4)
         {
-            FloatVector vector0_x_2_x_4_5_6_x = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer, MASK_0_x_2_x_4_5_6_x);
-            FloatVector vectorx_8_x_10 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 14, MASK_x_8_x_10_x_x_x_x);
-            FloatVector accumulator = filter.mul(vector0_x_2_x_4_5_6_x.add(vectorx_8_x_10));
+            fv0 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer, MASK_RIGHT);
+            fv2 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 2, MASK_LEFT);
+            fv4 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 8, MASK_RIGHT);
+            fv6 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 10, MASK_LEFT);
+            fv7 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 14);
+            fv10 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 20, MASK_RIGHT);
+            fv12 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 22, MASK_LEFT);
+            fv14 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 28, MASK_RIGHT);
+
+            accumulator = filterA.mul(fv0.add(fv2)).add(filterB.mul(fv4.add(fv6))
+                    .add(filterC.mul(fv7).add(filterD.mul(fv10.add(fv12)).add(filterE.mul(fv14)))));
 
             filtered[bufferPointer / 2] = accumulator.reduceLanes(VectorOperators.ADD, I_VECTOR_MASK);
             filtered[bufferPointer / 2 + 1] = accumulator.reduceLanes(VectorOperators.ADD, Q_VECTOR_MASK);

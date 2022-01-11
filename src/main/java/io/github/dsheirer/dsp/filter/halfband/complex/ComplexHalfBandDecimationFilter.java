@@ -134,10 +134,11 @@ public class ComplexHalfBandDecimationFilter implements IComplexDecimationFilter
             samples[x] = random.nextFloat() * 2.0f - 1.0f;
         }
 
-        float[] coefficients = FilterFactory.getHalfBand(11, Window.WindowType.BLACKMAN);
+        float[] coefficients = FilterFactory.getHalfBand(15, Window.WindowType.BLACKMAN);
 
         ComplexHalfBandDecimationFilter filter = new ComplexHalfBandDecimationFilter(coefficients);
-        VectorComplexHalfBandDecimationFilter11Tap512Bit vectorFilter = new VectorComplexHalfBandDecimationFilter11Tap512Bit(coefficients);
+//        VectorComplexHalfBandDecimationFilter128Bit vectorFilter = new VectorComplexHalfBandDecimationFilter128Bit(coefficients);
+        VectorComplexHalfBandDecimationFilter15Tap128Bit vectorFilter = new VectorComplexHalfBandDecimationFilter15Tap128Bit(coefficients);
 
         double accumulator = 0.0d;
 
@@ -145,16 +146,16 @@ public class ComplexHalfBandDecimationFilter implements IComplexDecimationFilter
 
         long start = System.currentTimeMillis();
 
-//        for(int x = 0; x < iterations; x++)
-//        {
-            float[] filtered = filter.decimateComplex(samples);
-//            float[] filtered = vectorFilter.decimateComplex(samples);
-            float[] vfiltered = vectorFilter.decimateComplex(samples);
+        for(int x = 0; x < iterations; x++)
+        {
+//            float[] filtered = filter.decimateComplex(samples);
+            float[] filtered = vectorFilter.decimateComplex(samples);
+//            float[] vfiltered = vectorFilter.decimateComplex(samples);
             accumulator += filtered[3];
-//        }
+        }
 
-        System.out.println("REG:" + Arrays.toString(filtered));
-        System.out.println("VEC:" + Arrays.toString(vfiltered));
+//        System.out.println("REG:" + Arrays.toString(filtered));
+//        System.out.println("VEC:" + Arrays.toString(vfiltered));
         double elapsed = System.currentTimeMillis() - start;
 
         DecimalFormat df = new DecimalFormat("0.000");
