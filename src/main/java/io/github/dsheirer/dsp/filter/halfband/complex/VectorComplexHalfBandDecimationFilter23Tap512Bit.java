@@ -31,22 +31,20 @@ import jdk.incubator.vector.VectorSpecies;
  * This filter uses the Java Vector API for SIMD available in JDK 17+.
  *
  * This filter is optimized for:
- *  15-tap half-band filters
- *  128-bit/4-lane SIMD instructions.
+ *  23-tap half-band filters
+ *  512-bit/16-lane SIMD instructions.
  */
-public class VectorComplexHalfBandDecimationFilter15Tap128Bit implements IComplexDecimationFilter
+public class VectorComplexHalfBandDecimationFilter23Tap512Bit implements IComplexDecimationFilter
 {
-    private static final int COEFFICIENT_LENGTH = 15;
+    private static final int COEFFICIENT_LENGTH = 23;
 
-    private static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_128;
+    private static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_512;
     private static final VectorMask<Float> I_VECTOR_MASK = VectorUtilities.getIVectorMask(VECTOR_SPECIES);
     private static final VectorMask<Float> Q_VECTOR_MASK = VectorUtilities.getQVectorMask(VECTOR_SPECIES);
 
-    private float[] mCoefficient0 = new float[4];
-    private float[] mCoefficient2 = new float[4];
-    private float[] mCoefficient4 = new float[4];
-    private float[] mCoefficient6 = new float[4];
-    private float[] mCoefficient7 = new float[4];
+    private float[] mCoefficient0_x_2_x_4_x_6_x = new float[16];
+    private float[] mCoefficient8_x_10_11_12_x_14_x = new float[16];
+    private float[] mCoefficientx_16_x_18_x_20_x_22 = new float[16];
     private float[] mBuffer;
     private int mBufferOverlap;
 
@@ -56,7 +54,7 @@ public class VectorComplexHalfBandDecimationFilter15Tap128Bit implements IComple
      * @param coefficients of the half-band filter that is odd-length where all odd index coefficients are
      * zero valued except for the middle odd index coefficient which should be valued 0.5
      */
-    public VectorComplexHalfBandDecimationFilter15Tap128Bit(float[] coefficients)
+    public VectorComplexHalfBandDecimationFilter23Tap512Bit(float[] coefficients)
     {
         VectorUtilities.checkSpecies(VECTOR_SPECIES);
 
@@ -73,21 +71,35 @@ public class VectorComplexHalfBandDecimationFilter15Tap128Bit implements IComple
             arrayLength += VECTOR_SPECIES.length();
         }
 
-        //Arrange the coefficients for loading as 4-lane vectors
-        mCoefficient0[0] = coefficients[0];
-        mCoefficient0[1] = coefficients[0];
+        //Arrange the coefficients for loading as 8-lane vectors
+        mCoefficient0_x_2_x_4_x_6_x[0] = coefficients[0];
+        mCoefficient0_x_2_x_4_x_6_x[1] = coefficients[0];
+        mCoefficient0_x_2_x_4_x_6_x[4] = coefficients[2];
+        mCoefficient0_x_2_x_4_x_6_x[5] = coefficients[2];
+        mCoefficient0_x_2_x_4_x_6_x[8] = coefficients[4];
+        mCoefficient0_x_2_x_4_x_6_x[9] = coefficients[4];
+        mCoefficient0_x_2_x_4_x_6_x[12] = coefficients[6];
+        mCoefficient0_x_2_x_4_x_6_x[13] = coefficients[6];
 
-        mCoefficient2[0] = coefficients[2];
-        mCoefficient2[1] = coefficients[2];
+        mCoefficient8_x_10_11_12_x_14_x[0] = coefficients[8];
+        mCoefficient8_x_10_11_12_x_14_x[1] = coefficients[8];
+        mCoefficient8_x_10_11_12_x_14_x[4] = coefficients[10];
+        mCoefficient8_x_10_11_12_x_14_x[5] = coefficients[10];
+        mCoefficient8_x_10_11_12_x_14_x[6] = coefficients[11]; //Center coefficient
+        mCoefficient8_x_10_11_12_x_14_x[7] = coefficients[11];
+        mCoefficient8_x_10_11_12_x_14_x[8] = coefficients[12];
+        mCoefficient8_x_10_11_12_x_14_x[9] = coefficients[12];
+        mCoefficient8_x_10_11_12_x_14_x[12] = coefficients[14];
+        mCoefficient8_x_10_11_12_x_14_x[13] = coefficients[14];
 
-        mCoefficient4[0] = coefficients[4];
-        mCoefficient4[1] = coefficients[4];
-
-        mCoefficient6[0] = coefficients[6];
-        mCoefficient6[1] = coefficients[6];
-
-        mCoefficient7[0] = coefficients[7];
-        mCoefficient7[1] = coefficients[7];
+        mCoefficientx_16_x_18_x_20_x_22[2] = coefficients[16];
+        mCoefficientx_16_x_18_x_20_x_22[3] = coefficients[16];
+        mCoefficientx_16_x_18_x_20_x_22[6] = coefficients[18];
+        mCoefficientx_16_x_18_x_20_x_22[7] = coefficients[18];
+        mCoefficientx_16_x_18_x_20_x_22[10] = coefficients[20];
+        mCoefficientx_16_x_18_x_20_x_22[11] = coefficients[20];
+        mCoefficientx_16_x_18_x_20_x_22[14] = coefficients[22];
+        mCoefficientx_16_x_18_x_20_x_22[15] = coefficients[22];
 
         //Set buffer overlap to larger of the length of the SIMD lanes minus 2 or double the coefficient's length minus 2
         //to ensure we don't get an index out of bounds exception when loading samples from the buffer.
@@ -125,31 +137,19 @@ public class VectorComplexHalfBandDecimationFilter15Tap128Bit implements IComple
 
         float[] filtered = new float[samples.length / 2];
 
-        FloatVector filterA = FloatVector.fromArray(VECTOR_SPECIES, mCoefficient0, 0);
-        FloatVector filterB = FloatVector.fromArray(VECTOR_SPECIES, mCoefficient2, 0);
-        FloatVector filterC = FloatVector.fromArray(VECTOR_SPECIES, mCoefficient4, 0);
-        FloatVector filterD = FloatVector.fromArray(VECTOR_SPECIES, mCoefficient6, 0);
-        FloatVector filterE = FloatVector.fromArray(VECTOR_SPECIES, mCoefficient7, 0);
+        FloatVector filterA = FloatVector.fromArray(VECTOR_SPECIES, mCoefficient0_x_2_x_4_x_6_x, 0);
+        FloatVector filterB = FloatVector.fromArray(VECTOR_SPECIES, mCoefficient8_x_10_11_12_x_14_x, 0);
+        FloatVector filterC = FloatVector.fromArray(VECTOR_SPECIES, mCoefficientx_16_x_18_x_20_x_22, 0);
 
-        FloatVector fv0, fv2, fv4, fv6, fv7, fv8, fv10, fv12, fv14, accumulator;
+        FloatVector fvA, fvB, fvC, accumulator;
 
         for(int bufferPointer = 0; bufferPointer < samples.length; bufferPointer += 4)
         {
-            fv0 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer);
-            fv2 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 4);
-            fv4 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 8);
-            fv6 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 12);
-            fv7 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 14);
-            fv8 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 16);
-            fv10 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 20);
-            fv12 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 24);
-            fv14 = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 28);
+            fvA = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer);
+            fvB = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 16);
+            fvC = FloatVector.fromArray(VECTOR_SPECIES, mBuffer, bufferPointer + 30);
 
-            accumulator = filterA.mul(fv0.add(fv14))
-                    .add(filterB.mul(fv2.add(fv12)))
-                    .add(filterC.mul(fv4.add(fv10)))
-                    .add(filterD.mul(fv6.add(fv8)))
-                    .add(filterE.mul(fv7));
+            accumulator = filterA.mul(fvA).add(filterB.mul(fvB)).add(filterC.mul(fvC));
 
             filtered[bufferPointer / 2] = accumulator.reduceLanes(VectorOperators.ADD, I_VECTOR_MASK);
             filtered[bufferPointer / 2 + 1] = accumulator.reduceLanes(VectorOperators.ADD, Q_VECTOR_MASK);
