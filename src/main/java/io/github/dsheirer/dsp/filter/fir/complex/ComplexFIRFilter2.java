@@ -24,6 +24,7 @@ import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.buffer.ReusableComplexBufferQueue;
 import io.github.dsheirer.sample.complex.Complex;
 
+@Deprecated //20220115 ... use ComplexFIRFilter instead
 public class ComplexFIRFilter2 extends FIRFilter
 {
     private ReusableComplexBufferQueue mReusableComplexBufferQueue = new ReusableComplexBufferQueue("Complex FIR Filter");
