@@ -16,26 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  * ****************************************************************************
  */
-package io.github.dsheirer.dsp.filter.fir.real;
+
+package io.github.dsheirer.dsp.filter.fir.complex;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.Window;
-import io.github.dsheirer.sample.buffer.ReusableBufferQueue;
-import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
+import io.github.dsheirer.dsp.filter.fir.real.RealFIRFilter;
+import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilter256Bit;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.Random;
+import java.util.Scanner;
 
-/**
- * Finite Impulse Response (FIR) filter for filtering individual float samples or float sample arrays.
- *
- * Note: filtering operations in this class are structured to leverage SIMD processor intrinsics when
- * available to the Java runtime.
- */
-public class RealFIRFilter implements IRealFilter
+public class ComplexFIRFilter implements IComplexFilter
 {
-    private ReusableBufferQueue mReusableBufferQueue = new ReusableBufferQueue("RealFIRFilter");
     private float[] mBuffer;
     private float[] mCoefficients;
     private int mBufferOverlap;
@@ -45,12 +41,19 @@ public class RealFIRFilter implements IRealFilter
      *
      * @param coefficients - filter coefficients in normal order.
      */
-    public RealFIRFilter(float[] coefficients)
+    public ComplexFIRFilter(float[] coefficients)
     {
         //Reverse the order of the coefficients.
-        mCoefficients = coefficients;
-        ArrayUtils.reverse(mCoefficients);
-        mBufferOverlap = mCoefficients.length - 1;
+        ArrayUtils.reverse(coefficients);
+
+        //Double the size of the coefficients array to align with the complex samples array
+        mCoefficients = new float[coefficients.length * 2];
+        for(int x = 0; x < coefficients.length; x++)
+        {
+            mCoefficients[2 * x] = coefficients[x];
+        }
+
+        mBufferOverlap = mCoefficients.length - 2;
 
         //We'll resize this later when we get the first sample buffer.  For now, make it non-null.
         mBuffer = new float[mCoefficients.length];
@@ -84,33 +87,27 @@ public class RealFIRFilter implements IRealFilter
 
         float[] filtered = new float[samples.length];
 
-        for(int bufferPointer = 0; bufferPointer < samples.length; bufferPointer++)
+        int offset = 0;
+
+        float iAccumulator, qAccumulator;
+
+        for(int bufferPointer = 0; bufferPointer < samples.length; bufferPointer += 2)
         {
-            for(int coefficientPointer = 0; coefficientPointer < mCoefficients.length; coefficientPointer++)
+            iAccumulator = 0.0f;
+            qAccumulator = 0.0f;
+
+            for(int coefficientPointer = 0; coefficientPointer < mCoefficients.length; coefficientPointer += 2)
             {
-                filtered[bufferPointer] += mBuffer[bufferPointer + coefficientPointer] * mCoefficients[coefficientPointer];
+                offset = bufferPointer + coefficientPointer;
+                iAccumulator += mBuffer[offset] * mCoefficients[coefficientPointer];
+                qAccumulator += mBuffer[offset + 1] * mCoefficients[coefficientPointer];
             }
+
+            filtered[bufferPointer] = iAccumulator;
+            filtered[bufferPointer + 1] = qAccumulator;
         }
 
         return filtered;
-    }
-
-    /**
-     * Filters the samples contained in the unfilteredBuffer and returns a new reusable buffer with the
-     * filtered samples.
-     *
-     * Note: user count on the returned (new) buffer is set to one and the user count is decremented on
-     * the unfiltered buffer argument.
-     *
-     * @param unfilteredBuffer containing a sample array to be filtered
-     * @return a new reusable buffer with the filtered samples.
-     */
-    public ReusableFloatBuffer filter(ReusableFloatBuffer unfilteredBuffer)
-    {
-        float[] filtered = filter(unfilteredBuffer.getSamples());
-        ReusableFloatBuffer filteredBuffer = mReusableBufferQueue.getBuffer(filtered, unfilteredBuffer.getTimestamp());
-        unfilteredBuffer.decrementUserCount();
-        return filteredBuffer;
     }
 
     public static void main(String[] args)
@@ -127,8 +124,9 @@ public class RealFIRFilter implements IRealFilter
 
         float[] coefficients = FilterFactory.getLowPass(1000, 250, 99, Window.WindowType.BLACKMAN);
 
-        RealFIRFilter filter = new RealFIRFilter(coefficients);
-        VectorRealFIRFilter256Bit vectorFilter = new VectorRealFIRFilter256Bit(coefficients);
+        ComplexFIRFilter2 legacyFilter = new ComplexFIRFilter2(coefficients);
+        ComplexFIRFilter filter = new ComplexFIRFilter(coefficients);
+//        VectorRealFIRFilter256Bit vectorFilter = new VectorRealFIRFilter256Bit(coefficients);
 
         double accumulator = 0.0d;
 
@@ -138,6 +136,7 @@ public class RealFIRFilter implements IRealFilter
 
         for(int x = 0; x < iterations; x++)
         {
+//            float[] filtered = legacyFilter.filter(samples);
             float[] filtered = filter.filter(samples);
 //            float[] filtered = vectorFilter.filter(samples);
 //            float[] vfiltered = vectorFilter.filter(samples);
@@ -153,4 +152,5 @@ public class RealFIRFilter implements IRealFilter
         System.out.println("Accumulator: " + accumulator);
         System.out.println("Test Complete.  Elapsed Time: " + df.format(elapsed / 1000.0d) + " seconds");
     }
+
 }

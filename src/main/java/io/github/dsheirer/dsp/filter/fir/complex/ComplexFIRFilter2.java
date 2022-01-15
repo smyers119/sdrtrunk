@@ -1,18 +1,21 @@
-/*******************************************************************************
- * sdr-trunk
- * Copyright (C) 2014-2018 Dennis Sheirer
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by  the Free Software Foundation, either version 3 of the License, or  (at your option) any
- * later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,  but WITHOUT ANY WARRANTY; without even the implied
- * warranty of  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License  along with this program.
- * If not, see <http://www.gnu.org/licenses/>
- *
- ******************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
 package io.github.dsheirer.dsp.filter.fir.complex;
 
 import io.github.dsheirer.dsp.filter.fir.FIRFilter;
@@ -111,21 +114,23 @@ public class ComplexFIRFilter2 extends FIRFilter
      */
     public ReusableComplexBuffer filter(ReusableComplexBuffer originalBuffer)
     {
-        ReusableComplexBuffer filteredBuffer = mReusableComplexBufferQueue.getBuffer(originalBuffer.getSamples().length);
-        filteredBuffer.setTimestamp(originalBuffer.getTimestamp());
+        float[] filteredSamples = filter(originalBuffer.getSamples());
+        ReusableComplexBuffer filteredBuffer = mReusableComplexBufferQueue.getBuffer(filteredSamples, originalBuffer.getTimestamp());
+        originalBuffer.decrementUserCount();
+        return filteredBuffer;
+    }
 
-        float[] samples = originalBuffer.getSamples();
-        float[] filteredSamples = filteredBuffer.getSamples();
+    public float[] filter(float[] samples)
+    {
+        float[] filtered = new float[samples.length];
 
-        for(int x = 0; x < originalBuffer.getSamples().length; x += 2)
+        for(int x = 0; x < samples.length; x += 2)
         {
-            filteredSamples[x] = filterInphase(samples[x]);
-            filteredSamples[x + 1] = filterQuadrature(samples[x + 1]);
+            filtered[x] = filterInphase(samples[x]);
+            filtered[x + 1] = filterQuadrature(samples[x + 1]);
         }
 
-        originalBuffer.decrementUserCount();
-
-        return filteredBuffer;
+        return filtered;
     }
 
     @Override
