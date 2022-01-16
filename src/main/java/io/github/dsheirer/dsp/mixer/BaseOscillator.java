@@ -20,9 +20,9 @@
 package io.github.dsheirer.dsp.mixer;
 
 /**
- * Real Oscillator base class.
+ * Base Oscillator class.
  */
-public abstract class AbstractRealOscillator implements IRealOscillator
+public abstract class BaseOscillator implements IBaseOscillator
 {
     protected static final double TWO_PI = Math.PI * 2.0d;
     private double mFrequency;
@@ -35,7 +35,7 @@ public abstract class AbstractRealOscillator implements IRealOscillator
      * @param frequency in hertz
      * @param sampleRate in hertz
      */
-    public AbstractRealOscillator(double frequency, double sampleRate)
+    public BaseOscillator(double frequency, double sampleRate)
     {
         mFrequency = frequency;
         mSampleRate = sampleRate;
@@ -73,7 +73,7 @@ public abstract class AbstractRealOscillator implements IRealOscillator
     /**
      * Updates/calculates the angle per sample from the frequency and sample rate values.
      */
-    private void update()
+    protected void update()
     {
         mAnglePerSample = (float)(TWO_PI * getFrequency() / getSampleRate());
     }
@@ -82,7 +82,6 @@ public abstract class AbstractRealOscillator implements IRealOscillator
      * Frequency for this oscillator
      * @return frequency in Hertz
      */
-    @Override
     public double getFrequency()
     {
         return mFrequency;
@@ -92,7 +91,6 @@ public abstract class AbstractRealOscillator implements IRealOscillator
      * Sets the frequency for this oscillator
      * @param frequency in hertz
      */
-    @Override
     public void setFrequency(double frequency)
     {
         mFrequency = frequency;
@@ -103,7 +101,6 @@ public abstract class AbstractRealOscillator implements IRealOscillator
      * Sample rate for this oscillator
      * @return sample rate in Hertz
      */
-    @Override
     public double getSampleRate()
     {
         return mSampleRate;
@@ -113,7 +110,6 @@ public abstract class AbstractRealOscillator implements IRealOscillator
      * Sets the sample rate for this oscillator
      * @param sampleRate in hertz
      */
-    @Override
     public void setSampleRate(double sampleRate)
     {
         mSampleRate = sampleRate;
@@ -123,7 +119,6 @@ public abstract class AbstractRealOscillator implements IRealOscillator
     /**
      * Indicates if this oscillator is enabled, meaning it has a frequency that is not equal to zero.
      */
-    @Override
     public boolean isEnabled()
     {
         return mFrequency != 0.0d;

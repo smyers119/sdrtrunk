@@ -29,12 +29,12 @@ import java.util.Arrays;
 /**
  * Real oscillator that uses SIMD vector intrinsics from JDK17+ Project Panama.
  */
-public class VectorRealOscillator extends BaseOscillator implements IRealOscillator
+public class VectorComplexOscillator extends BaseOscillator implements IComplexOscillator
 {
     private static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_PREFERRED;
     private float[] mOffsets;
 
-    public VectorRealOscillator(double frequency, double sampleRate)
+    public VectorComplexOscillator(double frequency, double sampleRate)
     {
         super(frequency, sampleRate);
 
@@ -48,17 +48,24 @@ public class VectorRealOscillator extends BaseOscillator implements IRealOscilla
     @Override
     public float[] generate(int sampleCount)
     {
-        float[] samples = new float[sampleCount];
+        float[] samples = new float[2 * sampleCount];
 
-        for(int samplePointer = 0; samplePointer < sampleCount; samplePointer += VECTOR_SPECIES.length())
+        FloatVector offsetVector = FloatVector.fromArray(VECTOR_SPECIES, mOffsets, 0);
+
+        for(int samplePointer = 0; samplePointer < sampleCount; samplePointer += VECTOR_SPECIES.length() * 2)
         {
-            FloatVector generated = FloatVector.fromArray(VECTOR_SPECIES, mOffsets, 0);
-            generated = generated.mul(mAnglePerSample);
-            generated = generated.add(mCurrentPhase);
-            mCurrentPhase = generated.lane(VECTOR_SPECIES.length() - 1);
+            FloatVector phaseVector = offsetVector.mul(mAnglePerSample).add(mCurrentPhase);
+            mCurrentPhase = phaseVector.lane(VECTOR_SPECIES.length() - 1);
             mCurrentPhase %= TWO_PI;
-            generated = generated.lanewise(VectorOperators.SIN);
-            generated.intoArray(samples, samplePointer);
+            FloatVector iVector = phaseVector.lanewise(VectorOperators.SIN);
+            FloatVector qVector = phaseVector.lanewise(VectorOperators.COS);
+
+            //Interleave results back to samples vector
+            for(int i = 0; i < VECTOR_SPECIES.length(); i++)
+            {
+                samples[samplePointer + (2 * i)] = iVector.lane(i);
+                samples[samplePointer + (2 * i) + 1] = qVector.lane(i);
+            }
         }
 
         return samples;
@@ -71,11 +78,11 @@ public class VectorRealOscillator extends BaseOscillator implements IRealOscilla
         int samplesToGenerate = 2048;
         int iterations = 10_000_000;
 
-        boolean validation = false;
+        boolean validation = true;
 
-        Oscillator legacyO = new Oscillator(frequency, sampleRate);
-        RealOscillator scalarO = new RealOscillator(frequency, sampleRate);
-        VectorRealOscillator vectorO = new VectorRealOscillator(frequency, sampleRate);
+        LowPhaseNoiseOscillator legacyO = new LowPhaseNoiseOscillator(frequency, sampleRate);
+        ComplexOscillator scalarO = new ComplexOscillator(frequency, sampleRate);
+        VectorComplexOscillator vectorO = new VectorComplexOscillator(frequency, sampleRate);
 
         if(validation)
         {

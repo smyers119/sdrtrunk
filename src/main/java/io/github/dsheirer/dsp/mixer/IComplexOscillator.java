@@ -19,31 +19,12 @@
 
 package io.github.dsheirer.dsp.mixer;
 
-public class RealOscillator extends BaseOscillator implements IRealOscillator
+public interface IComplexOscillator extends IBaseOscillator
 {
     /**
-     * Constructs an instance
-     *
-     * @param frequency in hertz
-     * @param sampleRate in hertz
+     * Generates the specified number of real samples into a sample array.
+     * @param sampleCount number of samples to generate and length of the resulting float array.
+     * @return generated samples
      */
-    public RealOscillator(double frequency, double sampleRate)
-    {
-        super(frequency, sampleRate);
-    }
-
-    @Override
-    public float[] generate(int sampleCount)
-    {
-        float[] samples = new float[sampleCount];
-
-        for(int samplePointer = 0; samplePointer < sampleCount; samplePointer++)
-        {
-            mCurrentPhase += mAnglePerSample;
-            mCurrentPhase %= TWO_PI;
-            samples[samplePointer] = (float)Math.sin(mCurrentPhase);
-        }
-
-        return samples;
-    }
+    float[] generate(int sampleCount);
 }
