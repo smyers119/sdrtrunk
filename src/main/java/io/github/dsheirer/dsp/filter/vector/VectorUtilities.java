@@ -94,4 +94,69 @@ public class VectorUtilities
                 throw new IllegalArgumentException("Unrecognized vector species: " + species);
         }
     }
+
+    /**
+     * Creates an index map for routing inphase samples into a complex sample array
+     * @param species to determine lane width
+     * @return index map
+     */
+    public static int[] getIIndexMap(VectorSpecies<Float> species)
+    {
+        switch(species.length())
+        {
+            case 2:
+                return new int[]{0,2};
+            case 4:
+                return new int[]{0,2,4,6};
+            case 8:
+                return new int[]{0,2,4,6,8,10,12,14};
+            case 16:
+                return new int[]{0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30};
+            default:
+                throw new IllegalArgumentException("Unrecognized vector species: " + species);
+        }
+    }
+
+    /**
+     * Creates an index map for routing quadrature samples into a complex sample array
+     * @param species to determine lane width
+     * @return index map
+     */
+    public static int[] getQIndexMap(VectorSpecies<Float> species)
+    {
+        switch(species.length())
+        {
+            case 2:
+                return new int[]{1,3};
+            case 4:
+                return new int[]{1,3,5,7};
+            case 8:
+                return new int[]{1,3,5,7,9,11,13,15};
+            case 16:
+                return new int[]{1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31};
+            default:
+                throw new IllegalArgumentException("Unrecognized vector species: " + species);
+        }
+    }
+
+    /**
+     * Interleaves the samples from the I and Q vectors into a complex sample array
+     * @param iVector samples
+     * @param qVector samples
+     * @return interleaved sample array
+     */
+    public static float[] interleave(FloatVector iVector, FloatVector qVector)
+    {
+        float[] interleaved = new float[iVector.length() * 2];
+        float[] i = new float[iVector.length()];
+        float[] q = new float[qVector.length()];
+
+        for(int x = 0; x < i.length; x++)
+        {
+            interleaved[2 * x] = i[x];
+            interleaved[2 * x + 1] = q[x];
+        }
+
+        return interleaved;
+    }
 }

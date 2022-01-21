@@ -23,7 +23,6 @@ import org.apache.commons.math3.util.FastMath;
 
 public class ComplexOscillator extends BaseOscillator implements IComplexOscillator
 {
-    private static final float THREE_HALVES = 3.0f / 2.0f;
     private float mCosineAngle;
     private float mSineAngle;
     private float mPreviousInphase = 1.0f;
@@ -47,6 +46,7 @@ public class ComplexOscillator extends BaseOscillator implements IComplexOscilla
     protected void update()
     {
         super.update();
+        float angle = getAnglePerSample();
         mCosineAngle = (float)FastMath.cos(getAnglePerSample());
         mSineAngle = (float)FastMath.sin(getAnglePerSample());
     }
@@ -55,28 +55,34 @@ public class ComplexOscillator extends BaseOscillator implements IComplexOscilla
     public float[] generate(int sampleCount)
     {
         float[] samples = new float[sampleCount * 2];
+        float cosineAngle = (float)FastMath.cos(getAnglePerSample());
+        float sineAngle = (float)FastMath.sin(getAnglePerSample());
 
-        float inphase, quadrature, previousInphase, previousQuadrature, gain;
+        float previousInphase, previousQuadrature, gain;
 
         previousInphase = mPreviousInphase;
         previousQuadrature = mPreviousQuadrature;
 
+        int gainPointer = 0;
+
         for(int samplePointer = 0; samplePointer < samples.length; samplePointer += 2)
         {
-            gain = THREE_HALVES - ((previousInphase * previousInphase) + (previousQuadrature * previousQuadrature));
+            if(++gainPointer % 100 == 0)
+            {
+                gainPointer = 0;
+                gain = (3.0f - ((previousInphase * previousInphase) + (previousQuadrature * previousQuadrature))) / 2.0f;
 
-            samples[samplePointer] = ((previousInphase * mCosineAngle) - (previousQuadrature * mSineAngle)) * gain;
-            samples[samplePointer + 1] = ((previousInphase * mSineAngle) - (previousQuadrature * mCosineAngle)) * gain;
+                samples[samplePointer] = ((previousInphase * cosineAngle) - (previousQuadrature * sineAngle)) * gain;
+                samples[samplePointer + 1] = ((previousInphase * sineAngle) + (previousQuadrature * cosineAngle)) * gain;
+            }
+            else
+            {
+                samples[samplePointer] = ((previousInphase * cosineAngle) - (previousQuadrature * sineAngle));
+                samples[samplePointer + 1] = ((previousInphase * sineAngle) + (previousQuadrature * cosineAngle));
+            }
 
             previousInphase = samples[samplePointer];
             previousQuadrature = samples[samplePointer + 1];
-
-//            if(samplePointer % 10 == 0)
-//            {
-//                gain = THREE_HALVES - ((previousInphase * previousInphase) + (previousQuadrature * previousQuadrature));
-//                previousInphase *= gain;
-//                previousQuadrature *= gain;
-//            }
         }
 
         mPreviousInphase = previousInphase;

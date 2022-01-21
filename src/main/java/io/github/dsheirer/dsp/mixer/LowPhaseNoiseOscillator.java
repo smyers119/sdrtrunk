@@ -23,12 +23,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+@Deprecated //Use ComplexOscillator instead ... Denny Jan 2022
 public class LowPhaseNoiseOscillator extends AbstractOscillator
 {
     private final static Logger mLog = LoggerFactory.getLogger(LowPhaseNoiseOscillator.class);
 
     private static final double TWO_PI = 2.0 * FastMath.PI;
-    private static final double THREE_HALVES = 3.0 / 2.0;
     private double mInphase = 1.0;
     private double mQuadrature = 0.0;
     private double mPreviousInphase = 1.0;
@@ -85,7 +85,7 @@ public class LowPhaseNoiseOscillator extends AbstractOscillator
         mPreviousQuadrature = mQuadrature;
 
         //Update the gain value for the next rotation
-        mGain = THREE_HALVES - ((mPreviousInphase * mPreviousInphase) + (mPreviousQuadrature * mPreviousQuadrature));
+        mGain = (3.0 - ((mPreviousInphase * mPreviousInphase) + (mPreviousQuadrature * mPreviousQuadrature))) / 2.0;
     }
 
     public static long process(AbstractOscillator oscillator, int iterations, int sampleCount)
