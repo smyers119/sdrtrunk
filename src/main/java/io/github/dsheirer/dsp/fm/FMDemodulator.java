@@ -94,6 +94,50 @@ public class FMDemodulator
         return (float)(angle * mGain);
     }
 
+    public float[] demodulate(float[] i, float[] q)
+    {
+        float[] demodulated = new float[i.length];
+
+        float demodI, demodQ;
+
+        //Demodulate the first sample
+        demodI = (i[0] * mPreviousI) - (q[0] * -mPreviousQ);
+        demodQ = (q[0] * mPreviousI) + (i[0] * -mPreviousQ);
+
+        //Check for divide by zero
+        if(demodI != 0)
+        {
+            demodulated[0] = (float)FastMath.atan(demodQ / demodI);
+        }
+        else
+        {
+            demodulated[0] = (float)FastMath.atan(demodQ / Float.MIN_VALUE);
+        }
+
+        //Store last sample to previous for processing with next sample buffer
+        mPreviousI = i[i.length - 1];
+        mPreviousQ = q[q.length - 1];
+
+        //Demodulate the remainder of the sample array
+        for(int x = 1; x < i.length; x++)
+        {
+            demodI = (i[x] * i[x - 1]) - (q[x] * -q[x - 1]);
+            demodQ = (q[x] * i[x - 1]) + (i[x] * -q[x - 1]);
+
+            //Check for divide by zero
+            if(demodI != 0)
+            {
+                demodulated[x] = (float)FastMath.atan(demodQ / demodI);
+            }
+            else
+            {
+                demodulated[x] = (float)FastMath.atan(demodQ / Float.MIN_VALUE);
+            }
+        }
+
+        return demodulated;
+    }
+
     /**
      * Demodulates the complex samples and returns the demodulated value.
      * @param previous
