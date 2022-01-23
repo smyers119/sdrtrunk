@@ -50,6 +50,21 @@ public class VectorUtilities
     }
 
     /**
+     * Checks the I/Q sample array length to be an integer multiple of the SIMD lane width.
+     * @param i samples
+     * @param q samples
+     * @param species used for SIMD operations
+     */
+    public static void checkComplexArrayLength(float[] i, float[] q, VectorSpecies<Float> species)
+    {
+        if(i.length % species.length() != 0)
+        {
+            throw new IllegalArgumentException("I/Q buffer lengths must be a power of 2 multiple of SIMD lane width [" +
+                    species.length() + "]");
+        }
+    }
+
+    /**
      * Creates a vector mask for deinterleaving I samples from an interleaved complex sample vector.
      * @param species of SIMD
      * @return vector mask

@@ -53,8 +53,8 @@ public class NBFMDecoder extends PrimaryDecoder implements ISourceEventListener,
 {
 	private final static Logger mLog = LoggerFactory.getLogger(NBFMDecoder.class);
 	private static final double DEMODULATED_AUDIO_SAMPLE_RATE = 8000.0;
-	private static final double POWER_SQUELCH_ALPHA_DECAY = 0.0004;
-	private static final double POWER_SQUELCH_THRESHOLD_DB = -78.0;
+	private static final float POWER_SQUELCH_ALPHA_DECAY = 0.0004f;
+	private static final float POWER_SQUELCH_THRESHOLD_DB = -78.0f;
 	private static final int POWER_SQUELCH_RAMP = 4;
 
 	private ComplexFIRFilter2 mIQFilter;

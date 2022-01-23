@@ -1,5 +1,6 @@
 package io.github.dsheirer.dsp.fm;
 
+import io.github.dsheirer.dsp.filter.vector.VectorUtilities;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
@@ -13,8 +14,8 @@ import java.util.Random;
  */
 public class VectorFMDemodulator implements IFMDemodulator
 {
-    private static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_PREFERRED;
-    private static final float ZERO = 0.0f;
+    protected static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_PREFERRED;
+    protected static final float ZERO = 0.0f;
     private static final int BUFFER_OVERLAP = 1;
 
     //Initialize buffers to be non-null and resize once the first buffer arrives
@@ -27,11 +28,8 @@ public class VectorFMDemodulator implements IFMDemodulator
 
     @Override public float[] demodulate(float[] i, float[] q)
     {
-        if((i.length % VECTOR_SPECIES.length()) != 0)
-        {
-            throw new IllegalArgumentException("I/Q buffer lengths must be a power of 2 multiple of SIMD lane width [" +
-                    VECTOR_SPECIES.length() + "]");
-        }
+        VectorUtilities.checkComplexArrayLength(i, q, VECTOR_SPECIES);
+
         if(mIBuffer.length != (i.length + BUFFER_OVERLAP))
         {
             mIBuffer = new float[i.length + BUFFER_OVERLAP];

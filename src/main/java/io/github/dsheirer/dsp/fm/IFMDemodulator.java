@@ -1,7 +1,7 @@
 package io.github.dsheirer.dsp.fm;
 
 /**
- * Interface for FM demodulators
+ * Interface for FM demodulator
  */
 public interface IFMDemodulator
 {

@@ -16,7 +16,7 @@ public class PowerMonitor
     private int mPowerLevelBroadcastCount = 0;
     private int mPowerLevelBroadcastThreshold;
     private Listener<SourceEvent> mSourceEventListener;
-    private SinglePoleIirFilter mPowerFilter = new SinglePoleIirFilter(0.1);
+    private SinglePoleIirFilter mPowerFilter = new SinglePoleIirFilter(0.1f);
 
     /**
      * Constructs an instance
@@ -42,7 +42,7 @@ public class PowerMonitor
      * @param inphase complex sample component
      * @param quadrature complex sample component
      */
-    public void process(double inphase, double quadrature)
+    public void process(float inphase, float quadrature)
     {
         mPowerLevelBroadcastCount++;
 

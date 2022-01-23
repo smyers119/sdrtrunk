@@ -39,7 +39,7 @@ public class SquelchingFMDemodulator extends FMDemodulator implements Listener<S
     /**
      * Creates an FM demodulator instance with a default gain of 1.0.
      */
-    public SquelchingFMDemodulator(double alpha, double threshold, int ramp)
+    public SquelchingFMDemodulator(float alpha, float threshold, int ramp)
     {
         mPowerSquelch = new PowerSquelch(alpha, threshold, ramp);
     }
