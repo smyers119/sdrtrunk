@@ -17,7 +17,7 @@
  * ****************************************************************************
  */
 
-package io.github.dsheirer.dsp.filter.vector;
+package io.github.dsheirer.vector;
 
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorMask;

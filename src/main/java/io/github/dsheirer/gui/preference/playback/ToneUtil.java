@@ -19,7 +19,7 @@
 
 package io.github.dsheirer.gui.preference.playback;
 
-import io.github.dsheirer.dsp.mixer.Oscillator;
+import io.github.dsheirer.dsp.oscillator.Oscillator;
 
 /**
  * Utility for generating tones for audio clips

@@ -18,7 +18,7 @@
  */
 package io.github.dsheirer.dsp.filter.fir.complex;
 
-import io.github.dsheirer.dsp.filter.vector.VectorUtilities;
+import io.github.dsheirer.vector.VectorUtilities;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.VectorOperators;

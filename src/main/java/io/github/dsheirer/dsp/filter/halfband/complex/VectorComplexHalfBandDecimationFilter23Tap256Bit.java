@@ -19,13 +19,11 @@
 package io.github.dsheirer.dsp.filter.halfband.complex;
 
 import io.github.dsheirer.dsp.filter.decimate.IComplexDecimationFilter;
-import io.github.dsheirer.dsp.filter.vector.VectorUtilities;
+import io.github.dsheirer.vector.VectorUtilities;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
-
-import java.util.Arrays;
 
 /**
  * Implements a half-band filter that produces one filtered output for every two input samples.

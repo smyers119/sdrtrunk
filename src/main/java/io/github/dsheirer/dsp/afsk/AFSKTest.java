@@ -16,8 +16,8 @@
 package io.github.dsheirer.dsp.afsk;
 
 import io.github.dsheirer.buffer.FloatAveragingBuffer;
-import io.github.dsheirer.dsp.mixer.IOscillator;
-import io.github.dsheirer.dsp.mixer.Oscillator;
+import io.github.dsheirer.dsp.oscillator.IOscillator;
+import io.github.dsheirer.dsp.oscillator.Oscillator;
 import io.github.dsheirer.sample.complex.Complex;
 import org.apache.commons.math3.util.FastMath;
 import org.slf4j.Logger;

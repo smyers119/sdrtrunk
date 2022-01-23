@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  * ****************************************************************************
  */
-package io.github.dsheirer.dsp.mixer;
+package io.github.dsheirer.dsp.oscillator;
 
 public class FS4DownConverter
 {

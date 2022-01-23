@@ -13,7 +13,7 @@
  * If not, see <http://www.gnu.org/licenses/>
  *
  ******************************************************************************/
-package io.github.dsheirer.dsp.mixer;
+package io.github.dsheirer.dsp.oscillator;
 
 import io.github.dsheirer.sample.complex.Complex;
 import org.apache.commons.math3.util.FastMath;

@@ -20,8 +20,8 @@ package io.github.dsheirer.audio.invert;
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.FloatFIRFilter;
 import io.github.dsheirer.dsp.filter.Window.WindowType;
-import io.github.dsheirer.dsp.mixer.IOscillator;
-import io.github.dsheirer.dsp.mixer.Oscillator;
+import io.github.dsheirer.dsp.oscillator.IOscillator;
+import io.github.dsheirer.dsp.oscillator.Oscillator;
 
 /**
  * Based on the AudioType applied, produces normal, muted, or audio invert

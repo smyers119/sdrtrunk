@@ -1,14 +1,10 @@
 package io.github.dsheirer.dsp.fm;
 
-import io.github.dsheirer.dsp.filter.vector.VectorUtilities;
+import io.github.dsheirer.vector.VectorUtilities;
 import io.github.dsheirer.dsp.squelch.PowerSquelch;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.ReusableBufferQueue;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
-import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
 import io.github.dsheirer.source.SourceEvent;
 import jdk.incubator.vector.FloatVector;
-import jdk.incubator.vector.VectorSpecies;
 
 import java.text.DecimalFormat;
 import java.util.Arrays;

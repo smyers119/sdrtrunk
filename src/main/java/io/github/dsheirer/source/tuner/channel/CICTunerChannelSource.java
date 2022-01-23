@@ -17,8 +17,8 @@ package io.github.dsheirer.source.tuner.channel;
 
 import io.github.dsheirer.dsp.filter.cic.ComplexPrimeCICDecimate;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
-import io.github.dsheirer.dsp.mixer.IOscillator;
-import io.github.dsheirer.dsp.mixer.LowPhaseNoiseOscillator;
+import io.github.dsheirer.dsp.oscillator.IOscillator;
+import io.github.dsheirer.dsp.oscillator.LowPhaseNoiseOscillator;
 import io.github.dsheirer.sample.IOverflowListener;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.OverflowableReusableBufferTransferQueue;

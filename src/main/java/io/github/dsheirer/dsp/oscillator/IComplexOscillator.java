@@ -17,14 +17,23 @@
  * ****************************************************************************
  */
 
-package io.github.dsheirer.dsp.mixer;
+package io.github.dsheirer.dsp.oscillator;
+
+import io.github.dsheirer.sample.complex.ComplexSamples;
 
 public interface IComplexOscillator extends IBaseOscillator
 {
     /**
-     * Generates the specified number of real samples into a sample array.
-     * @param sampleCount number of samples to generate and length of the resulting float array.
-     * @return generated samples
+     * Generates the specified number of complex samples into an interleaved sample array.
+     * @param sampleCount number of complex samples to generate.
+     * @return generated samples where each sample is interleaved: I0, Q0, I1, Q1 ...
      */
     float[] generate(int sampleCount);
+
+    /**
+     * Generates the specified number of complex samples into a complex samples object.
+     * @param sampleCount number of complex samples to generate.
+     * @return generated samples
+     */
+    ComplexSamples generateComplexSamples(int sampleCount);
 }

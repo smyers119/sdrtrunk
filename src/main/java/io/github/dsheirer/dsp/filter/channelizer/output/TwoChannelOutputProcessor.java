@@ -16,7 +16,7 @@
 package io.github.dsheirer.dsp.filter.channelizer.output;
 
 import io.github.dsheirer.dsp.filter.channelizer.TwoChannelSynthesizerM2;
-import io.github.dsheirer.dsp.mixer.FS4DownConverter;
+import io.github.dsheirer.dsp.oscillator.FS4DownConverter;
 import io.github.dsheirer.sample.buffer.ReusableChannelResultsBuffer;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.buffer.ReusableComplexBufferAssembler;

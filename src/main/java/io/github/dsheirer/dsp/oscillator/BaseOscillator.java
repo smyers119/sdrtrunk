@@ -17,7 +17,7 @@
  * ****************************************************************************
  */
 
-package io.github.dsheirer.dsp.mixer;
+package io.github.dsheirer.dsp.oscillator;
 
 /**
  * Base Oscillator class.

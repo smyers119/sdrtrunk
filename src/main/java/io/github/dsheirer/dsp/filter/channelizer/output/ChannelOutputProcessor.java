@@ -18,8 +18,8 @@
  ******************************************************************************/
 package io.github.dsheirer.dsp.filter.channelizer.output;
 
-import io.github.dsheirer.dsp.mixer.IOscillator;
-import io.github.dsheirer.dsp.mixer.Oscillator;
+import io.github.dsheirer.dsp.oscillator.IOscillator;
+import io.github.dsheirer.dsp.oscillator.Oscillator;
 import io.github.dsheirer.sample.IOverflowListener;
 import io.github.dsheirer.sample.buffer.OverflowableReusableBufferTransferQueue;
 import io.github.dsheirer.sample.buffer.ReusableChannelResultsBuffer;

@@ -13,7 +13,7 @@
  * If not, see <http://www.gnu.org/licenses/>
  *
  ******************************************************************************/
-package io.github.dsheirer.dsp.mixer;
+package io.github.dsheirer.dsp.oscillator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

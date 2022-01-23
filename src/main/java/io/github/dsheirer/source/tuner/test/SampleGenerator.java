@@ -15,8 +15,8 @@
  ******************************************************************************/
 package io.github.dsheirer.source.tuner.test;
 
-import io.github.dsheirer.dsp.mixer.IOscillator;
-import io.github.dsheirer.dsp.mixer.LowPhaseNoiseOscillator;
+import io.github.dsheirer.dsp.oscillator.IOscillator;
+import io.github.dsheirer.dsp.oscillator.LowPhaseNoiseOscillator;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.ReusableBufferBroadcaster;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;

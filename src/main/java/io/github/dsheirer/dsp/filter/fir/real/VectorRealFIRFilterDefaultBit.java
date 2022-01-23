@@ -18,9 +18,8 @@
  */
 package io.github.dsheirer.dsp.filter.fir.real;
 
-import io.github.dsheirer.dsp.filter.vector.VectorUtilities;
+import io.github.dsheirer.vector.VectorUtilities;
 import jdk.incubator.vector.FloatVector;
-import jdk.incubator.vector.Vector;
 import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
 import org.apache.commons.lang3.ArrayUtils;

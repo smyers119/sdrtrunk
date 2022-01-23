@@ -20,7 +20,7 @@ package io.github.dsheirer.dsp.filter.halfband.complex;
 
 import io.github.dsheirer.dsp.filter.Filters;
 import io.github.dsheirer.dsp.filter.halfband.real.HalfBandFilter2;
-import io.github.dsheirer.dsp.mixer.Oscillator;
+import io.github.dsheirer.dsp.oscillator.Oscillator;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.buffer.ReusableComplexBufferQueue;
 

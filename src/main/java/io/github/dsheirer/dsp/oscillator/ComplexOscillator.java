@@ -17,8 +17,9 @@
  * ****************************************************************************
  */
 
-package io.github.dsheirer.dsp.mixer;
+package io.github.dsheirer.dsp.oscillator;
 
+import io.github.dsheirer.sample.complex.ComplexSamples;
 import org.apache.commons.math3.util.FastMath;
 
 public class ComplexOscillator extends BaseOscillator implements IComplexOscillator
@@ -89,5 +90,46 @@ public class ComplexOscillator extends BaseOscillator implements IComplexOscilla
         mPreviousQuadrature = previousQuadrature;
 
         return samples;
+    }
+
+    @Override
+    public ComplexSamples generateComplexSamples(int sampleCount)
+    {
+        float[] iSamples = new float[sampleCount];
+        float[] qSamples = new float[sampleCount];
+        float cosineAngle = (float)FastMath.cos(getAnglePerSample());
+        float sineAngle = (float)FastMath.sin(getAnglePerSample());
+
+        float previousInphase, previousQuadrature, gain;
+
+        previousInphase = mPreviousInphase;
+        previousQuadrature = mPreviousQuadrature;
+
+        int gainPointer = 0;
+
+        for(int samplePointer = 0; samplePointer < iSamples.length; samplePointer++)
+        {
+            if(++gainPointer % 100 == 0)
+            {
+                gainPointer = 0;
+                gain = (3.0f - ((previousInphase * previousInphase) + (previousQuadrature * previousQuadrature))) / 2.0f;
+
+                iSamples[samplePointer] = ((previousInphase * cosineAngle) - (previousQuadrature * sineAngle)) * gain;
+                qSamples[samplePointer] = ((previousInphase * sineAngle) + (previousQuadrature * cosineAngle)) * gain;
+            }
+            else
+            {
+                iSamples[samplePointer] = ((previousInphase * cosineAngle) - (previousQuadrature * sineAngle));
+                qSamples[samplePointer] = ((previousInphase * sineAngle) + (previousQuadrature * cosineAngle));
+            }
+
+            previousInphase = iSamples[samplePointer];
+            previousQuadrature = qSamples[samplePointer];
+        }
+
+        mPreviousInphase = previousInphase;
+        mPreviousQuadrature = previousQuadrature;
+
+        return new ComplexSamples(iSamples, qSamples);
     }
 }

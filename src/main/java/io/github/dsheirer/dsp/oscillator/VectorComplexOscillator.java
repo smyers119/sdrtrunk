@@ -1,6 +1,7 @@
-package io.github.dsheirer.dsp.mixer;
+package io.github.dsheirer.dsp.oscillator;
 
-import io.github.dsheirer.dsp.filter.vector.VectorUtilities;
+import io.github.dsheirer.sample.complex.ComplexSamples;
+import io.github.dsheirer.vector.VectorUtilities;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
 import org.apache.commons.math3.util.FastMath;
@@ -117,6 +118,59 @@ public class VectorComplexOscillator extends BaseOscillator implements IComplexO
         }
 
         return samples;
+    }
+
+    /**
+     * Generates complex samples.
+     * @param sampleCount number of samples to generate and length of the resulting float array.
+     * @return generated samples
+     */
+    @Override public ComplexSamples generateComplexSamples(int sampleCount)
+    {
+        if(sampleCount % VECTOR_SPECIES.length() != 0)
+        {
+            throw new IllegalArgumentException("Requested sample count [" + sampleCount +
+                    "] must be a power of 2 and a multiple of the SIMD lane width [" + VECTOR_SPECIES.length() + "]");
+        }
+
+        float[] iSamples = new float[sampleCount];
+        float[] qSamples = new float[sampleCount];
+
+        FloatVector previousInphase = FloatVector.fromArray(VECTOR_SPECIES, mPreviousInphases, 0);
+        FloatVector previousQuadrature = FloatVector.fromArray(VECTOR_SPECIES, mPreviousQuadratures, 0);
+        FloatVector gainInitials = FloatVector.fromArray(VECTOR_SPECIES, mGainInitials, 0);
+
+        //Sine and cosine angle per sample, with the rotation angle multiplied by the SIMD lane width
+        float cosAngle = (float)(FastMath.cos(getAnglePerSample() * VECTOR_SPECIES.length()));
+        float sinAngle = (float)(FastMath.sin(getAnglePerSample() * VECTOR_SPECIES.length()));
+
+        int gainCounter = 0;
+
+        FloatVector gain, inphase, quadrature;
+
+        for(int samplePointer = 0; samplePointer < sampleCount; samplePointer += VECTOR_SPECIES.length())
+        {
+            if(++gainCounter % 100 == 0)
+            {
+                gainCounter = 0;
+                gain = gainInitials.sub(previousInphase.pow(2.0f).add(previousQuadrature.pow(2.0f))).div(2.0f);
+                inphase = previousInphase.mul(cosAngle).sub(previousQuadrature.mul(sinAngle)).mul(gain);
+                quadrature = previousInphase.mul(sinAngle).add(previousQuadrature.mul(cosAngle)).mul(gain);
+            }
+            else
+            {
+                inphase = previousInphase.mul(cosAngle).sub(previousQuadrature.mul(sinAngle));
+                quadrature = previousInphase.mul(sinAngle).add(previousQuadrature.mul(cosAngle));
+            }
+
+            System.arraycopy(inphase, 0, iSamples, samplePointer, VECTOR_SPECIES.length());
+            System.arraycopy(quadrature, 0, qSamples, samplePointer, VECTOR_SPECIES.length());
+
+            previousInphase = inphase;
+            previousQuadrature = quadrature;
+        }
+
+        return new ComplexSamples(iSamples, qSamples);
     }
 
     public static void main(String[] args)
