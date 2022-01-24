@@ -21,8 +21,6 @@ package io.github.dsheirer.dsp.filter.decimate;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.Window;
-import io.github.dsheirer.dsp.filter.halfband.real.RealHalfBandDecimationFilter;
-import io.github.dsheirer.gui.playlist.alias.ViewAliasIdentifierRequest;
 
 /**
  * Decimate by 128 filter for real valued sample buffers.
@@ -32,15 +30,15 @@ public class RealDecimateX128Filter extends RealDecimateX64Filter
     private static final int VALIDATION_LENGTH = 128;
     private static final int DECIMATE_BY_128_FILTER_LENGTH = 11;
     private static final Window.WindowType DECIMATE_BY_128_WINDOW_TYPE = Window.WindowType.BLACKMAN;
-    private RealHalfBandDecimationFilter mFilter;
+    private IRealDecimationFilter mFilter;
 
     /**
      * Constructs the decimation filter.
      */
     public RealDecimateX128Filter()
     {
-        mFilter = new RealHalfBandDecimationFilter(FilterFactory.getHalfBand(DECIMATE_BY_128_FILTER_LENGTH,
-                DECIMATE_BY_128_WINDOW_TYPE));
+        mFilter = FilterFactory.getRealDecimationFilter(DECIMATE_BY_128_FILTER_LENGTH,
+                DECIMATE_BY_128_WINDOW_TYPE);
     }
 
     @Override

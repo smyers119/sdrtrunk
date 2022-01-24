@@ -18,10 +18,35 @@
  */
 package io.github.dsheirer.dsp.filter;
 
+import io.github.dsheirer.dsp.filter.decimate.IRealDecimationFilter;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.dsp.filter.fir.FIRFilterSpecification;
 import io.github.dsheirer.dsp.filter.fir.remez.RemezFIRFilterDesigner;
 import io.github.dsheirer.dsp.filter.fir.remez.RemezFIRFilterDesignerWithLagrange;
+import io.github.dsheirer.dsp.filter.halfband.real.RealHalfBandDecimationFilter;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter11Tap128Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter11Tap256Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter11Tap512Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter11Tap64Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter128Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter15Tap128Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter15Tap256Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter15Tap512Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter15Tap64Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter23Tap128Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter23Tap256Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter23Tap512Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter23Tap64Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter256Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter512Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter63Tap128Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter63Tap256Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter63Tap512Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter63Tap64Bit;
+import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter64Bit;
+import io.github.dsheirer.vector.calibrate.CalibrationManager;
+import io.github.dsheirer.vector.calibrate.CalibrationType;
+import io.github.dsheirer.vector.calibrate.OptimalOperation;
 import org.apache.commons.math3.util.FastMath;
 import org.jtransforms.fft.FloatFFT_1D;
 import org.slf4j.Logger;
@@ -1033,6 +1058,102 @@ public class FilterFactory
         }
 
         return taps;
+    }
+
+    /**
+     * Constructs the optimal decimation filter implementation for filter length an window type
+     * using calibration data to select among scalar and vector implementation options.
+     * @param length of decimation filter
+     * @param windowType for designing the filter
+     * @return filter implementation
+     */
+    public static IRealDecimationFilter getRealDecimationFilter(int length, Window.WindowType windowType)
+    {
+        float[] coefficients = getHalfBand(length, windowType);
+
+        switch(length)
+        {
+            case 11:
+                switch(CalibrationManager.getInstance().getOperation(CalibrationType.FILTER_HALF_BAND_REAL_11_TAP))
+                {
+                    case VECTOR_SIMD_64:
+                        return new VectorRealHalfBandDecimationFilter11Tap64Bit(coefficients);
+                    case VECTOR_SIMD_128:
+                        return new VectorRealHalfBandDecimationFilter11Tap128Bit(coefficients);
+                    case VECTOR_SIMD_256:
+                        return new VectorRealHalfBandDecimationFilter11Tap256Bit(coefficients);
+                    case VECTOR_SIMD_512:
+                        return new VectorRealHalfBandDecimationFilter11Tap512Bit(coefficients);
+                    case SCALAR:
+                    case UNCALIBRATED:
+                    default:
+                        return new RealHalfBandDecimationFilter(coefficients);
+                }
+            case 15:
+                switch(CalibrationManager.getInstance().getOperation(CalibrationType.FILTER_HALF_BAND_REAL_15_TAP))
+                {
+                    case VECTOR_SIMD_64:
+                        return new VectorRealHalfBandDecimationFilter15Tap64Bit(coefficients);
+                    case VECTOR_SIMD_128:
+                        return new VectorRealHalfBandDecimationFilter15Tap128Bit(coefficients);
+                    case VECTOR_SIMD_256:
+                        return new VectorRealHalfBandDecimationFilter15Tap256Bit(coefficients);
+                    case VECTOR_SIMD_512:
+                        return new VectorRealHalfBandDecimationFilter15Tap512Bit(coefficients);
+                    case SCALAR:
+                    case UNCALIBRATED:
+                    default:
+                        return new RealHalfBandDecimationFilter(coefficients);
+                }
+            case 23:
+                switch(CalibrationManager.getInstance().getOperation(CalibrationType.FILTER_HALF_BAND_REAL_23_TAP))
+                {
+                    case VECTOR_SIMD_64:
+                        return new VectorRealHalfBandDecimationFilter23Tap64Bit(coefficients);
+                    case VECTOR_SIMD_128:
+                        return new VectorRealHalfBandDecimationFilter23Tap128Bit(coefficients);
+                    case VECTOR_SIMD_256:
+                        return new VectorRealHalfBandDecimationFilter23Tap256Bit(coefficients);
+                    case VECTOR_SIMD_512:
+                        return new VectorRealHalfBandDecimationFilter23Tap512Bit(coefficients);
+                    case SCALAR:
+                    case UNCALIBRATED:
+                    default:
+                        return new RealHalfBandDecimationFilter(coefficients);
+                }
+            case 63:
+                switch(CalibrationManager.getInstance().getOperation(CalibrationType.FILTER_HALF_BAND_REAL_63_TAP))
+                {
+                    case VECTOR_SIMD_64:
+                        return new VectorRealHalfBandDecimationFilter63Tap64Bit(coefficients);
+                    case VECTOR_SIMD_128:
+                        return new VectorRealHalfBandDecimationFilter63Tap128Bit(coefficients);
+                    case VECTOR_SIMD_256:
+                        return new VectorRealHalfBandDecimationFilter63Tap256Bit(coefficients);
+                    case VECTOR_SIMD_512:
+                        return new VectorRealHalfBandDecimationFilter63Tap512Bit(coefficients);
+                    case SCALAR:
+                    case UNCALIBRATED:
+                    default:
+                        return new RealHalfBandDecimationFilter(coefficients);
+                }
+            default:
+                switch(CalibrationManager.getInstance().getOperation(CalibrationType.FILTER_HALF_BAND_REAL_DEFAULT))
+                {
+                    case VECTOR_SIMD_64:
+                        return new VectorRealHalfBandDecimationFilter64Bit(coefficients);
+                    case VECTOR_SIMD_128:
+                        return new VectorRealHalfBandDecimationFilter128Bit(coefficients);
+                    case VECTOR_SIMD_256:
+                        return new VectorRealHalfBandDecimationFilter256Bit(coefficients);
+                    case VECTOR_SIMD_512:
+                        return new VectorRealHalfBandDecimationFilter512Bit(coefficients);
+                    case SCALAR:
+                    case UNCALIBRATED:
+                    default:
+                        return new RealHalfBandDecimationFilter(coefficients);
+                }
+        }
     }
 
     /**

@@ -9,6 +9,7 @@ import io.github.dsheirer.vector.calibrate.filter.RealHalfBand11TapFilterCalibra
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBand15TapFilterCalibration;
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBand23TapFilterCalibration;
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBand63TapFilterCalibration;
+import io.github.dsheirer.vector.calibrate.filter.RealHalfBandDefaultFilterCalibration;
 import io.github.dsheirer.vector.calibrate.oscillator.ComplexOscillatorCalibration;
 import io.github.dsheirer.vector.calibrate.oscillator.RealOscillatorCalibration;
 import org.slf4j.Logger;
@@ -40,6 +41,7 @@ public class CalibrationManager
         add(new RealHalfBand15TapFilterCalibration());
         add(new RealHalfBand23TapFilterCalibration());
         add(new RealHalfBand63TapFilterCalibration());
+        add(new RealHalfBandDefaultFilterCalibration());
         add(new RealOscillatorCalibration());
         add(new SquelchingFmDemodulatorCalibration());
     }
@@ -154,7 +156,7 @@ public class CalibrationManager
     {
         CalibrationManager manager = getInstance();
 
-        manager.reset(CalibrationType.SQUELCHING_FM_DEMODULATOR);
+        manager.reset(CalibrationType.FILTER_HALF_BAND_REAL_DEFAULT);
 //        manager.reset();
 
         if(!manager.isCalibrated())

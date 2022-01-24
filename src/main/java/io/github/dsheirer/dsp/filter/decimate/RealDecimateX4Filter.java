@@ -31,15 +31,15 @@ public class RealDecimateX4Filter extends RealDecimateX2Filter
     private static final int VALIDATION_LENGTH = 4;
     private static final int DECIMATE_BY_4_FILTER_LENGTH = 23;
     private static final Window.WindowType DECIMATE_BY_4_WINDOW_TYPE = Window.WindowType.BLACKMAN;
-    private RealHalfBandDecimationFilter mFilter;
+    private IRealDecimationFilter mFilter;
 
     /**
      * Constructs the decimation filter.
      */
     public RealDecimateX4Filter()
     {
-        mFilter = new RealHalfBandDecimationFilter(FilterFactory.getHalfBand(DECIMATE_BY_4_FILTER_LENGTH,
-                DECIMATE_BY_4_WINDOW_TYPE));
+        mFilter = FilterFactory.getRealDecimationFilter(DECIMATE_BY_4_FILTER_LENGTH,
+                DECIMATE_BY_4_WINDOW_TYPE);
     }
 
     @Override

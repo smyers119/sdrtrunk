@@ -11,6 +11,7 @@ public enum CalibrationType
     FILTER_HALF_BAND_REAL_15_TAP("Real Half-Band Decimation Filter - 15 Tap"),
     FILTER_HALF_BAND_REAL_23_TAP("Real Half-Band Decimation Filter - 23 Tap"),
     FILTER_HALF_BAND_REAL_63_TAP("Real Half-Band Decimation Filter - 63 Tap"),
+    FILTER_HALF_BAND_REAL_DEFAULT("Real Half-Band Decimation Filter - Default"),
     FM_DEMODULATOR("FM Demodulator"),
     OSCILLATOR_COMPLEX("Complex Oscillator"),
     OSCILLATOR_REAL("Real Oscillator"),
