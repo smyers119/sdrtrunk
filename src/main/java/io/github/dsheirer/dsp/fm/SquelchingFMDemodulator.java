@@ -30,7 +30,7 @@ import io.github.dsheirer.source.SourceEvent;
  * Implements listener of source events to process runtime squelch threshold change request events
  * which are forwarded to the power squelch control.
  */
-public class SquelchingFMDemodulator extends FMDemodulator implements Listener<SourceEvent>
+public class SquelchingFMDemodulator extends FMDemodulator implements ISquelchingFmDemodulator, Listener<SourceEvent>
 {
     private ReusableBufferQueue mReusableBufferQueue = new ReusableBufferQueue("SquelchingFMDemodulator");
     private PowerSquelch mPowerSquelch;

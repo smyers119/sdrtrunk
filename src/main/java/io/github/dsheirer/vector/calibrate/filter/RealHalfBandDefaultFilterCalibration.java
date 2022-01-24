@@ -17,7 +17,7 @@ import jdk.incubator.vector.VectorSpecies;
  */
 public class RealHalfBandDefaultFilterCalibration extends RealHalfBandBaseFilterCalibration
 {
-    private static final int COEFFICIENT_LENGTH = 99;
+    private static final int COEFFICIENT_LENGTH = 31;
 
     /**
      * Constructs an instance

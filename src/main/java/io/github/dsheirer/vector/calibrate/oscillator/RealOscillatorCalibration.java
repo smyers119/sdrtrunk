@@ -6,7 +6,7 @@ import io.github.dsheirer.dsp.oscillator.VectorRealOscillator;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
-import io.github.dsheirer.vector.calibrate.OptimalOperation;
+import io.github.dsheirer.vector.calibrate.Implementation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,14 +42,14 @@ public class RealOscillatorCalibration extends Calibration
 
         if(scalar < vector)
         {
-            setOptimalOperation(OptimalOperation.SCALAR);
+            setImplementation(Implementation.SCALAR);
         }
         else
         {
-            setOptimalOperation(OptimalOperation.VECTOR_SIMD_PREFERRED);
+            setImplementation(Implementation.VECTOR_SIMD_PREFERRED);
         }
 
-        mLog.info("REAL OSCILLATOR - SETTING OPTIMAL OPERATION TO:" + getOptimalOperation());
+        mLog.info("REAL OSCILLATOR - SETTING OPTIMAL OPERATION TO:" + getImplementation());
     }
 
     /**

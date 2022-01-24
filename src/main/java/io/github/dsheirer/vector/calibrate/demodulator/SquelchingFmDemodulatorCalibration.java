@@ -5,7 +5,7 @@ import io.github.dsheirer.dsp.fm.VectorSquelchingFMDemodulator;
 import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
-import io.github.dsheirer.vector.calibrate.OptimalOperation;
+import io.github.dsheirer.vector.calibrate.Implementation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +16,7 @@ public class SquelchingFmDemodulatorCalibration extends Calibration
 {
     private static final Logger mLog = LoggerFactory.getLogger(SquelchingFmDemodulatorCalibration.class);
     private static final int SAMPLE_BUFFER_SIZE = 2048;
-    private static final int ITERATIONS = 200_000;
+    private static final int ITERATIONS = 100_000;
     private static final float POWER_SQUELCH_ALPHA_DECAY = 0.0004f;
     private static final float POWER_SQUELCH_THRESHOLD_DB = -78.0f;
     private static final int POWER_SQUELCH_RAMP = 4;
@@ -34,21 +34,21 @@ public class SquelchingFmDemodulatorCalibration extends Calibration
     {
         long scalarScore = calculateScalar(SAMPLE_BUFFER_SIZE, ITERATIONS);
         mLog.info("SQUELCHING FM DEMODULATOR SCALAR:" + scalarScore);
-        OptimalOperation operation = OptimalOperation.SCALAR;
+        Implementation operation = Implementation.SCALAR;
 
         long vectorScore = calculateVector(SAMPLE_BUFFER_SIZE, ITERATIONS);
         mLog.info("SQUELCHING FM DEMODULATOR VECTOR PREFERRED:" + vectorScore);
 
         if(vectorScore < scalarScore)
         {
-            setOptimalOperation(OptimalOperation.VECTOR_SIMD_PREFERRED);
+            setImplementation(Implementation.VECTOR_SIMD_PREFERRED);
         }
         else
         {
-            setOptimalOperation(OptimalOperation.SCALAR);
+            setImplementation(Implementation.SCALAR);
         }
 
-        mLog.info("SQUELCHING FM DEMODULATOR - SETTING OPTIMAL OPERATION TO:" + getOptimalOperation());
+        mLog.info("SQUELCHING FM DEMODULATOR - SETTING OPTIMAL OPERATION TO:" + getImplementation());
     }
 
     /**

@@ -15,7 +15,9 @@ import io.github.dsheirer.vector.calibrate.oscillator.RealOscillatorCalibration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,6 +46,8 @@ public class CalibrationManager
         add(new RealHalfBandDefaultFilterCalibration());
         add(new RealOscillatorCalibration());
         add(new SquelchingFmDemodulatorCalibration());
+
+        reset();
     }
 
     /**
@@ -83,16 +87,16 @@ public class CalibrationManager
      * @param type of calibration
      * @return operation
      */
-    public OptimalOperation getOperation(CalibrationType type)
+    public Implementation getImplementation(CalibrationType type)
     {
         Calibration calibration = getCalibration(type);
 
         if(calibration != null)
         {
-            return calibration.getOptimalOperation();
+            return calibration.getImplementation();
         }
 
-        return OptimalOperation.UNCALIBRATED;
+        return Implementation.UNCALIBRATED;
     }
 
     /**
@@ -142,14 +146,49 @@ public class CalibrationManager
      */
     public void calibrate() throws CalibrationException
     {
+        List<Calibration> uncalibrated = getUncalibrated();
+
+        if(uncalibrated.isEmpty())
+        {
+            mLog.info("No additional calibrations are required at this time.");
+        }
+        else
+        {
+            mLog.info("Calibrating software for optimal performance on this computer.  Please be patient, this "
+                    + "may take a few minutes.");
+
+            int calibrationCounter = 0;
+
+            for(Calibration calibration: uncalibrated)
+            {
+                if(!calibration.isCalibrated())
+                {
+                    mLog.info("====> Calibrating [" + ++calibrationCounter + " of " + uncalibrated.size() +
+                            "] Type: " + calibration.getType());
+                    calibration.calibrate();
+                }
+            }
+
+            mLog.info("Calibration Complete!");
+        }
+    }
+
+    /**
+     * List of calibrations that need to be performed.
+     */
+    public List<Calibration> getUncalibrated()
+    {
+        List<Calibration> uncalibrated = new ArrayList<>();
+
         for(Calibration calibration: mCalibrationMap.values())
         {
             if(!calibration.isCalibrated())
             {
-                mLog.info("====> Calibrating: " + calibration.getType());
-                calibration.calibrate();
+                uncalibrated.add(calibration);
             }
         }
+
+        return uncalibrated;
     }
 
     public static void main(String[] args)

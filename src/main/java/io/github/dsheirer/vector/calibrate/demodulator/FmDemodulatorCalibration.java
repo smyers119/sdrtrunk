@@ -6,7 +6,7 @@ import io.github.dsheirer.dsp.fm.VectorFMDemodulator;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
-import io.github.dsheirer.vector.calibrate.OptimalOperation;
+import io.github.dsheirer.vector.calibrate.Implementation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +17,7 @@ public class FmDemodulatorCalibration extends Calibration
 {
     private static final Logger mLog = LoggerFactory.getLogger(FmDemodulatorCalibration.class);
     private static final int SAMPLE_BUFFER_SIZE = 2048;
-    private static final int ITERATIONS = 500_000;
+    private static final int ITERATIONS = 100_000;
 
     /**
      * Constructs an instance
@@ -31,21 +31,21 @@ public class FmDemodulatorCalibration extends Calibration
     {
         long scalarScore = calculateScalar(SAMPLE_BUFFER_SIZE, ITERATIONS);
         mLog.info("FM DEMODULATOR SCALAR:" + scalarScore);
-        OptimalOperation operation = OptimalOperation.SCALAR;
+        Implementation operation = Implementation.SCALAR;
 
         long vectorScore = calculateVector(SAMPLE_BUFFER_SIZE, ITERATIONS);
         mLog.info("FM DEMODULATOR VECTOR PREFERRED:" + vectorScore);
 
         if(vectorScore < scalarScore)
         {
-            setOptimalOperation(OptimalOperation.VECTOR_SIMD_PREFERRED);
+            setImplementation(Implementation.VECTOR_SIMD_PREFERRED);
         }
         else
         {
-            setOptimalOperation(OptimalOperation.SCALAR);
+            setImplementation(Implementation.SCALAR);
         }
 
-        mLog.info("FM DEMODULATOR - SETTING OPTIMAL OPERATION TO:" + getOptimalOperation());
+        mLog.info("FM DEMODULATOR - SETTING OPTIMAL OPERATION TO:" + getImplementation());
     }
 
     /**

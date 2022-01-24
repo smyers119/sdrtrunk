@@ -20,7 +20,7 @@ public class RealHalfBand63TapFilterCalibration extends RealHalfBandBaseFilterCa
      */
     public RealHalfBand63TapFilterCalibration()
     {
-        super(CalibrationType.FILTER_HALF_BAND_REAL_63_TAP, COEFFICIENT_LENGTH);
+        super(CalibrationType.FILTER_HALF_BAND_REAL_63_TAP, COEFFICIENT_LENGTH, 500_000);
     }
 
     @Override protected IRealDecimationFilter getVectorFilter(VectorSpecies<Float> species, float[] coefficients)

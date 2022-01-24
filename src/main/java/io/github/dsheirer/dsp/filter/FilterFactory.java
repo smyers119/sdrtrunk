@@ -21,6 +21,13 @@ package io.github.dsheirer.dsp.filter;
 import io.github.dsheirer.dsp.filter.decimate.IRealDecimationFilter;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.dsp.filter.fir.FIRFilterSpecification;
+import io.github.dsheirer.dsp.filter.fir.real.IRealFilter;
+import io.github.dsheirer.dsp.filter.fir.real.RealFIRFilter;
+import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilter128Bit;
+import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilter256Bit;
+import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilter512Bit;
+import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilter64Bit;
+import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilterDefaultBit;
 import io.github.dsheirer.dsp.filter.fir.remez.RemezFIRFilterDesigner;
 import io.github.dsheirer.dsp.filter.fir.remez.RemezFIRFilterDesignerWithLagrange;
 import io.github.dsheirer.dsp.filter.halfband.real.RealHalfBandDecimationFilter;
@@ -46,7 +53,6 @@ import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationF
 import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter64Bit;
 import io.github.dsheirer.vector.calibrate.CalibrationManager;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
-import io.github.dsheirer.vector.calibrate.OptimalOperation;
 import org.apache.commons.math3.util.FastMath;
 import org.jtransforms.fft.FloatFFT_1D;
 import org.slf4j.Logger;
@@ -1061,6 +1067,33 @@ public class FilterFactory
     }
 
     /**
+     * Creates the optimal FIR filter implementation using calibration data to select
+     * from among the scalar and vector implementations.
+     * @param coefficients for the filter
+     * @return fir filter implementation
+     */
+    public static IRealFilter getRealFilter(float[] coefficients)
+    {
+        switch(CalibrationManager.getInstance().getImplementation(CalibrationType.FILTER_FIR))
+        {
+            case VECTOR_SIMD_PREFERRED:
+                return new VectorRealFIRFilterDefaultBit(coefficients);
+            case VECTOR_SIMD_64:
+                return new VectorRealFIRFilter64Bit(coefficients);
+            case VECTOR_SIMD_128:
+                return new VectorRealFIRFilter128Bit(coefficients);
+            case VECTOR_SIMD_256:
+                return new VectorRealFIRFilter256Bit(coefficients);
+            case VECTOR_SIMD_512:
+                return new VectorRealFIRFilter512Bit(coefficients);
+            case UNCALIBRATED:
+            case SCALAR:
+            default:
+                return new RealFIRFilter(coefficients);
+        }
+    }
+
+    /**
      * Constructs the optimal decimation filter implementation for filter length an window type
      * using calibration data to select among scalar and vector implementation options.
      * @param length of decimation filter
@@ -1074,7 +1107,7 @@ public class FilterFactory
         switch(length)
         {
             case 11:
-                switch(CalibrationManager.getInstance().getOperation(CalibrationType.FILTER_HALF_BAND_REAL_11_TAP))
+                switch(CalibrationManager.getInstance().getImplementation(CalibrationType.FILTER_HALF_BAND_REAL_11_TAP))
                 {
                     case VECTOR_SIMD_64:
                         return new VectorRealHalfBandDecimationFilter11Tap64Bit(coefficients);
@@ -1090,7 +1123,7 @@ public class FilterFactory
                         return new RealHalfBandDecimationFilter(coefficients);
                 }
             case 15:
-                switch(CalibrationManager.getInstance().getOperation(CalibrationType.FILTER_HALF_BAND_REAL_15_TAP))
+                switch(CalibrationManager.getInstance().getImplementation(CalibrationType.FILTER_HALF_BAND_REAL_15_TAP))
                 {
                     case VECTOR_SIMD_64:
                         return new VectorRealHalfBandDecimationFilter15Tap64Bit(coefficients);
@@ -1106,7 +1139,7 @@ public class FilterFactory
                         return new RealHalfBandDecimationFilter(coefficients);
                 }
             case 23:
-                switch(CalibrationManager.getInstance().getOperation(CalibrationType.FILTER_HALF_BAND_REAL_23_TAP))
+                switch(CalibrationManager.getInstance().getImplementation(CalibrationType.FILTER_HALF_BAND_REAL_23_TAP))
                 {
                     case VECTOR_SIMD_64:
                         return new VectorRealHalfBandDecimationFilter23Tap64Bit(coefficients);
@@ -1122,7 +1155,7 @@ public class FilterFactory
                         return new RealHalfBandDecimationFilter(coefficients);
                 }
             case 63:
-                switch(CalibrationManager.getInstance().getOperation(CalibrationType.FILTER_HALF_BAND_REAL_63_TAP))
+                switch(CalibrationManager.getInstance().getImplementation(CalibrationType.FILTER_HALF_BAND_REAL_63_TAP))
                 {
                     case VECTOR_SIMD_64:
                         return new VectorRealHalfBandDecimationFilter63Tap64Bit(coefficients);
@@ -1138,7 +1171,7 @@ public class FilterFactory
                         return new RealHalfBandDecimationFilter(coefficients);
                 }
             default:
-                switch(CalibrationManager.getInstance().getOperation(CalibrationType.FILTER_HALF_BAND_REAL_DEFAULT))
+                switch(CalibrationManager.getInstance().getImplementation(CalibrationType.FILTER_HALF_BAND_REAL_DEFAULT))
                 {
                     case VECTOR_SIMD_64:
                         return new VectorRealHalfBandDecimationFilter64Bit(coefficients);

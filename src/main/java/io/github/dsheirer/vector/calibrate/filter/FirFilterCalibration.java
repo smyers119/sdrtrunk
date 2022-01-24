@@ -13,7 +13,7 @@ import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilterDefaultBit;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
-import io.github.dsheirer.vector.calibrate.OptimalOperation;
+import io.github.dsheirer.vector.calibrate.Implementation;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
 import org.slf4j.Logger;
@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 public class FirFilterCalibration extends Calibration
 {
     private static final Logger mLog = LoggerFactory.getLogger(FirFilterCalibration.class);
-    private static final int ITERATIONS = 500_000;
+    private static final int ITERATIONS = 250_000;
     private static final int SAMPLE_BUFFER_SIZE = 2048;
     /**
      * Constructs an instance
@@ -56,7 +56,7 @@ public class FirFilterCalibration extends Calibration
 
         long bestScore = calculateScalar(coefficients, samples, ITERATIONS);
         mLog.info("FIR SCALAR:" + bestScore);
-        OptimalOperation operation = OptimalOperation.SCALAR;
+        Implementation operation = Implementation.SCALAR;
 
         long vectorPreferred = calculateVector(FloatVector.SPECIES_PREFERRED, coefficients, samples, ITERATIONS);
         mLog.info("FIR VECTOR PREFERRED:" + vectorPreferred);
@@ -64,7 +64,7 @@ public class FirFilterCalibration extends Calibration
         if(vectorPreferred < bestScore)
         {
             bestScore = vectorPreferred;
-            operation = OptimalOperation.VECTOR_SIMD_PREFERRED;
+            operation = Implementation.VECTOR_SIMD_PREFERRED;
         }
 
         switch(FloatVector.SPECIES_PREFERRED.length())
@@ -76,7 +76,7 @@ public class FirFilterCalibration extends Calibration
                 if(vector512 < bestScore)
                 {
                     bestScore = vector512;
-                    operation = OptimalOperation.VECTOR_SIMD_512;
+                    operation = Implementation.VECTOR_SIMD_512;
                 }
             case 8:
                 long vector256 = calculateVector(FloatVector.SPECIES_256, coefficients, samples, ITERATIONS);
@@ -84,7 +84,7 @@ public class FirFilterCalibration extends Calibration
                 if(vector256 < bestScore)
                 {
                     bestScore = vector256;
-                    operation = OptimalOperation.VECTOR_SIMD_256;
+                    operation = Implementation.VECTOR_SIMD_256;
                 }
             case 4:
                 long vector128 = calculateVector(FloatVector.SPECIES_128, coefficients, samples, ITERATIONS);
@@ -92,19 +92,19 @@ public class FirFilterCalibration extends Calibration
                 if(vector128 < bestScore)
                 {
                     bestScore = vector128;
-                    operation = OptimalOperation.VECTOR_SIMD_128;
+                    operation = Implementation.VECTOR_SIMD_128;
                 }
             case 2:
                 long vector64 = calculateVector(FloatVector.SPECIES_128, coefficients, samples, ITERATIONS);
                 mLog.info("FIR VECTOR 64:" + vector64);
                 if(vector64 < bestScore)
                 {
-                    operation = OptimalOperation.VECTOR_SIMD_64;
+                    operation = Implementation.VECTOR_SIMD_64;
                 }
         }
 
         mLog.info("FIR - SETTING OPTIMAL OPERATION TO: " + operation);
-        setOptimalOperation(operation);
+        setImplementation(operation);
     }
 
     /**

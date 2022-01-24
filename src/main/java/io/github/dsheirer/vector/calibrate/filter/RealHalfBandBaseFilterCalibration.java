@@ -7,7 +7,7 @@ import io.github.dsheirer.dsp.filter.halfband.real.RealHalfBandDecimationFilter;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
-import io.github.dsheirer.vector.calibrate.OptimalOperation;
+import io.github.dsheirer.vector.calibrate.Implementation;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
 import org.slf4j.Logger;
@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 public abstract class RealHalfBandBaseFilterCalibration extends Calibration
 {
     private static final Logger mLog = LoggerFactory.getLogger(RealHalfBandBaseFilterCalibration.class);
-    private static final int ITERATIONS = 1_000_000;
+    private int mIterations = 1_000_000;
     private static final int SAMPLE_BUFFER_SIZE = 2048;
     private float[] mCoefficients;
 
@@ -33,55 +33,65 @@ public abstract class RealHalfBandBaseFilterCalibration extends Calibration
     }
 
     /**
-     * Performs calibration to determine optimal (Scalar vs Vector) operation type.
-     * @throws CalibrationException
+     * Constructs an instance
      */
+    public RealHalfBandBaseFilterCalibration(CalibrationType type, int filterLength, int iterations)
+    {
+        this(type, filterLength);
+        mIterations = iterations;
+    }
+
+
+        /**
+         * Performs calibration to determine optimal (Scalar vs Vector) operation type.
+         * @throws CalibrationException
+         */
     @Override public void calibrate() throws CalibrationException
     {
         float[] samples = getSamples(SAMPLE_BUFFER_SIZE);
 
-        long bestScore = calculateScalar(mCoefficients, samples, ITERATIONS);
+        long bestScore = calculateScalar(mCoefficients, samples, mIterations);
         mLog.info("REAL HALF-BAND " + mCoefficients.length + "-TAP SCALAR:" + bestScore);
-        OptimalOperation operation = OptimalOperation.SCALAR;
+        Implementation operation = Implementation.SCALAR;
 
         switch(FloatVector.SPECIES_PREFERRED.length())
         {
             //Fall through for each switch case is the intended behavior
             case 16:
-                long vector512 = calculateVector(FloatVector.SPECIES_512, mCoefficients, samples, ITERATIONS);
+                long vector512 = calculateVector(FloatVector.SPECIES_512, mCoefficients, samples, mIterations);
                 mLog.info("REAL HALF-BAND " + mCoefficients.length + "-TAP VECTOR 512:" + vector512);
                 if(vector512 < bestScore)
                 {
                     bestScore = vector512;
-                    operation = OptimalOperation.VECTOR_SIMD_512;
+                    operation = Implementation.VECTOR_SIMD_512;
                 }
             case 8:
-                long vector256 = calculateVector(FloatVector.SPECIES_256, mCoefficients, samples, ITERATIONS);
+                long vector256 = calculateVector(FloatVector.SPECIES_256, mCoefficients, samples, mIterations);
                 mLog.info("REAL HALF-BAND " + mCoefficients.length + "-TAP VECTOR 256:" + vector256);
                 if(vector256 < bestScore)
                 {
                     bestScore = vector256;
-                    operation = OptimalOperation.VECTOR_SIMD_256;
+                    operation = Implementation.VECTOR_SIMD_256;
                 }
             case 4:
-                long vector128 = calculateVector(FloatVector.SPECIES_128, mCoefficients, samples, ITERATIONS);
+                long vector128 = calculateVector(FloatVector.SPECIES_128, mCoefficients, samples, mIterations);
                 mLog.info("REAL HALF-BAND " + mCoefficients.length + "-TAP VECTOR 128:" + vector128);
                 if(vector128 < bestScore)
                 {
                     bestScore = vector128;
-                    operation = OptimalOperation.VECTOR_SIMD_128;
+                    operation = Implementation.VECTOR_SIMD_128;
                 }
             case 2:
-                long vector64 = calculateVector(FloatVector.SPECIES_64, mCoefficients, samples, ITERATIONS);
+                long vector64 = calculateVector(FloatVector.SPECIES_64, mCoefficients, samples, mIterations);
                 mLog.info("REAL HALF-BAND " + mCoefficients.length + "-TAP VECTOR 64:" + vector64);
                 if(vector64 < bestScore)
                 {
-                    operation = OptimalOperation.VECTOR_SIMD_64;
+                    operation = Implementation.VECTOR_SIMD_64;
                 }
         }
 
         mLog.info("REAL HALF-BAND " + mCoefficients.length + "-TAP - SETTING OPTIMAL OPERATION TO:" + operation);
-        setOptimalOperation(operation);
+        setImplementation(operation);
     }
 
     /**

@@ -16,7 +16,8 @@ import java.util.Random;
  * Implements listener of source events to process runtime squelch threshold change request events
  * which are forwarded to the power squelch control.
  */
-public class VectorSquelchingFMDemodulator extends VectorFMDemodulator implements Listener<SourceEvent>
+public class VectorSquelchingFMDemodulator extends VectorFMDemodulator
+        implements ISquelchingFmDemodulator, Listener<SourceEvent>
 {
     private static final float TWO = 2.0f;
     private PowerSquelch mPowerSquelch;
@@ -28,6 +29,10 @@ public class VectorSquelchingFMDemodulator extends VectorFMDemodulator implement
     public VectorSquelchingFMDemodulator(float alpha, float threshold, int ramp)
     {
         mPowerSquelch = new PowerSquelch(alpha, threshold, ramp);
+    }
+
+    public void reset()
+    {
     }
 
     /**

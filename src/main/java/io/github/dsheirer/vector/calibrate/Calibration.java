@@ -10,7 +10,7 @@ public abstract class Calibration
 {
     private Preferences mPreferences = Preferences.userNodeForPackage(Calibration.class);
     private CalibrationType mType;
-    private OptimalOperation mOptimalOperation;
+    private Implementation mImplementation;
 
     /**
      * Constructs an instance
@@ -34,7 +34,7 @@ public abstract class Calibration
      */
     public boolean isCalibrated()
     {
-        return getOptimalOperation() != OptimalOperation.UNCALIBRATED;
+        return getImplementation() != Implementation.UNCALIBRATED;
     }
 
     /**
@@ -42,38 +42,38 @@ public abstract class Calibration
      */
     public void reset()
     {
-        setOptimalOperation(OptimalOperation.UNCALIBRATED);
+        setImplementation(Implementation.UNCALIBRATED);
     }
 
-    private String getOperationKey()
+    private String getImplementationKey()
     {
-        return getType() + "-operation";
+        return getType() + "-implementation";
     }
 
     /**
-     * Optimal operation for this plugin
-     * @return operation or uncalibrated if this plugin has not yet been calibrated
+     * Optimal implementation for this plugin
+     * @return implementation or uncalibrated if this plugin has not yet been calibrated
      */
-    public OptimalOperation getOptimalOperation()
+    public Implementation getImplementation()
     {
-        if(mOptimalOperation == null)
+        if(mImplementation == null)
         {
-            String operation = mPreferences.get(getOperationKey(), OptimalOperation.UNCALIBRATED.name());
-            mOptimalOperation = OptimalOperation.valueOf(operation);
+            String implementation = mPreferences.get(getImplementationKey(), Implementation.UNCALIBRATED.name());
+            mImplementation = Implementation.valueOf(implementation);
         }
 
-        return mOptimalOperation;
+        return mImplementation;
 
     }
 
     /**
-     * Sets the optimal operation as determined via calibration.
-     * @param optimalOperation to set
+     * Sets the optimal implementation as determined via calibration.
+     * @param implementation to set
      */
-    protected void setOptimalOperation(OptimalOperation optimalOperation)
+    protected void setImplementation(Implementation implementation)
     {
-        mOptimalOperation = optimalOperation;
-        mPreferences.put(getOperationKey(), optimalOperation.name());
+        mImplementation = implementation;
+        mPreferences.put(getImplementationKey(), implementation.name());
     }
 
     /**

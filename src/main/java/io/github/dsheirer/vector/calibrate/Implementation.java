@@ -1,9 +1,9 @@
 package io.github.dsheirer.vector.calibrate;
 
 /**
- * Identifies the optimal operation (Scalar vs Vector) identified through calibration testing
+ * Identifies the optimal implementation (Scalar vs Vector) identified through calibration testing
  */
-public enum OptimalOperation
+public enum Implementation
 {
     SCALAR,
     VECTOR_SIMD_PREFERRED,

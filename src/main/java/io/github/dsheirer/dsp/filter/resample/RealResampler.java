@@ -59,6 +59,16 @@ public class RealResampler
     }
 
     /**
+     * Primary input method to the resampler
+     * @param samples to resample
+     */
+    public void resample(float[] samples)
+    {
+        mBufferManager.load(samples);
+        mResampler.process(mResampleFactor, mBufferManager, false);
+    }
+
+    /**
      * Registers the listener to receive the resampled buffer output
      * @param resampledBufferListener to receive buffers
      */
@@ -93,6 +103,14 @@ public class RealResampler
         {
             mInputBuffer.put(reusableFloatBuffer.getSamples());
             reusableFloatBuffer.decrementUserCount();
+        }
+
+        /**
+         * Queues the buffer sample for resampling
+         */
+        public void load(float[] samples)
+        {
+            mInputBuffer.put(samples);
         }
 
         @Override
