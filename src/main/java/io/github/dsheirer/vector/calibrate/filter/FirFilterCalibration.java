@@ -1,4 +1,4 @@
-package io.github.dsheirer.vector.calibrate;
+package io.github.dsheirer.vector.calibrate.filter;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.Window;
@@ -10,22 +10,29 @@ import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilter256Bit;
 import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilter512Bit;
 import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilter64Bit;
 import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilterDefaultBit;
+import io.github.dsheirer.vector.calibrate.CalibrationException;
+import io.github.dsheirer.vector.calibrate.Calibration;
+import io.github.dsheirer.vector.calibrate.CalibrationType;
+import io.github.dsheirer.vector.calibrate.OptimalOperation;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Calibration plugin for FIR filters
  */
-public class FirFilterCalibrationPlugin extends CalibrationPlugin
+public class FirFilterCalibration extends Calibration
 {
+    private static final Logger mLog = LoggerFactory.getLogger(FirFilterCalibration.class);
     private static final int ITERATIONS = 500_000;
     private static final int SAMPLE_BUFFER_SIZE = 2048;
     /**
      * Constructs an instance
      */
-    public FirFilterCalibrationPlugin()
+    public FirFilterCalibration()
     {
-        super(CalibrationPluginType.FILTER_FIR);
+        super(CalibrationType.FILTER_FIR);
     }
 
     /**
@@ -48,11 +55,11 @@ public class FirFilterCalibrationPlugin extends CalibrationPlugin
         }
 
         long bestScore = calculateScalar(coefficients, samples, ITERATIONS);
-        System.out.println("FIR SCALAR:" + bestScore);
+        mLog.info("FIR SCALAR:" + bestScore);
         OptimalOperation operation = OptimalOperation.SCALAR;
 
         long vectorPreferred = calculateVector(FloatVector.SPECIES_PREFERRED, coefficients, samples, ITERATIONS);
-        System.out.println("FIR VECTOR PREFERRED:" + vectorPreferred);
+        mLog.info("FIR VECTOR PREFERRED:" + vectorPreferred);
 
         if(vectorPreferred < bestScore)
         {
@@ -65,7 +72,7 @@ public class FirFilterCalibrationPlugin extends CalibrationPlugin
             //Fall through for each switch case is the intended behavior
             case 16:
                 long vector512 = calculateVector(FloatVector.SPECIES_512, coefficients, samples, ITERATIONS);
-                System.out.println("FIR VECTOR 512:" + vector512);
+                mLog.info("FIR VECTOR 512:" + vector512);
                 if(vector512 < bestScore)
                 {
                     bestScore = vector512;
@@ -73,7 +80,7 @@ public class FirFilterCalibrationPlugin extends CalibrationPlugin
                 }
             case 8:
                 long vector256 = calculateVector(FloatVector.SPECIES_256, coefficients, samples, ITERATIONS);
-                System.out.println("FIR VECTOR 256:" + vector256);
+                mLog.info("FIR VECTOR 256:" + vector256);
                 if(vector256 < bestScore)
                 {
                     bestScore = vector256;
@@ -81,7 +88,7 @@ public class FirFilterCalibrationPlugin extends CalibrationPlugin
                 }
             case 4:
                 long vector128 = calculateVector(FloatVector.SPECIES_128, coefficients, samples, ITERATIONS);
-                System.out.println("FIR VECTOR 128:" + vector128);
+                mLog.info("FIR VECTOR 128:" + vector128);
                 if(vector128 < bestScore)
                 {
                     bestScore = vector128;
@@ -89,14 +96,14 @@ public class FirFilterCalibrationPlugin extends CalibrationPlugin
                 }
             case 2:
                 long vector64 = calculateVector(FloatVector.SPECIES_128, coefficients, samples, ITERATIONS);
-                System.out.println("FIR VECTOR 64:" + vector64);
+                mLog.info("FIR VECTOR 64:" + vector64);
                 if(vector64 < bestScore)
                 {
                     operation = OptimalOperation.VECTOR_SIMD_64;
                 }
         }
 
-        System.out.println("Setting FIR optimal operation to: " + operation);
+        mLog.info("FIR - SETTING OPTIMAL OPERATION TO: " + operation);
         setOptimalOperation(operation);
     }
 

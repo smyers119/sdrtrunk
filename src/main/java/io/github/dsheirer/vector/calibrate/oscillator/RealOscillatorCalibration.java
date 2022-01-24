@@ -1,17 +1,21 @@
-package io.github.dsheirer.vector.calibrate;
+package io.github.dsheirer.vector.calibrate.oscillator;
 
-import io.github.dsheirer.dsp.oscillator.ComplexOscillator;
-import io.github.dsheirer.dsp.oscillator.IComplexOscillator;
 import io.github.dsheirer.dsp.oscillator.IRealOscillator;
 import io.github.dsheirer.dsp.oscillator.RealOscillator;
-import io.github.dsheirer.dsp.oscillator.VectorComplexOscillator;
 import io.github.dsheirer.dsp.oscillator.VectorRealOscillator;
+import io.github.dsheirer.vector.calibrate.CalibrationException;
+import io.github.dsheirer.vector.calibrate.Calibration;
+import io.github.dsheirer.vector.calibrate.CalibrationType;
+import io.github.dsheirer.vector.calibrate.OptimalOperation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Calibration plugin for complex oscillators
+ * Calibration plugin for real oscillators
  */
-public class ComplexOscillatorCalibrationPlugin extends CalibrationPlugin
+public class RealOscillatorCalibration extends Calibration
 {
+    private static final Logger mLog = LoggerFactory.getLogger(RealOscillatorCalibration.class);
     private static final int ITERATIONS = 500_000;
     private static final int BUFFER_SIZE = 2048;
     private static final double FREQUENCY = 5.0d;
@@ -20,9 +24,9 @@ public class ComplexOscillatorCalibrationPlugin extends CalibrationPlugin
     /**
      * Constructs an instance
      */
-    public ComplexOscillatorCalibrationPlugin()
+    public RealOscillatorCalibration()
     {
-        super(CalibrationPluginType.OSCILLATOR_COMPLEX);
+        super(CalibrationType.OSCILLATOR_REAL);
     }
 
     /**
@@ -32,9 +36,9 @@ public class ComplexOscillatorCalibrationPlugin extends CalibrationPlugin
     @Override public void calibrate() throws CalibrationException
     {
         long scalar = calculateScalar(BUFFER_SIZE, ITERATIONS);
-        System.out.println("COMPLEX OSCILLATOR SCALAR:" + scalar);
+        mLog.info("REAL OSCILLATOR SCALAR:" + scalar);
         long vector = calculateVector(BUFFER_SIZE, ITERATIONS);
-        System.out.println("COMPLEX OSCILLATOR VECTOR:" + vector);
+        mLog.info("REAL OSCILLATOR VECTOR:" + vector);
 
         if(scalar < vector)
         {
@@ -45,8 +49,7 @@ public class ComplexOscillatorCalibrationPlugin extends CalibrationPlugin
             setOptimalOperation(OptimalOperation.VECTOR_SIMD_PREFERRED);
         }
 
-        System.out.println("Set Complex Oscillator optimal operation to: " + getOptimalOperation());
-
+        mLog.info("REAL OSCILLATOR - SETTING OPTIMAL OPERATION TO:" + getOptimalOperation());
     }
 
     /**
@@ -61,7 +64,7 @@ public class ComplexOscillatorCalibrationPlugin extends CalibrationPlugin
 
         long start = System.currentTimeMillis();
 
-        IComplexOscillator oscillator = new ComplexOscillator(FREQUENCY, SAMPLE_RATE);
+        IRealOscillator oscillator = new RealOscillator(FREQUENCY, SAMPLE_RATE);
 
         for(int i = 0; i < iterations; i++)
         {
@@ -82,7 +85,7 @@ public class ComplexOscillatorCalibrationPlugin extends CalibrationPlugin
     {
         float accumulator = 0.0f;
 
-        IComplexOscillator oscillator = new VectorComplexOscillator(FREQUENCY, SAMPLE_RATE);
+        IRealOscillator oscillator = new VectorRealOscillator(FREQUENCY, SAMPLE_RATE);
 
         long start = System.currentTimeMillis();
 

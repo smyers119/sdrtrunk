@@ -1,26 +1,22 @@
 package io.github.dsheirer.vector.calibrate;
 
-import io.github.dsheirer.preference.source.ChannelMultiFrequencyPreference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Random;
 import java.util.prefs.Preferences;
 
 /**
  * Abstract calibration plugin base class
  */
-public abstract class CalibrationPlugin
+public abstract class Calibration
 {
-    private Preferences mPreferences = Preferences.userNodeForPackage(CalibrationPlugin.class);
-    private CalibrationPluginType mType;
+    private Preferences mPreferences = Preferences.userNodeForPackage(Calibration.class);
+    private CalibrationType mType;
     private OptimalOperation mOptimalOperation;
 
     /**
      * Constructs an instance
      * @param type
      */
-    public CalibrationPlugin(CalibrationPluginType type)
+    public Calibration(CalibrationType type)
     {
         mType = type;
     }
@@ -28,7 +24,7 @@ public abstract class CalibrationPlugin
     /**
      * Type of calibration plugin
      */
-    public CalibrationPluginType getType()
+    public CalibrationType getType()
     {
         return mType;
     }

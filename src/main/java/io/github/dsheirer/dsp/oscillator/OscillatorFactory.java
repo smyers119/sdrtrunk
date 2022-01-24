@@ -1,7 +1,7 @@
 package io.github.dsheirer.dsp.oscillator;
 
 import io.github.dsheirer.vector.calibrate.CalibrationManager;
-import io.github.dsheirer.vector.calibrate.CalibrationPluginType;
+import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.OptimalOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class OscillatorFactory
      */
     public static IRealOscillator getRealOscillator(double frequency, double sampleRate)
     {
-        OptimalOperation operation = CalibrationManager.getInstance().getOperation(CalibrationPluginType.OSCILLATOR_REAL);
+        OptimalOperation operation = CalibrationManager.getInstance().getOperation(CalibrationType.OSCILLATOR_REAL);
 
         switch(operation)
         {
@@ -46,7 +46,7 @@ public class OscillatorFactory
      */
     public static IComplexOscillator getComplexOscillator(double frequency, double sampleRate)
     {
-        OptimalOperation operation = CalibrationManager.getInstance().getOperation(CalibrationPluginType.OSCILLATOR_COMPLEX);
+        OptimalOperation operation = CalibrationManager.getInstance().getOperation(CalibrationType.OSCILLATOR_COMPLEX);
 
         switch(operation)
         {

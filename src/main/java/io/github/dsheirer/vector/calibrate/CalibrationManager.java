@@ -1,5 +1,19 @@
 package io.github.dsheirer.vector.calibrate;
 
+import io.github.dsheirer.vector.calibrate.demodulator.FmDemodulatorCalibration;
+import io.github.dsheirer.vector.calibrate.demodulator.SquelchingFmDemodulatorCalibration;
+import io.github.dsheirer.vector.calibrate.filter.ComplexHalfBand11TapFilterCalibration;
+import io.github.dsheirer.vector.calibrate.filter.ComplexHalfBand15TapFilterCalibration;
+import io.github.dsheirer.vector.calibrate.filter.FirFilterCalibration;
+import io.github.dsheirer.vector.calibrate.filter.RealHalfBand11TapFilterCalibration;
+import io.github.dsheirer.vector.calibrate.filter.RealHalfBand15TapFilterCalibration;
+import io.github.dsheirer.vector.calibrate.filter.RealHalfBand23TapFilterCalibration;
+import io.github.dsheirer.vector.calibrate.filter.RealHalfBand63TapFilterCalibration;
+import io.github.dsheirer.vector.calibrate.oscillator.ComplexOscillatorCalibration;
+import io.github.dsheirer.vector.calibrate.oscillator.RealOscillatorCalibration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,7 +22,8 @@ import java.util.Map;
  */
 public class CalibrationManager
 {
-    private Map<CalibrationPluginType, CalibrationPlugin> mPluginMap = new HashMap<>();
+    private static final Logger mLog = LoggerFactory.getLogger(CalibrationManager.class);
+    private Map<CalibrationType, Calibration> mCalibrationMap = new HashMap<>();
     private static CalibrationManager sInstance;
 
     /**
@@ -16,9 +31,17 @@ public class CalibrationManager
      */
     private CalibrationManager()
     {
-        addPlugin(new FirFilterCalibrationPlugin());
-        addPlugin(new ComplexOscillatorCalibrationPlugin());
-        addPlugin(new RealOscillatorCalibrationPlugin());
+        add(new ComplexHalfBand11TapFilterCalibration());
+        add(new ComplexHalfBand15TapFilterCalibration());
+        add(new ComplexOscillatorCalibration());
+        add(new FirFilterCalibration());
+        add(new FmDemodulatorCalibration());
+        add(new RealHalfBand11TapFilterCalibration());
+        add(new RealHalfBand15TapFilterCalibration());
+        add(new RealHalfBand23TapFilterCalibration());
+        add(new RealHalfBand63TapFilterCalibration());
+        add(new RealOscillatorCalibration());
+        add(new SquelchingFmDemodulatorCalibration());
     }
 
     /**
@@ -35,50 +58,50 @@ public class CalibrationManager
     }
 
     /**
-     * Adds the plugin to the map of plugins for this manager.
-      * @param plugin to add
+     * Adds the calibration to the map of calibrations for this manager.
+      * @param calibration to add
      */
-    private void addPlugin(CalibrationPlugin plugin)
+    private void add(Calibration calibration)
     {
-        mPluginMap.put(plugin.getType(), plugin);
+        mCalibrationMap.put(calibration.getType(), calibration);
     }
 
     /**
-     * Access a plugin by type
-     * @param type of plugin
-     * @return plugin instance, or null.
+     * Access a calibration by type
+     * @param type of calibration
+     * @return calibration instance, or null.
      */
-    public CalibrationPlugin getPlugin(CalibrationPluginType type)
+    public Calibration getCalibration(CalibrationType type)
     {
-        return mPluginMap.get(type);
+        return mCalibrationMap.get(type);
     }
 
     /**
-     * Identifies the optimal operation for the plugin type.
-     * @param type of plugin
+     * Identifies the optimal operation for the calibration type.
+     * @param type of calibration
      * @return operation
      */
-    public OptimalOperation getOperation(CalibrationPluginType type)
+    public OptimalOperation getOperation(CalibrationType type)
     {
-        CalibrationPlugin plugin = getPlugin(type);
+        Calibration calibration = getCalibration(type);
 
-        if(plugin != null)
+        if(calibration != null)
         {
-            return plugin.getOptimalOperation();
+            return calibration.getOptimalOperation();
         }
 
         return OptimalOperation.UNCALIBRATED;
     }
 
     /**
-     * Indicates if all plugins are calibrated.
-     * @return true if all plugins are calibrated or if there are no plugins.
+     * Indicates if all calibrations are calibrated.
+     * @return true if all calibrations are calibrated or if there are no calibrations registered.
      */
     public boolean isCalibrated()
     {
-        for(CalibrationPlugin plugin: mPluginMap.values())
+        for(Calibration calibration: mCalibrationMap.values())
         {
-            if(!plugin.isCalibrated())
+            if(!calibration.isCalibrated())
             {
                 return false;
             }
@@ -88,40 +111,41 @@ public class CalibrationManager
     }
 
     /**
-     * Resets all plugins to an uncalibrated state.
+     * Resets all calibrations to an uncalibrated state.
      */
     public void reset()
     {
-        for(CalibrationPlugin plugin: mPluginMap.values())
+        for(Calibration calibration: mCalibrationMap.values())
         {
-            plugin.reset();
+            calibration.reset();
         }
     }
 
     /**
-     * Resets a specific calibration plugin type.
+     * Resets a specific calibration type.
      */
-    public void reset(CalibrationPluginType type)
+    public void reset(CalibrationType type)
     {
-        CalibrationPlugin plugin = mPluginMap.get(type);
+        Calibration calibration = mCalibrationMap.get(type);
 
-        if(plugin != null)
+        if(calibration != null)
         {
-            plugin.reset();
+            calibration.reset();
         }
     }
 
     /**
-     * Calibrates any plugins that are not currently calibrated
-     * @throws CalibrationException if any errors are encountered by any of the plugins.
+     * Calibrates any calibrations that are not currently calibrated
+     * @throws CalibrationException if any errors are encountered by any of the calibrations.
      */
     public void calibrate() throws CalibrationException
     {
-        for(CalibrationPlugin plugin: mPluginMap.values())
+        for(Calibration calibration: mCalibrationMap.values())
         {
-            if(!plugin.isCalibrated())
+            if(!calibration.isCalibrated())
             {
-                plugin.calibrate();
+                mLog.info("====> Calibrating: " + calibration.getType());
+                calibration.calibrate();
             }
         }
     }
@@ -130,7 +154,8 @@ public class CalibrationManager
     {
         CalibrationManager manager = getInstance();
 
-        manager.reset(CalibrationPluginType.OSCILLATOR_COMPLEX);
+        manager.reset(CalibrationType.SQUELCHING_FM_DEMODULATOR);
+//        manager.reset();
 
         if(!manager.isCalibrated())
         {
@@ -144,7 +169,6 @@ public class CalibrationManager
             }
         }
 
-        OptimalOperation firOperation = manager.getOperation(CalibrationPluginType.FILTER_FIR);
-        System.out.println("FIR FILTER: " + firOperation);
+        System.out.println("Complete");
     }
 }

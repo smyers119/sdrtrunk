@@ -26,7 +26,7 @@ import org.apache.commons.math3.util.FastMath;
 /**
  * FM Demodulator for demodulating complex samples and producing demodulated floating point samples.
  */
-public class FMDemodulator
+public class FMDemodulator implements IFmDemodulator
 {
     private ReusableBufferQueue mReusableBufferQueue = new ReusableBufferQueue("FMDemodulator");
     private float mPreviousI = 0.0f;

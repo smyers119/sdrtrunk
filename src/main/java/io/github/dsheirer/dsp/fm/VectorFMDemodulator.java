@@ -12,7 +12,7 @@ import java.util.Random;
 /**
  * FM demodulator that uses JDK 17+ SIMD vector intrinsics
  */
-public class VectorFMDemodulator implements IFMDemodulator
+public class VectorFMDemodulator implements IFmDemodulator
 {
     protected static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_PREFERRED;
     protected static final float ZERO = 0.0f;
