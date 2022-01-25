@@ -23,7 +23,7 @@ import org.apache.commons.math3.util.FastMath;
 /**
  * Performs AM demodulation on baseband I/Q samples to produce demodulated float output.
  */
-public class AMDemodulator
+public class AMDemodulator implements IAmDemodulator
 {
     private ReusableBufferQueue mReusableBufferQueue = new ReusableBufferQueue("AMDemodulator");
     private int mOutputBufferPointer;
@@ -57,6 +57,18 @@ public class AMDemodulator
     public float demodulate(float inphase, float quadrature)
     {
         return (float) FastMath.sqrt((inphase * inphase) + (quadrature * quadrature)) * mGain;
+    }
+
+    @Override public float[] demodulate(float[] i, float[] q)
+    {
+        float[] demodulated = new float[i.length];
+
+        for(int x = 0; x < i.length; x++)
+        {
+            demodulated[x] = (float)FastMath.sqrt((i[x] * i[x]) + (q[x] * q[x])) * mGain;
+        }
+
+        return demodulated;
     }
 
     /**

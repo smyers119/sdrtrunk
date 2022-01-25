@@ -135,8 +135,6 @@ public class AutomaticGainControl
     private RealCircularBuffer mDelayBuffer = new RealCircularBuffer((int)(SAMPLE_RATE * DELAY_TIME_CONSTANT));
     private DoubleCircularBuffer mMagnitudeBuffer = new DoubleCircularBuffer((int)(SAMPLE_RATE * WINDOW_TIME_CONSTANT));
 
-    private ReusableBufferQueue mReusableBufferQueue = new ReusableBufferQueue("AutomaticGainControl");
-
     public AutomaticGainControl()
     {
     }
@@ -148,19 +146,14 @@ public class AutomaticGainControl
      * @param input samples to process
      * @return output samples with gain applied
      */
-    public ReusableFloatBuffer process(ReusableFloatBuffer input)
+    public float[] process(float[] input)
     {
-        ReusableFloatBuffer output = mReusableBufferQueue.getBuffer(input.getSampleCount());
+        float[] output = new float[input.length];
 
-        float[] inputSamples = input.getSamples();
-        float[] outputSamples = output.getSamples();
-
-        for(int x = 0; x < inputSamples.length; x++)
+        for(int x = 0; x < input.length; x++)
         {
-            outputSamples[x] = process(inputSamples[x]);
+            output[x] = process(input[x]);
         }
-
-        input.decrementUserCount();
 
         return output;
     }
