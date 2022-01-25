@@ -47,7 +47,7 @@ public class CalibrationManager
         add(new RealOscillatorCalibration());
         add(new SquelchingFmDemodulatorCalibration());
 
-        reset();
+//        reset();
     }
 
     /**

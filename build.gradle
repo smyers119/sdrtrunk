@@ -121,12 +121,13 @@ dependencies {
 }
 
 application {
-    mainClass.set("io.github.dsheirer.gui.SDRTrunk")
+    mainClassName = "io.github.dsheirer.gui.SDRTrunk"
 
     //Note: jide-oss.jar requires access to hidden windows look & feel
     //Note: controlsfx.jar requires access to hidden javaFX classes
     applicationDefaultJvmArgs = ['--add-exports=java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED',
-        '--add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls']
+        '--add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls',
+        '--add-modules=jdk.incubator.vector']
 }
 
 tasks.withType(JavaCompile) {
@@ -146,7 +147,8 @@ run {
         //Note: jide-oss.jar requires access to hidden windows look & feel
         //Note: controlsfx.jar requires access to hidden javaFX classes
         jvmArgs = ['--add-exports=java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED',
-                   '--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED']
+                   '--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED',
+                   '--add-modules=jdk.incubator.vector']
     }
     else {
         //Note: controlsfx.jar requires access to hidden javaFX classes
@@ -174,6 +176,8 @@ idea {
         downloadSources = true
     }
 }
+
+
 
 /**
  * Java Development Kit (JDK) locations.  In order to build OS-specific images, these paths must point to the parent
