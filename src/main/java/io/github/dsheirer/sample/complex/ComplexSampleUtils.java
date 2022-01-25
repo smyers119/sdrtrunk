@@ -5,8 +5,8 @@ import org.apache.commons.math3.util.FastMath;
 public class ComplexSampleUtils
 {
 	/**
-	 * Converts an interleaved complex sample array and deinterleaves the I and Q sample
-	 * arrays.
+	 * Converts from an interleaved complex sample array to a sample record with the
+	 * I and Q in separate arrays.
 	 * @param samples that are interleaved complex samples
 	 * @return deinterleaved complex samples instance
 	 */
@@ -21,7 +21,7 @@ public class ComplexSampleUtils
 		{
 			offset = 2 * x;
 			i[x] = samples[offset];
-			i[x] = samples[offset + 1];
+			q[x] = samples[offset + 1];
 		}
 
 		return new ComplexSamples(i, q);

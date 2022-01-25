@@ -5,6 +5,8 @@ import io.github.dsheirer.dsp.squelch.PowerSquelch;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.source.SourceEvent;
 import jdk.incubator.vector.FloatVector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.DecimalFormat;
 import java.util.Arrays;
@@ -19,6 +21,7 @@ import java.util.Random;
 public class VectorSquelchingFMDemodulator extends VectorFMDemodulator
         implements ISquelchingFmDemodulator, Listener<SourceEvent>
 {
+    private static final Logger mLog = LoggerFactory.getLogger(VectorSquelchingFMDemodulator.class);
     private static final float TWO = 2.0f;
     private PowerSquelch mPowerSquelch;
     private boolean mSquelchChanged = false;
@@ -55,7 +58,6 @@ public class VectorSquelchingFMDemodulator extends VectorFMDemodulator
         setSquelchChanged(false);
 
         float[] demodulated = super.demodulate(i, q);
-
         float[] magnitude = getMagnitude(i, q);
 
         for(int x = 0; x < i.length; x++)

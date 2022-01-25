@@ -4,6 +4,8 @@ import io.github.dsheirer.vector.VectorUtilities;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.DecimalFormat;
 import java.util.Arrays;
@@ -14,6 +16,7 @@ import java.util.Random;
  */
 public class VectorFMDemodulator implements IFmDemodulator
 {
+    private static final Logger mLog = LoggerFactory.getLogger(VectorFMDemodulator.class);
     protected static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_PREFERRED;
     protected static final float ZERO = 0.0f;
     private static final int BUFFER_OVERLAP = 1;

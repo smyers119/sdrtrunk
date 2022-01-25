@@ -50,6 +50,8 @@ import io.github.dsheirer.source.SourceEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+
 /**
  * Decoder module with integrated narrowband FM (12.5 or 25.0 kHz channel) demodulator
  */

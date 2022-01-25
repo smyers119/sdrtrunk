@@ -53,6 +53,7 @@ import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationF
 import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter64Bit;
 import io.github.dsheirer.vector.calibrate.CalibrationManager;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
+import io.github.dsheirer.vector.calibrate.Implementation;
 import org.apache.commons.math3.util.FastMath;
 import org.jtransforms.fft.FloatFFT_1D;
 import org.slf4j.Logger;
@@ -1074,7 +1075,9 @@ public class FilterFactory
      */
     public static IRealFilter getRealFilter(float[] coefficients)
     {
-        switch(CalibrationManager.getInstance().getImplementation(CalibrationType.FILTER_FIR))
+        Implementation implementation = CalibrationManager.getInstance().getImplementation(CalibrationType.FILTER_FIR);
+
+        switch(implementation)
         {
             case VECTOR_SIMD_PREFERRED:
                 return new VectorRealFIRFilterDefaultBit(coefficients);
