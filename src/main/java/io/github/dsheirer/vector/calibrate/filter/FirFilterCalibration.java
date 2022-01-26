@@ -27,6 +27,7 @@ public class FirFilterCalibration extends Calibration
     private static final Logger mLog = LoggerFactory.getLogger(FirFilterCalibration.class);
     private static final int ITERATIONS = 250_000;
     private static final int SAMPLE_BUFFER_SIZE = 2048;
+
     /**
      * Constructs an instance
      */

@@ -20,6 +20,7 @@ import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.complex.Complex;
 import io.github.dsheirer.sample.complex.ComplexSampleListener;
+import io.github.dsheirer.sample.complex.ComplexSamples;
 
 public abstract class PSKDemodulator<T> implements ComplexSampleListener
 {
@@ -90,6 +91,21 @@ public abstract class PSKDemodulator<T> implements ComplexSampleListener
         }
 
         reusableComplexBuffer.decrementUserCount();
+    }
+
+    /**
+     * Processes a complex sample buffer
+     * @param samples
+     */
+    public void receive(ComplexSamples samples)
+    {
+        float[] i = samples.i();
+        float[] q = samples.q();
+
+        for(int x = 0; x < i.length; x++)
+        {
+            receive(i[x], q[x]);
+        }
     }
 
     /**

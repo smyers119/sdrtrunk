@@ -25,13 +25,12 @@ import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.dsp.filter.fir.FIRFilterSpecification;
 import io.github.dsheirer.dsp.filter.fir.complex.ComplexFIRFilter2;
-import io.github.dsheirer.dsp.gain.ComplexFeedForwardGainControl;
+import io.github.dsheirer.dsp.gain.complex.ComplexGainControl;
 import io.github.dsheirer.dsp.psk.DQPSKDecisionDirectedDemodulator;
 import io.github.dsheirer.dsp.psk.InterpolatingSampleBuffer;
 import io.github.dsheirer.dsp.psk.pll.CostasLoop;
 import io.github.dsheirer.dsp.psk.pll.FrequencyCorrectionSyncMonitor;
 import io.github.dsheirer.dsp.psk.pll.PLLBandwidth;
-import io.github.dsheirer.dsp.squelch.PowerMonitor;
 import io.github.dsheirer.module.decode.DecoderType;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.source.SourceEvent;
@@ -51,7 +50,7 @@ public class P25P1DecoderC4FM extends P25P1Decoder
     protected CostasLoop mCostasLoop;
     protected FrequencyCorrectionSyncMonitor mFrequencyCorrectionSyncMonitor;
     protected P25P1MessageFramer mMessageFramer;
-    private ComplexFeedForwardGainControl mAGC = new ComplexFeedForwardGainControl(32);
+    private ComplexGainControl mAGC = new ComplexGainControl();
     private Map<Double,float[]> mBasebandFilters = new HashMap<>();
     private ComplexFIRFilter2 mBasebandFilter;
 
@@ -107,7 +106,7 @@ public class P25P1DecoderC4FM extends P25P1Decoder
         mPowerMonitor.process(basebandFiltered);
 
         //User accounting of the incoming buffer is handled by the gain filter
-        ReusableComplexBuffer gainApplied = mAGC.filter(basebandFiltered);
+        ReusableComplexBuffer gainApplied = mAGC.process(basebandFiltered);
 
         mMessageFramer.setCurrentTime(reusableComplexBuffer.getTimestamp());
 

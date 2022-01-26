@@ -77,6 +77,17 @@ public class PowerMonitor
     }
 
     /**
+     * Processes I&Q complex baseband sample buffers.
+     */
+    public void process(float[] i, float[] q)
+    {
+        for(int x = 0; x < i.length; x++)
+        {
+            process(i[x], q[x]);
+        }
+    }
+
+    /**
      * Registers the listener to receive power level notifications and squelch threshold requests
      */
     public void setSourceEventListener(Listener<SourceEvent> listener)

@@ -10,6 +10,7 @@ import io.github.dsheirer.vector.calibrate.filter.RealHalfBand15TapFilterCalibra
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBand23TapFilterCalibration;
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBand63TapFilterCalibration;
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBandDefaultFilterCalibration;
+import io.github.dsheirer.vector.calibrate.gain.ComplexGainCalibration;
 import io.github.dsheirer.vector.calibrate.oscillator.ComplexOscillatorCalibration;
 import io.github.dsheirer.vector.calibrate.oscillator.RealOscillatorCalibration;
 import org.slf4j.Logger;
@@ -34,6 +35,7 @@ public class CalibrationManager
      */
     private CalibrationManager()
     {
+        add(new ComplexGainCalibration());
         add(new ComplexHalfBand11TapFilterCalibration());
         add(new ComplexHalfBand15TapFilterCalibration());
         add(new ComplexOscillatorCalibration());
@@ -46,8 +48,6 @@ public class CalibrationManager
         add(new RealHalfBandDefaultFilterCalibration());
         add(new RealOscillatorCalibration());
         add(new SquelchingFmDemodulatorCalibration());
-
-//        reset();
     }
 
     /**
@@ -154,8 +154,8 @@ public class CalibrationManager
         }
         else
         {
-            mLog.info("Calibrating software for optimal performance on this computer.  Please be patient, this "
-                    + "may take a few minutes.");
+            mLog.info("Calibrating software for optimal performance on this computer.");
+            mLog.info("--> Please be patient, this may take a few minutes.");
 
             int calibrationCounter = 0;
 
@@ -195,7 +195,7 @@ public class CalibrationManager
     {
         CalibrationManager manager = getInstance();
 
-        manager.reset(CalibrationType.FILTER_HALF_BAND_REAL_DEFAULT);
+        manager.reset(CalibrationType.COMPLEX_GAIN);
 //        manager.reset();
 
         if(!manager.isCalibrated())

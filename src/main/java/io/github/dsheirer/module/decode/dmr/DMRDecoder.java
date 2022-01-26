@@ -22,7 +22,10 @@ package io.github.dsheirer.module.decode.dmr;
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.fir.FIRFilterSpecification;
 import io.github.dsheirer.dsp.filter.fir.complex.ComplexFIRFilter2;
-import io.github.dsheirer.dsp.gain.ComplexFeedForwardGainControl;
+import io.github.dsheirer.dsp.filter.fir.real.IRealFilter;
+import io.github.dsheirer.dsp.gain.complex.ComplexGainControl;
+import io.github.dsheirer.dsp.gain.complex.ComplexGainFactory;
+import io.github.dsheirer.dsp.gain.complex.IComplexGainControl;
 import io.github.dsheirer.dsp.psk.DQPSKDecisionDirectedDemodulator;
 import io.github.dsheirer.dsp.psk.InterpolatingSampleBuffer;
 import io.github.dsheirer.dsp.psk.pll.CostasLoop;
@@ -39,6 +42,8 @@ import io.github.dsheirer.sample.buffer.IReusableByteBufferProvider;
 import io.github.dsheirer.sample.buffer.IReusableComplexBufferListener;
 import io.github.dsheirer.sample.buffer.ReusableByteBuffer;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
+import io.github.dsheirer.sample.SampleUtils;
+import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.ISourceEventProvider;
 import io.github.dsheirer.source.SourceEvent;
@@ -61,15 +66,17 @@ public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener,
     private Broadcaster<Dibit> mDibitBroadcaster = new Broadcaster<>();
     private DibitToByteBufferAssembler mByteBufferAssembler = new DibitToByteBufferAssembler(300);
     private DMRMessageProcessor mMessageProcessor;
-    private ComplexFeedForwardGainControl mAGC = new ComplexFeedForwardGainControl(32);
+    protected IComplexGainControl mAGC;
     private Map<Double,float[]> mBasebandFilters = new HashMap<>();
-    private ComplexFIRFilter2 mBasebandFilter;
+    protected IRealFilter mIBasebandFilter;
+    protected IRealFilter mQBasebandFilter;
+
     protected InterpolatingSampleBuffer mInterpolatingSampleBuffer;
     protected DQPSKDecisionDirectedDemodulator mQPSKDemodulator;
     protected CostasLoop mCostasLoop;
     protected FrequencyCorrectionSyncMonitor mFrequencyCorrectionSyncMonitor;
     protected DMRMessageFramer mMessageFramer;
-    private PowerMonitor mPowerMonitor = new PowerMonitor();
+    protected PowerMonitor mPowerMonitor = new PowerMonitor();
 
     /**
      * Constructs an instance
@@ -78,6 +85,7 @@ public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener,
     {
         mMessageProcessor = new DMRMessageProcessor(config);
         mMessageProcessor.setMessageListener(getMessageListener());
+        mAGC = ComplexGainFactory.getGainControl();
         getDibitBroadcaster().addListener(mByteBufferAssembler);
         setSampleRate(25000.0);
     }
@@ -101,7 +109,7 @@ public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener,
 
     /**
      * Sets the sample rate and configures internal decoder components.
-     * @param sampleRate
+     * @param sampleRate of the channel to decode
      */
     public void setSampleRate(double sampleRate)
     {
@@ -113,7 +121,8 @@ public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener,
 
         mPowerMonitor.setSampleRate((int)sampleRate);
         mSampleRate = sampleRate;
-        mBasebandFilter = new ComplexFIRFilter2(getBasebandFilter());
+        mIBasebandFilter = FilterFactory.getRealFilter(getBasebandFilter());
+        mQBasebandFilter = FilterFactory.getRealFilter(getBasebandFilter());
         mCostasLoop = new CostasLoop(getSampleRate(), getSymbolRate());
         mCostasLoop.setPLLBandwidth(PLLBandwidth.BW_300);
         mFrequencyCorrectionSyncMonitor = new FrequencyCorrectionSyncMonitor(mCostasLoop, this);
@@ -143,30 +152,19 @@ public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener,
     @Override
     public void receive(ReusableComplexBuffer reusableComplexBuffer)
     {
-        //User accounting of the incoming buffer is handled by the filter
-        ReusableComplexBuffer basebandFiltered = filter(reusableComplexBuffer);
+        //TODO: update this to receive/process ComplexSamples objects instead of reusable buffers
+        ComplexSamples samples = SampleUtils.deinterleave(reusableComplexBuffer.getSamples());
+        mMessageFramer.setCurrentTime(reusableComplexBuffer.getTimestamp());
+        reusableComplexBuffer.decrementUserCount();
+
+        float[] i = mIBasebandFilter.filter(samples.i());
+        float[] q = mQBasebandFilter.filter(samples.q());
 
         //Process buffer for power measurements
-        mPowerMonitor.process(basebandFiltered);
+        mPowerMonitor.process(i, q);
 
-        //User accounting of the incoming buffer is handled by the gain filter
-        ReusableComplexBuffer gainApplied = mAGC.filter(basebandFiltered);
-
-        mMessageFramer.setCurrentTime(reusableComplexBuffer.getTimestamp());
-
-        //User accounting of the filtered buffer is handled by the demodulator
-        mQPSKDemodulator.receive(gainApplied);
-    }
-
-    /**
-     * Filters the complex buffer and returns a new reusable complex buffer with the filtered contents.
-     * @param reusableComplexBuffer to filter
-     * @return filtered complex buffer
-     */
-    protected ReusableComplexBuffer filter(ReusableComplexBuffer reusableComplexBuffer)
-    {
-        //User accounting of the incoming buffer is handled by the filter
-        return mBasebandFilter.filter(reusableComplexBuffer);
+        ComplexSamples amplified = mAGC.process(i, q);
+        mQPSKDemodulator.receive(amplified);
     }
 
     /**

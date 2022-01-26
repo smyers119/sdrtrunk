@@ -21,9 +21,7 @@ import io.github.dsheirer.dsp.filter.Window;
 import io.github.dsheirer.dsp.filter.Window.WindowType;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.dsp.filter.fir.FIRFilterSpecification;
-import io.github.dsheirer.dsp.filter.fir.complex.ComplexFIRFilter2;
 import io.github.dsheirer.dsp.filter.fir.real.IRealFilter;
-import io.github.dsheirer.dsp.filter.fir.real.RealFIRFilter2;
 import io.github.dsheirer.dsp.filter.resample.RealResampler;
 import io.github.dsheirer.dsp.gain.AutomaticGainControl;
 import io.github.dsheirer.module.Module;
@@ -33,7 +31,7 @@ import io.github.dsheirer.sample.buffer.IReusableComplexBufferListener;
 import io.github.dsheirer.sample.buffer.ReusableBufferQueue;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
-import io.github.dsheirer.sample.complex.ComplexSampleUtils;
+import io.github.dsheirer.sample.SampleUtils;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.SourceEvent;
@@ -114,7 +112,7 @@ public class AMDemodulatorModule extends Module implements ISourceEventListener,
     @Override
     public void receive(ReusableComplexBuffer basebandBuffer)
     {
-        ComplexSamples samples = ComplexSampleUtils.deinterleave(basebandBuffer.getSamples());
+        ComplexSamples samples = SampleUtils.deinterleave(basebandBuffer.getSamples());
         basebandBuffer.decrementUserCount();
 
         float[] i = mIBasebandFilter.filter(samples.i());

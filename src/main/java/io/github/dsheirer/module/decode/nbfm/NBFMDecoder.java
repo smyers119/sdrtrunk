@@ -23,18 +23,14 @@ import io.github.dsheirer.channel.state.IDecoderStateEventProvider;
 import io.github.dsheirer.channel.state.State;
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.Window;
-import io.github.dsheirer.dsp.filter.decimate.ComplexDecimationReusableBufferWrapper;
 import io.github.dsheirer.dsp.filter.decimate.DecimationFilterFactory;
-import io.github.dsheirer.dsp.filter.decimate.IComplexDecimationFilter;
 import io.github.dsheirer.dsp.filter.decimate.IRealDecimationFilter;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.dsp.filter.fir.FIRFilterSpecification;
-import io.github.dsheirer.dsp.filter.fir.complex.ComplexFIRFilter2;
 import io.github.dsheirer.dsp.filter.fir.real.IRealFilter;
 import io.github.dsheirer.dsp.filter.resample.RealResampler;
 import io.github.dsheirer.dsp.fm.FmDemodulatorFactory;
 import io.github.dsheirer.dsp.fm.ISquelchingFmDemodulator;
-import io.github.dsheirer.dsp.fm.SquelchingFMDemodulator;
 import io.github.dsheirer.module.decode.DecoderType;
 import io.github.dsheirer.module.decode.PrimaryDecoder;
 import io.github.dsheirer.sample.Listener;
@@ -42,15 +38,13 @@ import io.github.dsheirer.sample.buffer.IReusableBufferProvider;
 import io.github.dsheirer.sample.buffer.IReusableComplexBufferListener;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
-import io.github.dsheirer.sample.complex.ComplexSampleUtils;
+import io.github.dsheirer.sample.SampleUtils;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.ISourceEventProvider;
 import io.github.dsheirer.source.SourceEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
 
 /**
  * Decoder module with integrated narrowband FM (12.5 or 25.0 kHz channel) demodulator
@@ -147,7 +141,7 @@ public class NBFMDecoder extends PrimaryDecoder implements ISourceEventListener,
 					"event before it can process complex sample buffers");
 		}
 
-		ComplexSamples samples = ComplexSampleUtils.deinterleave(reusableComplexBuffer.getSamples());
+		ComplexSamples samples = SampleUtils.deinterleave(reusableComplexBuffer.getSamples());
 		reusableComplexBuffer.decrementUserCount();
 
 		float[] decimatedI = mIDecimationFilter.decimateReal(samples.i());

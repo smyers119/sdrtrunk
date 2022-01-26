@@ -24,7 +24,7 @@ package io.github.dsheirer.module.decode.p25.phase1;
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.Window.WindowType;
 import io.github.dsheirer.dsp.filter.fir.complex.ComplexFIRFilter2;
-import io.github.dsheirer.dsp.gain.ComplexFeedForwardGainControl;
+import io.github.dsheirer.dsp.gain.complex.ComplexGainControl;
 import io.github.dsheirer.dsp.psk.DQPSKGardnerDemodulator;
 import io.github.dsheirer.dsp.psk.InterpolatingSampleBuffer;
 import io.github.dsheirer.dsp.psk.pll.CostasLoop;
@@ -53,7 +53,7 @@ public class P25P1DecoderLSM extends P25P1Decoder
 
     private Map<Double,float[]> mBasebandFilters = new HashMap<>();
     private ComplexFIRFilter2 mBasebandFilter;
-    private ComplexFeedForwardGainControl mAGC = new ComplexFeedForwardGainControl(32);
+    private ComplexGainControl mAGC = new ComplexGainControl();
     protected DQPSKGardnerDemodulator mQPSKDemodulator;
     protected P25P1MessageFramer mMessageFramer;
     protected CostasLoop mCostasLoop;
@@ -117,7 +117,7 @@ public class P25P1DecoderLSM extends P25P1Decoder
         mPowerMonitor.process(basebandFiltered);
 
         //AGC will decrement the user count when finished
-        ReusableComplexBuffer gainApplied = mAGC.filter(basebandFiltered);
+        ReusableComplexBuffer gainApplied = mAGC.process(basebandFiltered);
 
         mMessageFramer.setCurrentTime(reusableComplexBuffer.getTimestamp());
 

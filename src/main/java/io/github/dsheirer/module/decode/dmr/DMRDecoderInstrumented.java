@@ -23,8 +23,10 @@ import io.github.dsheirer.dsp.psk.DQPSKDecisionDirectedDemodulatorInstrumented;
 import io.github.dsheirer.dsp.psk.InterpolatingSampleBufferInstrumented;
 import io.github.dsheirer.dsp.psk.SymbolDecisionData;
 import io.github.dsheirer.sample.Listener;
+import io.github.dsheirer.sample.SampleUtils;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.complex.Complex;
+import io.github.dsheirer.sample.complex.ComplexSamples;
 
 /**
  * Instrumented version of DMR decoder
@@ -48,19 +50,30 @@ public class DMRDecoderInstrumented extends DMRDecoder
     }
 
     /**
-     * Overrides the filter method so that we can capture the filtered samples for instrumentation
+     * Primary method for processing incoming complex sample buffers
+     * @param reusableComplexBuffer containing channelized complex samples
      */
-    protected ReusableComplexBuffer filter(ReusableComplexBuffer reusableComplexBuffer)
+    @Override
+    public void receive(ReusableComplexBuffer reusableComplexBuffer)
     {
-        ReusableComplexBuffer filtered = super.filter(reusableComplexBuffer);
+        ComplexSamples samples = SampleUtils.deinterleave(reusableComplexBuffer.getSamples());
+        mMessageFramer.setCurrentTime(reusableComplexBuffer.getTimestamp());
+        reusableComplexBuffer.decrementUserCount();
+
+        float[] i = mIBasebandFilter.filter(samples.i());
+        float[] q = mQBasebandFilter.filter(samples.q());
 
         if(mFilteredSymbolListener != null)
         {
-            filtered.incrementUserCount();
-            mFilteredSymbolListener.receive(filtered);
+//TODO: adjust the instrumentation classes to use ComplexSamples and/or arrays.  Denny - Jan 2022
+//            mFilteredSymbolListener.receive(i, q);
         }
 
-        return filtered;
+        //Process buffer for power measurements
+        mPowerMonitor.process(i, q);
+
+        ComplexSamples amplified = mAGC.process(i, q);
+        mQPSKDemodulator.receive(amplified);
     }
 
     /**
