@@ -23,11 +23,12 @@ package io.github.dsheirer.source.wave;
 
 import io.github.dsheirer.sample.ConversionUtils;
 import io.github.dsheirer.sample.Listener;
+import io.github.dsheirer.sample.SampleType;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.buffer.ReusableComplexBufferQueue;
-import io.github.dsheirer.source.ComplexSource;
 import io.github.dsheirer.source.IControllableFileSource;
 import io.github.dsheirer.source.IFrameLocationListener;
+import io.github.dsheirer.source.Source;
 import io.github.dsheirer.source.SourceEvent;
 import io.github.dsheirer.util.ThreadPool;
 import org.apache.commons.math3.util.FastMath;
@@ -44,7 +45,7 @@ import java.util.Arrays;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class ComplexWaveSource extends ComplexSource implements IControllableFileSource, AutoCloseable
+public class ComplexWaveSource extends Source implements IControllableFileSource, AutoCloseable
 {
     private final static Logger mLog = LoggerFactory.getLogger(ComplexWaveSource.class);
 
@@ -83,6 +84,11 @@ public class ComplexWaveSource extends ComplexSource implements IControllableFil
     public ComplexWaveSource(File file) throws IOException
     {
         this(file, false);
+    }
+
+    @Override public SampleType getSampleType()
+    {
+        return SampleType.COMPLEX;
     }
 
     @Override
@@ -288,7 +294,6 @@ public class ComplexWaveSource extends ComplexSource implements IControllableFil
      * Registers the listener to receive sample buffers as they are read from
      * the wave file
      */
-    @Override
     public void setListener(Listener<ReusableComplexBuffer> listener)
     {
         mListener = listener;

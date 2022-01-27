@@ -20,6 +20,7 @@ import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.SampleType;
 import io.github.dsheirer.sample.buffer.ReusableBufferBroadcaster;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
+import io.github.dsheirer.sample.complex.ComplexSamples;
 import javafx.scene.text.Text;
 
 public class ComplexDecoderPane extends AbstractDecoderPane<ReusableComplexBuffer>
@@ -52,7 +53,7 @@ public class ComplexDecoderPane extends AbstractDecoderPane<ReusableComplexBuffe
         mComplexBufferBroadcaster.broadcast(reusableComplexBuffer);
     }
 
-    public void addListener(Listener<ReusableComplexBuffer> listener)
+    public void addListener(Listener<ComplexSamples> listener)
     {
         mComplexBufferBroadcaster.addListener(listener);
     }

@@ -1,6 +1,7 @@
 package io.github.dsheirer.sample;
 
 import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
+import io.github.dsheirer.sample.complex.ComplexSamples;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -47,6 +48,26 @@ public class ConversionUtils
         for(float sample : samples)
         {
             converted.putShort((short)(sample * Short.MAX_VALUE));
+        }
+
+        return converted;
+    }
+
+    /**
+     * Converts the float samples into a little-endian 16-bit sample byte buffer.
+     *
+     * @param samples - float array of sample data
+     * @return - little-endian 16-bit sample byte buffer
+     */
+    public static ByteBuffer convertToSigned16BitSamples(ComplexSamples samples)
+    {
+        ByteBuffer converted = ByteBuffer.allocate(samples.i().length * 2);
+        converted.order(ByteOrder.LITTLE_ENDIAN);
+
+        for(int x = 0; x < samples.i().length; x++)
+        {
+            converted.putShort((short)(samples.i()[x] * Short.MAX_VALUE));
+            converted.putShort((short)(samples.q()[x] * Short.MAX_VALUE));
         }
 
         return converted;

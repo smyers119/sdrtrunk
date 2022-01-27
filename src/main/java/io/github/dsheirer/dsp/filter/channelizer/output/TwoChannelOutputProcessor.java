@@ -17,9 +17,8 @@ package io.github.dsheirer.dsp.filter.channelizer.output;
 
 import io.github.dsheirer.dsp.filter.channelizer.TwoChannelSynthesizerM2;
 import io.github.dsheirer.dsp.oscillator.FS4DownConverter;
+import io.github.dsheirer.sample.buffer.ComplexSamplesAssembler;
 import io.github.dsheirer.sample.buffer.ReusableChannelResultsBuffer;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
-import io.github.dsheirer.sample.buffer.ReusableComplexBufferAssembler;
 
 import java.util.List;
 
@@ -92,29 +91,29 @@ public class TwoChannelOutputProcessor extends ChannelOutputProcessor
      * extracted frequency-corrected channel I/Q sample set to the complex sample listener.
      *
      * @param channelResultsBuffers to process containing an array of channel I/Q sample pairs (I0,Q0,I1,Q1...In,Qn)
-     * @param reusableComplexBufferAssembler to receive the extracted, frequency-translated channel results
+     * @param complexSamplesAssembler to receive the extracted, frequency-translated channel results
      */
     @Override
     public void process(List<ReusableChannelResultsBuffer> channelResultsBuffers,
-                        ReusableComplexBufferAssembler reusableComplexBufferAssembler)
+                        ComplexSamplesAssembler complexSamplesAssembler)
     {
         for(ReusableChannelResultsBuffer buffer : channelResultsBuffers)
         {
-            ReusableComplexBuffer channel1 = buffer.getChannel(mChannelOffset1);
-            ReusableComplexBuffer channel2 = buffer.getChannel(mChannelOffset2);
+//TODO:            ReusableComplexBuffer channel1 = buffer.getChannel(mChannelOffset1);
+//TODO:            ReusableComplexBuffer channel2 = buffer.getChannel(mChannelOffset2);
 
             //Join the two channels using the synthesizer
-            ReusableComplexBuffer synthesized = mSynthesizer.process(channel1, channel2);
+//TODO:            ReusableComplexBuffer synthesized = mSynthesizer.process(channel1, channel2);
 
             //The synthesized channels are centered at +FS/4 ... downconvert to center the spectrum
-            mFS4DownConverter.mixComplex(synthesized.getSamples());
+//TODO:            mFS4DownConverter.mixComplex(synthesized.getSamples());
 
             //Apply offset and frequency correction to center the signal of interest within the synthesized channel
-            getFrequencyCorrectionMixer().mixComplex(synthesized.getSamples());
+//TODO:            getFrequencyCorrectionMixer().mixComplex(synthesized.getSamples());
 
-            synthesized.applyGain(getGain());
+//TODO:            synthesized.applyGain(getGain());
 
-            reusableComplexBufferAssembler.receive(synthesized);
+//TODO:            complexSamplesAssembler.receive(synthesized);
 
             buffer.decrementUserCount();
         }

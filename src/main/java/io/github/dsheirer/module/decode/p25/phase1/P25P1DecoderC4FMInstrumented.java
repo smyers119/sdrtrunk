@@ -25,6 +25,7 @@ import io.github.dsheirer.dsp.psk.SymbolDecisionData;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.complex.Complex;
+import io.github.dsheirer.sample.complex.ComplexSamples;
 
 public class P25P1DecoderC4FMInstrumented extends P25P1DecoderC4FM
 {
@@ -44,19 +45,28 @@ public class P25P1DecoderC4FMInstrumented extends P25P1DecoderC4FM
     }
 
     /**
-     * Overrides the filter method so that we can capture the filtered samples for instrumentation
+     * Primary method for processing incoming complex sample buffers
+     * @param samples containing channelized complex samples
      */
-    protected ReusableComplexBuffer filter(ReusableComplexBuffer reusableComplexBuffer)
+    @Override
+    public void receive(ComplexSamples samples)
     {
-        ReusableComplexBuffer filtered = super.filter(reusableComplexBuffer);
+        mMessageFramer.setCurrentTime(System.currentTimeMillis());
+
+        float[] i = mIBasebandFilter.filter(samples.i());
+        float[] q = mQBasebandFilter.filter(samples.q());
 
         if(mFilteredSymbolListener != null)
         {
-            filtered.incrementUserCount();
-            mFilteredSymbolListener.receive(filtered);
+            //TODO: update the instrumentation classes to use complex arrays
+//            mFilteredSymbolListener.receive(i, q);
         }
 
-        return filtered;
+        //Process the buffer for power meter measurements (before gain is applied)
+        mPowerMonitor.process(i, q);
+
+        ComplexSamples amplified = mAGC.process(i, q);
+        mQPSKDemodulator.receive(amplified);
     }
 
     /**

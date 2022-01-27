@@ -25,6 +25,7 @@ import io.github.dsheirer.sample.buffer.OverflowableReusableBufferTransferQueue;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.buffer.ReusableComplexBufferQueue;
 import io.github.dsheirer.sample.complex.Complex;
+import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.source.SourceEvent;
 
 import java.util.ArrayList;
@@ -37,8 +38,6 @@ import java.util.List;
  */
 public class CICTunerChannelSource extends TunerChannelSource implements Listener<ReusableComplexBuffer>
 {
-//    private final static Logger mLog = LoggerFactory.getLogger(CICTunerChannelSource.class);
-
     //Maximum number of filled buffers for the blocking queue
     private static final int BUFFER_MAX_CAPACITY = 300;
 
@@ -191,20 +190,13 @@ public class CICTunerChannelSource extends TunerChannelSource implements Listene
     /**
      * Sets the listener to receive the complex buffer sample output from this channel
      *
-     * @param complexBufferListener to receive complex buffers
+     * @param complexSamplesListener to receive complex buffers
      */
     @Override
-    public void setListener(Listener<ReusableComplexBuffer> complexBufferListener)
+    public void setListener(Listener<ComplexSamples> complexSamplesListener)
     {
-        mDecimationFilter.setListener(complexBufferListener);
+        mDecimationFilter.setListener(complexSamplesListener);
     }
-
-    @Override
-    public void removeListener(Listener<ReusableComplexBuffer> listener)
-    {
-        mDecimationFilter.removeListener();
-    }
-
 
     @Override
     public double getSampleRate()

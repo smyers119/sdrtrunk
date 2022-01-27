@@ -21,9 +21,9 @@ package io.github.dsheirer.dsp.filter.channelizer.output;
 import io.github.dsheirer.dsp.oscillator.IOscillator;
 import io.github.dsheirer.dsp.oscillator.Oscillator;
 import io.github.dsheirer.sample.IOverflowListener;
+import io.github.dsheirer.sample.buffer.ComplexSamplesAssembler;
 import io.github.dsheirer.sample.buffer.OverflowableReusableBufferTransferQueue;
 import io.github.dsheirer.sample.buffer.ReusableChannelResultsBuffer;
-import io.github.dsheirer.sample.buffer.ReusableComplexBufferAssembler;
 import io.github.dsheirer.source.Source;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,10 +110,10 @@ public abstract class ChannelOutputProcessor implements IPolyphaseChannelOutputP
 
     /**
      * Processes all enqueued polyphase channelizer results until the internal queue is empty
-     * @param reusableComplexBufferAssembler to receive the processed channel results
+     * @param assembler to receive the processed channel results
      */
     @Override
-    public void processChannelResults(ReusableComplexBufferAssembler reusableComplexBufferAssembler)
+    public void processChannelResults(ComplexSamplesAssembler assembler)
     {
         try
         {
@@ -121,7 +121,7 @@ public abstract class ChannelOutputProcessor implements IPolyphaseChannelOutputP
 
             if(toProcess > 0)
             {
-                process(mChannelResultsToProcess, reusableComplexBufferAssembler);
+                process(mChannelResultsToProcess, assembler);
             }
         }
         catch(Throwable throwable)
@@ -135,10 +135,10 @@ public abstract class ChannelOutputProcessor implements IPolyphaseChannelOutputP
     /**
      * Sub-class implementation to process one polyphase channelizer result array.
      * @param channelResults to process
-     * @param reusableComplexBufferAssembler to receive the processed channelizer results
+     * @param assembler to receive the processed channelizer results
      */
     public abstract void process(List<ReusableChannelResultsBuffer> channelResults,
-                                 ReusableComplexBufferAssembler reusableComplexBufferAssembler);
+                                 ComplexSamplesAssembler assembler);
 
 
     /**

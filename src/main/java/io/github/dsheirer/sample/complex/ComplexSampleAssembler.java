@@ -63,10 +63,4 @@ public class ComplexSampleAssembler implements Listener<Complex>,
     {
 		mListener = listener;
     }
-
-	@Override
-    public void removeListener( Listener<List<Complex>> listener )
-    {
-		mListener = null;
-    }
 }

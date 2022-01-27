@@ -480,13 +480,13 @@ public abstract class TunerController implements Tunable, ISourceEventProcessor,
 
     /**
      * Records the complex I/Q buffers produced by the tuner
-     * @param recorderManager to obtain a baseband recorder
+     * @param userPreferences to obtain a baseband recorder
      */
     public void startRecorder(UserPreferences userPreferences)
     {
         if(!isRecording())
         {
-            mRecorder = RecorderFactory.getBasebandRecorder("TUNER_" + getFrequency(), userPreferences);
+            mRecorder = RecorderFactory.getTunerRecorder("TUNER_" + getFrequency(), userPreferences);
             mRecorder.setSampleRate((float)getSampleRate());
             mRecorder.start();
             addBufferListener(mRecorder);

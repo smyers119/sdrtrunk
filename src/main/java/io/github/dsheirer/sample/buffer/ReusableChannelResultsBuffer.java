@@ -15,6 +15,7 @@
  ******************************************************************************/
 package io.github.dsheirer.sample.buffer;
 
+import io.github.dsheirer.sample.complex.ComplexSamples;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,7 +110,7 @@ public class ReusableChannelResultsBuffer extends AbstractReusableBuffer
      * @throws IllegalArgumentException if this buffer doesn't contain any samples or if the requested channel is
      * not within the channel range of the contained channel results.
      */
-    public ReusableComplexBuffer getChannel(int iChannelIndex)
+    public ComplexSamples getChannel(int iChannelIndex)
     {
         if(mFilledBuffers.isEmpty())
         {
@@ -122,33 +123,27 @@ public class ReusableChannelResultsBuffer extends AbstractReusableBuffer
                 "results -- max channel is " + mLength);
         }
 
-        ReusableComplexBuffer channelBuffer = mReusableComplexBufferQueue.getBuffer(mFilledBuffers.size() * 2);
-
-        float[] samples = channelBuffer.getSamples();
+        float[] i = new float[mFilledBuffers.size()];
+        float[] q = new float[mFilledBuffers.size()];
 
         int pointer = 0;
-
-        int qChannelIndex = iChannelIndex + 1;
 
         for(float[] channelResults: mFilledBuffers)
         {
             try
             {
-                samples[pointer] = channelResults[iChannelIndex];
-                pointer++;
-                samples[pointer] = channelResults[qChannelIndex];
-                pointer++;
+                i[pointer] = channelResults[iChannelIndex];
+                q[pointer++] = channelResults[iChannelIndex + 1];
             }
             catch(Exception e)
             {
                 mLog.error("Error accessing channel results - iIndex:" + iChannelIndex +
                 " Results Size: " + mFilledBuffers.size() +
-                " Samples Length:" + samples.length +
                 " Pointer:" + pointer, e);
             }
         }
 
-        return channelBuffer;
+        return new ComplexSamples(i, q);
     }
 
     /**

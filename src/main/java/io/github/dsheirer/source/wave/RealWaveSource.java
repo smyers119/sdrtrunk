@@ -20,11 +20,12 @@ package io.github.dsheirer.source.wave;
 
 import io.github.dsheirer.sample.ConversionUtils;
 import io.github.dsheirer.sample.Listener;
+import io.github.dsheirer.sample.SampleType;
 import io.github.dsheirer.sample.buffer.ReusableBufferQueue;
 import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
 import io.github.dsheirer.source.IControllableFileSource;
 import io.github.dsheirer.source.IFrameLocationListener;
-import io.github.dsheirer.source.RealSource;
+import io.github.dsheirer.source.Source;
 import io.github.dsheirer.source.SourceEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class RealWaveSource extends RealSource implements IControllableFileSource, AutoCloseable
+public class RealWaveSource extends Source implements IControllableFileSource, AutoCloseable
 {
     private final static Logger mLog = LoggerFactory.getLogger(RealWaveSource.class);
 
@@ -53,6 +54,11 @@ public class RealWaveSource extends RealSource implements IControllableFileSourc
     public RealWaveSource(File file) throws IOException
     {
         mFile = file;
+    }
+
+    @Override public SampleType getSampleType()
+    {
+        return SampleType.REAL;
     }
 
     @Override
@@ -240,7 +246,6 @@ public class RealWaveSource extends RealSource implements IControllableFileSourc
     /**
      * Registers the listener to receive sample buffers as they are read from the wave file
      */
-    @Override
     public void setListener(Listener<ReusableFloatBuffer> listener)
     {
         mListener = listener;
@@ -249,7 +254,6 @@ public class RealWaveSource extends RealSource implements IControllableFileSourc
     /**
      * Unregisters the listener from receiving sample buffers
      */
-    @Override
     public void removeListener(Listener<ReusableFloatBuffer> listener)
     {
         mListener = null;

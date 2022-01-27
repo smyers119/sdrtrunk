@@ -21,9 +21,7 @@ package io.github.dsheirer.module.decode.dmr;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.fir.FIRFilterSpecification;
-import io.github.dsheirer.dsp.filter.fir.complex.ComplexFIRFilter2;
 import io.github.dsheirer.dsp.filter.fir.real.IRealFilter;
-import io.github.dsheirer.dsp.gain.complex.ComplexGainControl;
 import io.github.dsheirer.dsp.gain.complex.ComplexGainFactory;
 import io.github.dsheirer.dsp.gain.complex.IComplexGainControl;
 import io.github.dsheirer.dsp.psk.DQPSKDecisionDirectedDemodulator;
@@ -39,11 +37,9 @@ import io.github.dsheirer.module.decode.FeedbackDecoder;
 import io.github.dsheirer.sample.Broadcaster;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.IReusableByteBufferProvider;
-import io.github.dsheirer.sample.buffer.IReusableComplexBufferListener;
 import io.github.dsheirer.sample.buffer.ReusableByteBuffer;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
-import io.github.dsheirer.sample.SampleUtils;
 import io.github.dsheirer.sample.complex.ComplexSamples;
+import io.github.dsheirer.sample.complex.IComplexSamplesListener;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.ISourceEventProvider;
 import io.github.dsheirer.source.SourceEvent;
@@ -57,7 +53,7 @@ import java.util.Map;
  * DMR decoder module.
  */
 public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener, ISourceEventProvider,
-        IReusableComplexBufferListener, Listener<ReusableComplexBuffer>, IReusableByteBufferProvider
+        IComplexSamplesListener, Listener<ComplexSamples>, IReusableByteBufferProvider
 {
     private final static Logger mLog = LoggerFactory.getLogger(DMRDecoder.class);
     protected static final float SAMPLE_COUNTER_GAIN = 0.4f;
@@ -66,7 +62,7 @@ public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener,
     private Broadcaster<Dibit> mDibitBroadcaster = new Broadcaster<>();
     private DibitToByteBufferAssembler mByteBufferAssembler = new DibitToByteBufferAssembler(300);
     private DMRMessageProcessor mMessageProcessor;
-    protected IComplexGainControl mAGC;
+    protected IComplexGainControl mAGC = ComplexGainFactory.getGainControl();
     private Map<Double,float[]> mBasebandFilters = new HashMap<>();
     protected IRealFilter mIBasebandFilter;
     protected IRealFilter mQBasebandFilter;
@@ -85,7 +81,6 @@ public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener,
     {
         mMessageProcessor = new DMRMessageProcessor(config);
         mMessageProcessor.setMessageListener(getMessageListener());
-        mAGC = ComplexGainFactory.getGainControl();
         getDibitBroadcaster().addListener(mByteBufferAssembler);
         setSampleRate(25000.0);
     }
@@ -147,15 +142,12 @@ public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener,
 
     /**
      * Primary method for processing incoming complex sample buffers
-     * @param reusableComplexBuffer containing channelized complex samples
+     * @param samples containing channelized complex samples
      */
     @Override
-    public void receive(ReusableComplexBuffer reusableComplexBuffer)
+    public void receive(ComplexSamples samples)
     {
-        //TODO: update this to receive/process ComplexSamples objects instead of reusable buffers
-        ComplexSamples samples = SampleUtils.deinterleave(reusableComplexBuffer.getSamples());
-        mMessageFramer.setCurrentTime(reusableComplexBuffer.getTimestamp());
-        reusableComplexBuffer.decrementUserCount();
+        mMessageFramer.setCurrentTime(System.currentTimeMillis());
 
         float[] i = mIBasebandFilter.filter(samples.i());
         float[] q = mQBasebandFilter.filter(samples.q());
@@ -330,7 +322,7 @@ public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener,
      * Listener interface to receive reusable complex buffers
      */
     @Override
-    public Listener<ReusableComplexBuffer> getReusableComplexBufferListener()
+    public Listener<ComplexSamples> getComplexSamplesListener()
     {
         return DMRDecoder.this;
     }

@@ -35,11 +35,9 @@ import io.github.dsheirer.module.decode.DecoderType;
 import io.github.dsheirer.module.decode.PrimaryDecoder;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.IReusableBufferProvider;
-import io.github.dsheirer.sample.buffer.IReusableComplexBufferListener;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
-import io.github.dsheirer.sample.SampleUtils;
 import io.github.dsheirer.sample.complex.ComplexSamples;
+import io.github.dsheirer.sample.complex.IComplexSamplesListener;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.ISourceEventProvider;
 import io.github.dsheirer.source.SourceEvent;
@@ -50,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * Decoder module with integrated narrowband FM (12.5 or 25.0 kHz channel) demodulator
  */
 public class NBFMDecoder extends PrimaryDecoder implements ISourceEventListener, ISourceEventProvider,
-		IReusableComplexBufferListener, Listener<ReusableComplexBuffer>, IReusableBufferProvider,
+		IComplexSamplesListener, Listener<ComplexSamples>, IReusableBufferProvider,
 		IDecoderStateEventProvider
 {
 	private final static Logger mLog = LoggerFactory.getLogger(NBFMDecoder.class);
@@ -92,7 +90,7 @@ public class NBFMDecoder extends PrimaryDecoder implements ISourceEventListener,
     }
 
 	@Override
-	public Listener<ReusableComplexBuffer> getReusableComplexBufferListener()
+	public Listener<ComplexSamples> getComplexSamplesListener()
 	{
 		return this;
 	}
@@ -132,17 +130,13 @@ public class NBFMDecoder extends PrimaryDecoder implements ISourceEventListener,
 	}
 
 	@Override
-	public void receive(ReusableComplexBuffer reusableComplexBuffer)
+	public void receive(ComplexSamples samples)
 	{
 		if(mIDecimationFilter == null || mQDecimationFilter == null)
 		{
-			reusableComplexBuffer.decrementUserCount();
 			throw new IllegalStateException("NBFM demodulator module must receive a sample rate change source " +
 					"event before it can process complex sample buffers");
 		}
-
-		ComplexSamples samples = SampleUtils.deinterleave(reusableComplexBuffer.getSamples());
-		reusableComplexBuffer.decrementUserCount();
 
 		float[] decimatedI = mIDecimationFilter.decimateReal(samples.i());
 		float[] decimatedQ = mQDecimationFilter.decimateReal(samples.q());

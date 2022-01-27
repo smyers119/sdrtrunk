@@ -163,8 +163,8 @@ public class VectorComplexOscillator extends BaseOscillator implements IComplexO
                 quadrature = previousInphase.mul(sinAngle).add(previousQuadrature.mul(cosAngle));
             }
 
-            System.arraycopy(inphase, 0, iSamples, samplePointer, VECTOR_SPECIES.length());
-            System.arraycopy(quadrature, 0, qSamples, samplePointer, VECTOR_SPECIES.length());
+            inphase.intoArray(iSamples, samplePointer);
+            quadrature.intoArray(qSamples, samplePointer);
 
             previousInphase = inphase;
             previousQuadrature = quadrature;

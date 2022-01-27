@@ -23,6 +23,7 @@ import io.github.dsheirer.preference.UserPreferences;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.SampleType;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
+import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.settings.SettingsManager;
 import io.github.dsheirer.source.ISourceEventProcessor;
 import io.github.dsheirer.source.SourceEvent;
@@ -53,7 +54,6 @@ import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ChannelizerViewer extends JFrame
@@ -371,19 +371,19 @@ public class ChannelizerViewer extends JFrame
 
             if(mSource != null)
             {
-                mSource.setListener(new Listener<ReusableComplexBuffer>()
+                mSource.setListener(new Listener<ComplexSamples>()
                 {
                     @Override
-                    public void receive(ReusableComplexBuffer complexBuffer)
+                    public void receive(ComplexSamples complexSamples)
                     {
                         if(mLoggingEnabled)
                         {
-                            mLog.debug("Samples:" + Arrays.toString(complexBuffer.getSamples()));
+//TODO:                            mLog.debug("Samples:" + Arrays.toString(complexSamples.getSamples()));
                         }
 
-                        complexBuffer.incrementUserCount();
-                        mDFTProcessor.receive(complexBuffer);
-                        complexBuffer.decrementUserCount();
+//TODO:                        complexSamples.incrementUserCount();
+//TODO:                        mDFTProcessor.receive(complexSamples);
+//TODO:                        complexSamples.decrementUserCount();
                     }
                 });
 
@@ -478,19 +478,19 @@ public class ChannelizerViewer extends JFrame
 
             if(mSource != null)
             {
-                mSource.setListener(new Listener<ReusableComplexBuffer>()
+                mSource.setListener(new Listener<ComplexSamples>()
                 {
                     @Override
-                    public void receive(ReusableComplexBuffer complexBuffer)
+                    public void receive(ComplexSamples complexBuffer)
                     {
                         if(mLoggingEnabled)
                         {
-                            mLog.debug("Samples:" + Arrays.toString(complexBuffer.getSamples()));
+//TODO:                            mLog.debug("Samples:" + Arrays.toString(complexBuffer.getSamples()));
                         }
 
-                        complexBuffer.incrementUserCount();
-                        mDFTProcessor.receive(complexBuffer);
-                        complexBuffer.decrementUserCount();
+//TODO:                        complexBuffer.incrementUserCount();
+//TODO:                        mDFTProcessor.receive(complexBuffer);
+//TODO:                        complexBuffer.decrementUserCount();
                     }
                 });
 
@@ -579,12 +579,11 @@ public class ChannelizerViewer extends JFrame
 
             for(TunerChannelSource tunerChannelSource : sources)
             {
-                tunerChannelSource.setListener(new Listener<ReusableComplexBuffer>()
+                tunerChannelSource.setListener(new Listener<ComplexSamples>()
                 {
                     @Override
-                    public void receive(ReusableComplexBuffer reusableComplexBuffer)
+                    public void receive(ComplexSamples complexSamples)
                     {
-                        reusableComplexBuffer.decrementUserCount();
                     }
                 });
 

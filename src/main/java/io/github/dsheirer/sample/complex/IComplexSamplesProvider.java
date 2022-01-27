@@ -13,17 +13,24 @@
  * If not, see <http://www.gnu.org/licenses/>
  *
  ******************************************************************************/
-package io.github.dsheirer.source;
+package io.github.dsheirer.sample.complex;
 
-import io.github.dsheirer.sample.Provider;
-import io.github.dsheirer.sample.SampleType;
-import io.github.dsheirer.sample.complex.ComplexSamples;
+import io.github.dsheirer.sample.Listener;
 
-public abstract class ComplexSource extends Source implements Provider<ComplexSamples>
+public interface IComplexSamplesProvider
 {
-    @Override
-    public SampleType getSampleType()
-    {
-        return SampleType.COMPLEX;
-    }
+    /**
+     * Adds the listener to receive complex buffer samples
+     */
+    void addBufferListener(Listener<ComplexSamples> listener);
+
+    /**
+     * Removes the listener from receiving complex buffer samples
+     */
+    void removeBufferListener(Listener<ComplexSamples> listener);
+
+    /**
+     * Indicates if there are any complex buffer listeners registered
+     */
+    boolean hasBufferListeners();
 }

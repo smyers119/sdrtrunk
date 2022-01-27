@@ -3,6 +3,7 @@ package io.github.dsheirer.vector.calibrate;
 public enum CalibrationType
 {
     COMPLEX_GAIN("Complex Gain"),
+    COMPLEX_MIXER("Complex Mixer"),
     FILTER_FIR("FIR Filter"),
     FILTER_HALF_BAND_COMPLEX_11_TAP("Complex Half-Band Decimation Filter - 11 Tap"),
     FILTER_HALF_BAND_COMPLEX_15_TAP("Complex Half-Band Decimation Filter - 15 Tap"),

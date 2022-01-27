@@ -27,6 +27,7 @@ import io.github.dsheirer.module.decode.p25.audio.P25P2CallSequenceRecorder;
 import io.github.dsheirer.preference.UserPreferences;
 import io.github.dsheirer.record.binary.BinaryRecorder;
 import io.github.dsheirer.record.wave.ComplexBufferWaveRecorder;
+import io.github.dsheirer.record.wave.ComplexSamplesWaveRecorder;
 import io.github.dsheirer.source.config.SourceConfigTuner;
 import io.github.dsheirer.source.config.SourceConfigTunerMultipleFrequency;
 import io.github.dsheirer.util.StringUtils;
@@ -158,7 +159,19 @@ public class RecorderFactory
     /**
      * Constructs a baseband recorder for use in a processing chain.
      */
-    public static ComplexBufferWaveRecorder getBasebandRecorder(String channelName, UserPreferences userPreferences)
+    public static ComplexSamplesWaveRecorder getBasebandRecorder(String channelName, UserPreferences userPreferences)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getRecordingBasePath(userPreferences));
+        sb.append(File.separator).append(StringUtils.replaceIllegalCharacters(channelName)).append("_baseband");
+
+        return new ComplexSamplesWaveRecorder(BASEBAND_SAMPLE_RATE, sb.toString());
+    }
+
+    /**
+     * Constructs a baseband recorder for use in a processing chain.
+     */
+    public static ComplexBufferWaveRecorder getTunerRecorder(String channelName, UserPreferences userPreferences)
     {
         StringBuilder sb = new StringBuilder();
         sb.append(getRecordingBasePath(userPreferences));

@@ -26,15 +26,15 @@ import io.github.dsheirer.module.decode.FeedbackDecoder;
 import io.github.dsheirer.sample.Broadcaster;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.IReusableByteBufferProvider;
-import io.github.dsheirer.sample.buffer.IReusableComplexBufferListener;
 import io.github.dsheirer.sample.buffer.ReusableByteBuffer;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
+import io.github.dsheirer.sample.complex.ComplexSamples;
+import io.github.dsheirer.sample.complex.IComplexSamplesListener;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.ISourceEventProvider;
 import io.github.dsheirer.source.SourceEvent;
 
 public abstract class P25P1Decoder extends FeedbackDecoder implements ISourceEventListener, ISourceEventProvider,
-    IReusableComplexBufferListener, Listener<ReusableComplexBuffer>, IReusableByteBufferProvider
+        IComplexSamplesListener, Listener<ComplexSamples>, IReusableByteBufferProvider
 {
     private double mSampleRate;
     private Broadcaster<Dibit> mDibitBroadcaster = new Broadcaster<>();
@@ -160,7 +160,7 @@ public abstract class P25P1Decoder extends FeedbackDecoder implements ISourceEve
      * Listener interface to receive reusable complex buffers
      */
     @Override
-    public Listener<ReusableComplexBuffer> getReusableComplexBufferListener()
+    public Listener<ComplexSamples> getComplexSamplesListener()
     {
         return P25P1Decoder.this;
     }

@@ -23,7 +23,6 @@ import io.github.dsheirer.dsp.psk.DQPSKDecisionDirectedDemodulatorInstrumented;
 import io.github.dsheirer.dsp.psk.InterpolatingSampleBufferInstrumented;
 import io.github.dsheirer.dsp.psk.SymbolDecisionData;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.SampleUtils;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.complex.Complex;
 import io.github.dsheirer.sample.complex.ComplexSamples;
@@ -51,14 +50,12 @@ public class DMRDecoderInstrumented extends DMRDecoder
 
     /**
      * Primary method for processing incoming complex sample buffers
-     * @param reusableComplexBuffer containing channelized complex samples
+     * @param complexSamples containing channelized complex samples
      */
     @Override
-    public void receive(ReusableComplexBuffer reusableComplexBuffer)
+    public void receive(ComplexSamples samples)
     {
-        ComplexSamples samples = SampleUtils.deinterleave(reusableComplexBuffer.getSamples());
-        mMessageFramer.setCurrentTime(reusableComplexBuffer.getTimestamp());
-        reusableComplexBuffer.decrementUserCount();
+        mMessageFramer.setCurrentTime(System.currentTimeMillis());
 
         float[] i = mIBasebandFilter.filter(samples.i());
         float[] q = mQBasebandFilter.filter(samples.q());

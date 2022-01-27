@@ -17,8 +17,10 @@
 package io.github.dsheirer.source.tuner.channel;
 
 import io.github.dsheirer.sample.Listener;
+import io.github.dsheirer.sample.SampleUtils;
 import io.github.dsheirer.sample.buffer.OverflowableReusableBufferTransferQueue;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
+import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.SourceEvent;
 import io.github.dsheirer.source.tuner.TunerController;
@@ -40,7 +42,7 @@ public class PassThroughChannelSource extends TunerChannelSource implements ISou
     private OverflowableReusableBufferTransferQueue<ReusableComplexBuffer> mBufferQueue =
             new OverflowableReusableBufferTransferQueue<>(500, 100);
     private List<ReusableComplexBuffer> mBuffersToProcess = new ArrayList<>();
-    private Listener<ReusableComplexBuffer> mComplexBufferListener;
+    private Listener<ComplexSamples> mComplexSamplesListener;
 
     /**
      * Constructs an instance
@@ -81,15 +83,9 @@ public class PassThroughChannelSource extends TunerChannelSource implements ISou
     }
 
     @Override
-    public void setListener(Listener<ReusableComplexBuffer> complexBufferListener)
+    public void setListener(Listener<ComplexSamples> complexSamplesListener)
     {
-        mComplexBufferListener = complexBufferListener;
-    }
-
-    @Override
-    public void removeListener(Listener<ReusableComplexBuffer> listener)
-    {
-        mComplexBufferListener = null;
+        mComplexSamplesListener = complexSamplesListener;
     }
 
     @Override
@@ -99,9 +95,10 @@ public class PassThroughChannelSource extends TunerChannelSource implements ISou
 
         for(ReusableComplexBuffer buffer: mBuffersToProcess)
         {
-            if(mComplexBufferListener != null)
+            if(mComplexSamplesListener != null)
             {
-                mComplexBufferListener.receive(buffer);
+                mComplexSamplesListener.receive(SampleUtils.deinterleave(buffer.getSamples()));
+                buffer.decrementUserCount();
             }
             else
             {

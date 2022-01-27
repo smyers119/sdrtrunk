@@ -18,9 +18,9 @@
  ******************************************************************************/
 package io.github.dsheirer.dsp.filter.channelizer.output;
 
+import io.github.dsheirer.sample.buffer.ComplexSamplesAssembler;
 import io.github.dsheirer.sample.buffer.ReusableChannelResultsBuffer;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
-import io.github.dsheirer.sample.buffer.ReusableComplexBufferAssembler;
+import io.github.dsheirer.sample.complex.ComplexSamples;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,26 +75,26 @@ public class OneChannelOutputProcessor extends ChannelOutputProcessor
      * extracted frequency-corrected channel I/Q sample set to the complex sample listener.
      *
      * @param channelResults to process containing a list of channel array of I/Q sample pairs (I0,Q0,I1,Q1...In,Qn)
-     * @param reusableComplexBufferAssembler to receive the extracted, frequency-translated channel results
+     * @param assembler to receive the extracted, frequency-translated channel results
      */
     @Override
     public void process(List<ReusableChannelResultsBuffer> channelResults,
-                        ReusableComplexBufferAssembler reusableComplexBufferAssembler)
+                        ComplexSamplesAssembler assembler)
     {
         for(ReusableChannelResultsBuffer channelResultsBuffer: channelResults)
         {
             try
             {
-                ReusableComplexBuffer channelBuffer = channelResultsBuffer.getChannel(mChannelOffset);
+                ComplexSamples buffer = channelResultsBuffer.getChannel(mChannelOffset);
 
                 if(hasFrequencyCorrection())
                 {
-                    getFrequencyCorrectionMixer().mixComplex(channelBuffer.getSamples());
+//TODO:                    getFrequencyCorrectionMixer().mixComplex(buffer.getSamples());
                 }
 
-                channelBuffer.applyGain(getGain());
+//TODO:                buffer.applyGain(getGain());
 
-                reusableComplexBufferAssembler.receive(channelBuffer);
+//TODO:                assembler.receive(buffer);
             }
             catch(IllegalArgumentException iae)
             {

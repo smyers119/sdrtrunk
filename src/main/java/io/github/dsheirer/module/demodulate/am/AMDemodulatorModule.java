@@ -27,12 +27,10 @@ import io.github.dsheirer.dsp.gain.AutomaticGainControl;
 import io.github.dsheirer.module.Module;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.IReusableBufferProvider;
-import io.github.dsheirer.sample.buffer.IReusableComplexBufferListener;
 import io.github.dsheirer.sample.buffer.ReusableBufferQueue;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
-import io.github.dsheirer.sample.SampleUtils;
 import io.github.dsheirer.sample.complex.ComplexSamples;
+import io.github.dsheirer.sample.complex.IComplexSamplesListener;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.SourceEvent;
 import org.slf4j.Logger;
@@ -45,8 +43,8 @@ import org.slf4j.LoggerFactory;
  * This module requires a sample rate SourceEvent prior to processing baseband sample buffers in order to configure
  * internal filters and the resampler.
  */
-public class AMDemodulatorModule extends Module implements ISourceEventListener, IReusableComplexBufferListener,
-    IReusableBufferProvider, Listener<ReusableComplexBuffer>
+public class AMDemodulatorModule extends Module implements ISourceEventListener, IComplexSamplesListener,
+    IReusableBufferProvider, Listener<ComplexSamples>
 {
     private final static Logger mLog = LoggerFactory.getLogger(AMDemodulatorModule.class);
     private IRealFilter mIBasebandFilter;
@@ -110,11 +108,8 @@ public class AMDemodulatorModule extends Module implements ISourceEventListener,
     }
 
     @Override
-    public void receive(ReusableComplexBuffer basebandBuffer)
+    public void receive(ComplexSamples samples)
     {
-        ComplexSamples samples = SampleUtils.deinterleave(basebandBuffer.getSamples());
-        basebandBuffer.decrementUserCount();
-
         float[] i = mIBasebandFilter.filter(samples.i());
         float[] q = mQBasebandFilter.filter(samples.q());
         float[] demodulated = mDemodulator.demodulate(i, q);
@@ -144,7 +139,7 @@ public class AMDemodulatorModule extends Module implements ISourceEventListener,
     }
 
     @Override
-    public Listener<ReusableComplexBuffer> getReusableComplexBufferListener()
+    public Listener<ComplexSamples> getComplexSamplesListener()
     {
         return this;
     }
