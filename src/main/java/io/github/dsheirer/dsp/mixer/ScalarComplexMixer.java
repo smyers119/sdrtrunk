@@ -4,6 +4,7 @@ import io.github.dsheirer.dsp.oscillator.IComplexOscillator;
 import io.github.dsheirer.dsp.oscillator.OscillatorFactory;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 
+import java.text.DecimalFormat;
 import java.util.Arrays;
 
 /**
@@ -49,16 +50,17 @@ public class ScalarComplexMixer extends ComplexMixer
 
     public static void main(String[] args)
     {
-        IComplexOscillator oscillator = OscillatorFactory.getComplexOscillator(2, 10);
-        ComplexSamples samples = oscillator.generateComplexSamples(32);
+        int sampleCount = 2048;
+        IComplexOscillator oscillator = OscillatorFactory.getComplexOscillator(2, 20);
+        ComplexSamples samples = oscillator.generateComplexSamples(sampleCount);
 
         double mixFrequency = 3.0;
-        double mixSampleRate = 10.0;
+        double mixSampleRate = 20.0;
 
         ComplexMixer scalar = new ScalarComplexMixer(mixFrequency, mixSampleRate);
         ComplexMixer vector = new VectorComplexMixer(mixFrequency, mixSampleRate);
 
-        boolean validate = true;
+        boolean validate = false;
 
         if(validate)
         {
@@ -71,6 +73,24 @@ public class ScalarComplexMixer extends ComplexMixer
             System.out.println("Scalar  Q:" + Arrays.toString(scalarMixed.q()));
             System.out.println("Vector  I:" + Arrays.toString(vectorMixed.i()));
             System.out.println("Vector  Q:" + Arrays.toString(vectorMixed.q()));
+        }
+        else
+        {
+            int iterations = 10_000_000;
+            double accumulator = 0.0;
+            System.out.println("Starting ...");
+            long start = System.currentTimeMillis();
+            for(int count = 0; count < iterations; count++)
+            {
+                ComplexSamples mixedSamples = scalar.mix(samples);
+//                ComplexSamples mixedSamples = vector.mix(samples);
+                accumulator += mixedSamples.i()[1];
+            }
+            double elapsed = System.currentTimeMillis() - start;
+
+            DecimalFormat df = new DecimalFormat("0.000");
+            System.out.println("Accumulator: " + accumulator);
+            System.out.println("Test Complete.  Elapsed Time: " + df.format(elapsed / 1000.0d) + " seconds");
         }
     }
 }
