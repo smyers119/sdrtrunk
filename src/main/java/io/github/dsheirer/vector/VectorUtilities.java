@@ -60,7 +60,7 @@ public class VectorUtilities
     {
         if(i.length % species.length() != 0)
         {
-            throw new IllegalArgumentException("I/Q buffer lengths must be a power of 2 multiple of SIMD lane width [" +
+            throw new IllegalArgumentException("I/Q buffer lengths [" + i.length + "] must be a power of 2 multiple of SIMD lane width [" +
                     species.length() + "]");
         }
     }

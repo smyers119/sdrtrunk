@@ -1,6 +1,6 @@
-/*******************************************************************************
- * sdrtrunk
- * Copyright (C) 2014-2017 Dennis Sheirer
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,14 +14,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package io.github.dsheirer.dsp.filter.channelizer.output;
 
 import io.github.dsheirer.dsp.gain.complex.ComplexGain;
-import io.github.dsheirer.dsp.gain.complex.ComplexGainFactory;
+import io.github.dsheirer.dsp.gain.complex.ScalarComplexGain;
 import io.github.dsheirer.dsp.mixer.ComplexMixer;
-import io.github.dsheirer.dsp.mixer.ComplexMixerFactory;
+import io.github.dsheirer.dsp.mixer.ScalarComplexMixer;
 import io.github.dsheirer.sample.IOverflowListener;
 import io.github.dsheirer.sample.buffer.ComplexSamplesAssembler;
 import io.github.dsheirer.sample.buffer.OverflowableReusableBufferTransferQueue;
@@ -42,7 +42,7 @@ public abstract class ChannelOutputProcessor implements IPolyphaseChannelOutputP
     private int mMaxResultsToProcess;
 
     private int mInputChannelCount;
-    private ComplexMixer mFrequencyCorrectionMixer;
+    private ScalarComplexMixer mFrequencyCorrectionMixer;
     private boolean mFrequencyCorrectionEnabled;
     private ComplexGain mComplexGain;
 
@@ -57,9 +57,12 @@ public abstract class ChannelOutputProcessor implements IPolyphaseChannelOutputP
     public ChannelOutputProcessor(int inputChannelCount, double sampleRate, float gain)
     {
         mInputChannelCount = inputChannelCount;
-        mComplexGain = ComplexGainFactory.getComplexGain(gain);
 
-        mFrequencyCorrectionMixer = ComplexMixerFactory.getMixer(0, sampleRate);
+        //We have to use scalar implementation for gain and mixer ... the vector implementation requires the generated
+        //sample count to be a multiple of the SIMD lane width and we can't guarantee that.
+        mComplexGain = new ScalarComplexGain(gain);
+        mFrequencyCorrectionMixer = new ScalarComplexMixer(0, sampleRate, true);
+
         mMaxResultsToProcess = (int)(sampleRate / 10) * 2;  //process at 100 millis interval, twice the expected inflow rate
 
         mChannelResultsQueue = new OverflowableReusableBufferTransferQueue<>((int)(sampleRate * 3), (int)(sampleRate * 0.5));

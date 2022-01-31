@@ -22,7 +22,10 @@ package io.github.dsheirer.dsp.oscillator;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import org.apache.commons.math3.util.FastMath;
 
-public class ComplexOscillator extends BaseOscillator implements IComplexOscillator
+/**
+ * Scalar implementation of a complex oscillator.
+ */
+public class ScalarComplexOscillator extends BaseOscillator implements IComplexOscillator
 {
     private float mCosineAngle;
     private float mSineAngle;
@@ -35,7 +38,7 @@ public class ComplexOscillator extends BaseOscillator implements IComplexOscilla
      * @param frequency in hertz
      * @param sampleRate in hertz
      */
-    public ComplexOscillator(double frequency, double sampleRate)
+    public ScalarComplexOscillator(double frequency, double sampleRate)
     {
         super(frequency, sampleRate);
     }
