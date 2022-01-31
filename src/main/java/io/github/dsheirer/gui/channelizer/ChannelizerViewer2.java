@@ -1,7 +1,6 @@
 /*
- * ******************************************************************************
- * sdrtrunk
- * Copyright (C) 2014-2018 Dennis Sheirer
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,14 +14,16 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
- * *****************************************************************************
+ * ****************************************************************************
  */
 package io.github.dsheirer.gui.channelizer;
 
 import io.github.dsheirer.preference.UserPreferences;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.SampleType;
+import io.github.dsheirer.sample.SampleUtils;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
+import io.github.dsheirer.sample.buffer.ReusableComplexBufferQueue;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.settings.SettingsManager;
 import io.github.dsheirer.source.ISourceEventProcessor;
@@ -57,6 +58,7 @@ import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ChannelizerViewer2 extends JFrame
@@ -363,6 +365,7 @@ public class ChannelizerViewer2 extends JFrame
 
     public class ChannelPanel extends JPanel implements Listener<ReusableComplexBuffer>, ISourceEventProcessor
     {
+        private ReusableComplexBufferQueue mBufferQueue = new ReusableComplexBufferQueue("Channelizer viewer2's ChannelPanel");
         private TunerChannelSource mSource;
         private DFTProcessor mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
         private ComplexDecibelConverter mComplexDecibelConverter = new ComplexDecibelConverter();
@@ -394,12 +397,13 @@ public class ChannelizerViewer2 extends JFrame
                     {
                         if(mLoggingEnabled)
                         {
-//TODO:                            mLog.debug("Samples:" + Arrays.toString(complexSamples.getSamples()));
+                            mLog.debug("Samples:" + Arrays.toString(complexSamples.i()) + " " +
+                                    Arrays.toString(complexSamples.q()));
                         }
 
-//TODO:                        complexSamples.incrementUserCount();
-//TODO:                        mDFTProcessor.receive(complexSamples);
-//TODO:                        complexSamples.decrementUserCount();
+                        ReusableComplexBuffer reusableComplexBuffer =
+                                mBufferQueue.getBuffer(SampleUtils.interleave(complexSamples), System.currentTimeMillis());
+                        mDFTProcessor.receive(reusableComplexBuffer);
                     }
                 });
 

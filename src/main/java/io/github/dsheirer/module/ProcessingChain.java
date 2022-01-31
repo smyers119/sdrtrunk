@@ -1,6 +1,6 @@
 /*
  * *****************************************************************************
- *  Copyright (C) 2014-2020 Dennis Sheirer
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,6 +66,7 @@ import io.github.dsheirer.sample.buffer.ReusableByteBuffer;
 import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.sample.complex.IComplexSamplesListener;
+import io.github.dsheirer.source.ComplexSource;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.ISourceEventProvider;
 import io.github.dsheirer.source.RealSource;
@@ -647,7 +648,7 @@ public class ProcessingChain implements Listener<ChannelEvent>
                 switch(mSource.getSampleType())
                 {
                     case COMPLEX:
-//TODO:                        ((ComplexSource)mSource).setListener(mBasebandComplexBufferBroadcaster);
+                        ((ComplexSource)mSource).setListener(mBasebandComplexSamplesBroadcaster);
                         break;
                     case REAL:
                         ((RealSource)mSource).setListener(mDemodulatedAudioBufferBroadcaster);
@@ -695,10 +696,10 @@ public class ProcessingChain implements Listener<ChannelEvent>
                 switch(mSource.getSampleType())
                 {
                     case COMPLEX:
-//TODO:                        ((ComplexSource)mSource).removeListener(mBasebandComplexBufferBroadcaster);
+                        ((ComplexSource)mSource).setListener(null);
                         break;
                     case REAL:
-//TODO:                        ((RealSource)mSource).removeListener(mDemodulatedAudioBufferBroadcaster);
+                        ((RealSource)mSource).setListener(null);
                         break;
                     default:
                         throw new IllegalArgumentException("Unrecognized source sample type - cannot start processing " +
