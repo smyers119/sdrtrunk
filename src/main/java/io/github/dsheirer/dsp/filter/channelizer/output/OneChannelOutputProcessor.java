@@ -40,7 +40,7 @@ public class OneChannelOutputProcessor extends ChannelOutputProcessor
      * @param channelIndexes containing a single channel index.
      * @param gain value to apply.  Typically this is the same as the channelizer's channel count.
      */
-    public OneChannelOutputProcessor(double sampleRate, List<Integer> channelIndexes, double gain)
+    public OneChannelOutputProcessor(double sampleRate, List<Integer> channelIndexes, float gain)
     {
         super(1, sampleRate, gain);
         setPolyphaseChannelIndices(channelIndexes);
@@ -89,12 +89,12 @@ public class OneChannelOutputProcessor extends ChannelOutputProcessor
 
                 if(hasFrequencyCorrection())
                 {
-//TODO:                    getFrequencyCorrectionMixer().mixComplex(buffer.getSamples());
+                    buffer = getFrequencyCorrectionMixer().mix(buffer);
                 }
 
-//TODO:                buffer.applyGain(getGain());
+                buffer = getGain().apply(buffer);
 
-//TODO:                assembler.receive(buffer);
+                assembler.receive(buffer);
             }
             catch(IllegalArgumentException iae)
             {

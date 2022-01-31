@@ -49,7 +49,7 @@ public class P25P1DecoderLSM extends P25P1Decoder
     private Map<Double,float[]> mBasebandFilters = new HashMap<>();
     protected IRealFilter mIBasebandFilter;
     protected IRealFilter mQBasebandFilter;
-    protected IComplexGainControl mAGC = ComplexGainFactory.getGainControl();
+    protected IComplexGainControl mAGC = ComplexGainFactory.getComplexGainControl();
     protected DQPSKGardnerDemodulator mQPSKDemodulator;
     protected P25P1MessageFramer mMessageFramer;
     protected CostasLoop mCostasLoop;

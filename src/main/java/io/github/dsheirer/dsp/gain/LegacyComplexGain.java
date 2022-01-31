@@ -3,12 +3,12 @@ package io.github.dsheirer.dsp.gain;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.complex.Complex;
 
-public class ComplexGain implements Listener<Complex>
+public class LegacyComplexGain implements Listener<Complex>
 {
     private float mGain;
     private Listener<Complex> mListener;
 
-    public ComplexGain(float gain)
+    public LegacyComplexGain(float gain)
     {
         mGain = gain;
     }

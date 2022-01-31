@@ -293,22 +293,23 @@ public class SynthesizerViewer extends JFrame
         @Override
         public void run()
         {
-            ReusableComplexBuffer channel1Buffer = mReusableComplexBufferQueue.getBuffer(mSamplesPerCycle);
-            getChannel1ControlPanel().getOscillator().generateComplex(channel1Buffer);
-
-            ReusableComplexBuffer channel2Buffer = mReusableComplexBufferQueue.getBuffer(mSamplesPerCycle);
-            getChannel2ControlPanel().getOscillator().generateComplex(channel2Buffer);
-
-            channel1Buffer.incrementUserCount();
-            channel2Buffer.incrementUserCount();
-
-            ReusableComplexBuffer synthesizedBuffer = mSynthesizer.process(channel1Buffer, channel2Buffer);
-
-            getChannel1Panel().receive(channel1Buffer);
-
-            getChannel2Panel().receive(channel2Buffer);
-
-            getSpectrumPanel().receive(synthesizedBuffer);
+            //TODO: update this to use ComplexSamples
+//            ReusableComplexBuffer channel1Buffer = mReusableComplexBufferQueue.getBuffer(mSamplesPerCycle);
+//            getChannel1ControlPanel().getOscillator().generateComplex(channel1Buffer);
+//
+//            ReusableComplexBuffer channel2Buffer = mReusableComplexBufferQueue.getBuffer(mSamplesPerCycle);
+//            getChannel2ControlPanel().getOscillator().generateComplex(channel2Buffer);
+//
+//            channel1Buffer.incrementUserCount();
+//            channel2Buffer.incrementUserCount();
+//
+//            ReusableComplexBuffer synthesizedBuffer = mSynthesizer.process(channel1Buffer, channel2Buffer);
+//
+//            getChannel1Panel().receive(channel1Buffer);
+//
+//            getChannel2Panel().receive(channel2Buffer);
+//
+//            getSpectrumPanel().receive(synthesizedBuffer);
         }
     }
 

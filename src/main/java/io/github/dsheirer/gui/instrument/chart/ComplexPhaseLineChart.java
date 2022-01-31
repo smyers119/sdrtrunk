@@ -16,7 +16,7 @@
 package io.github.dsheirer.gui.instrument.chart;
 
 import io.github.dsheirer.buffer.ComplexCircularBuffer;
-import io.github.dsheirer.dsp.gain.ComplexGain;
+import io.github.dsheirer.dsp.gain.LegacyComplexGain;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.complex.Complex;
@@ -38,7 +38,7 @@ public class ComplexPhaseLineChart extends LineChart implements Listener<Reusabl
 
     private static final Complex ANGLE_OFFSET_45_DEGREES = Complex.fromAngle(FastMath.PI / 4.0);
     private ComplexCircularBuffer mComplexCircularBuffer;
-    private ComplexGain mComplexGain = new ComplexGain(600.0f);
+    private LegacyComplexGain mComplexGain = new LegacyComplexGain(600.0f);
     private ObservableList<Data<Integer,Float>> mPhaseValues = FXCollections.observableArrayList();
     private IntegerProperty mLengthProperty = new SimpleIntegerProperty(40);
 

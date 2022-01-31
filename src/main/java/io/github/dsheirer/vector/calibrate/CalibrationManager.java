@@ -11,6 +11,8 @@ import io.github.dsheirer.vector.calibrate.filter.RealHalfBand23TapFilterCalibra
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBand63TapFilterCalibration;
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBandDefaultFilterCalibration;
 import io.github.dsheirer.vector.calibrate.gain.ComplexGainCalibration;
+import io.github.dsheirer.vector.calibrate.gain.ComplexGainControlCalibration;
+import io.github.dsheirer.vector.calibrate.mixer.ComplexMixerCalibration;
 import io.github.dsheirer.vector.calibrate.oscillator.ComplexOscillatorCalibration;
 import io.github.dsheirer.vector.calibrate.oscillator.RealOscillatorCalibration;
 import org.slf4j.Logger;
@@ -36,9 +38,11 @@ public class CalibrationManager
     private CalibrationManager()
     {
         add(new ComplexGainCalibration());
+        add(new ComplexGainControlCalibration());
         add(new ComplexHalfBand11TapFilterCalibration());
         add(new ComplexHalfBand15TapFilterCalibration());
         add(new ComplexOscillatorCalibration());
+        add(new ComplexMixerCalibration());
         add(new FirFilterCalibration());
         add(new FmDemodulatorCalibration());
         add(new RealHalfBand11TapFilterCalibration());

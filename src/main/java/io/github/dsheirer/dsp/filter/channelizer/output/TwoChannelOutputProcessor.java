@@ -19,6 +19,7 @@ import io.github.dsheirer.dsp.filter.channelizer.TwoChannelSynthesizerM2;
 import io.github.dsheirer.dsp.oscillator.FS4DownConverter;
 import io.github.dsheirer.sample.buffer.ComplexSamplesAssembler;
 import io.github.dsheirer.sample.buffer.ReusableChannelResultsBuffer;
+import io.github.dsheirer.sample.complex.ComplexSamples;
 
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class TwoChannelOutputProcessor extends ChannelOutputProcessor
      * @param channelIndexes containing two channel indices.
      * @param gain to apply to output.  Typically this is equal to the channelizer's channel count.
      */
-    public TwoChannelOutputProcessor(double sampleRate, List<Integer> channelIndexes, float[] filter, double gain)
+    public TwoChannelOutputProcessor(double sampleRate, List<Integer> channelIndexes, float[] filter, float gain)
     {
         //Set the frequency correction oscillator to 2 x output sample rate since we'll be correcting the frequency
         //after synthesizing both input channels
@@ -99,21 +100,21 @@ public class TwoChannelOutputProcessor extends ChannelOutputProcessor
     {
         for(ReusableChannelResultsBuffer buffer : channelResultsBuffers)
         {
-//TODO:            ReusableComplexBuffer channel1 = buffer.getChannel(mChannelOffset1);
-//TODO:            ReusableComplexBuffer channel2 = buffer.getChannel(mChannelOffset2);
+            ComplexSamples channel1 = buffer.getChannel(mChannelOffset1);
+            ComplexSamples channel2 = buffer.getChannel(mChannelOffset2);
 
             //Join the two channels using the synthesizer
-//TODO:            ReusableComplexBuffer synthesized = mSynthesizer.process(channel1, channel2);
+            ComplexSamples synthesized = mSynthesizer.process(channel1, channel2);
 
             //The synthesized channels are centered at +FS/4 ... downconvert to center the spectrum
-//TODO:            mFS4DownConverter.mixComplex(synthesized.getSamples());
+            mFS4DownConverter.mixComplex(synthesized);
 
             //Apply offset and frequency correction to center the signal of interest within the synthesized channel
-//TODO:            getFrequencyCorrectionMixer().mixComplex(synthesized.getSamples());
+            getFrequencyCorrectionMixer().mix(synthesized);
 
-//TODO:            synthesized.applyGain(getGain());
+            getGain().apply(synthesized);
 
-//TODO:            complexSamplesAssembler.receive(synthesized);
+            complexSamplesAssembler.receive(synthesized);
 
             buffer.decrementUserCount();
         }

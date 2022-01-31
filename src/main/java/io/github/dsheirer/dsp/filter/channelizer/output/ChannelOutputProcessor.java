@@ -18,8 +18,10 @@
  ******************************************************************************/
 package io.github.dsheirer.dsp.filter.channelizer.output;
 
-import io.github.dsheirer.dsp.oscillator.IOscillator;
-import io.github.dsheirer.dsp.oscillator.Oscillator;
+import io.github.dsheirer.dsp.gain.complex.ComplexGain;
+import io.github.dsheirer.dsp.gain.complex.ComplexGainFactory;
+import io.github.dsheirer.dsp.mixer.ComplexMixer;
+import io.github.dsheirer.dsp.mixer.ComplexMixerFactory;
 import io.github.dsheirer.sample.IOverflowListener;
 import io.github.dsheirer.sample.buffer.ComplexSamplesAssembler;
 import io.github.dsheirer.sample.buffer.OverflowableReusableBufferTransferQueue;
@@ -40,9 +42,9 @@ public abstract class ChannelOutputProcessor implements IPolyphaseChannelOutputP
     private int mMaxResultsToProcess;
 
     private int mInputChannelCount;
-    private IOscillator mFrequencyCorrectionMixer;
+    private ComplexMixer mFrequencyCorrectionMixer;
     private boolean mFrequencyCorrectionEnabled;
-    private double mGain = 1.0;
+    private ComplexGain mComplexGain;
 
     /**
      * Base class for polyphase channelizer output channel processing.  Provides built-in frequency translation
@@ -52,21 +54,20 @@ public abstract class ChannelOutputProcessor implements IPolyphaseChannelOutputP
      * @param sampleRate of the output channel.  This is used to match the oscillator's sample rate to the output
      * channel sample rate for frequency translation/correction.
      */
-    public ChannelOutputProcessor(int inputChannelCount, double sampleRate, double gain)
+    public ChannelOutputProcessor(int inputChannelCount, double sampleRate, float gain)
     {
         mInputChannelCount = inputChannelCount;
-        mGain = gain;
+        mComplexGain = ComplexGainFactory.getComplexGain(gain);
 
-//TODO: swap this out and use the LowPhaseNoiseOscillator
-        mFrequencyCorrectionMixer = new Oscillator(0, sampleRate);
+        mFrequencyCorrectionMixer = ComplexMixerFactory.getMixer(0, sampleRate);
         mMaxResultsToProcess = (int)(sampleRate / 10) * 2;  //process at 100 millis interval, twice the expected inflow rate
 
         mChannelResultsQueue = new OverflowableReusableBufferTransferQueue<>((int)(sampleRate * 3), (int)(sampleRate * 0.5));
     }
 
-    protected double getGain()
+    protected ComplexGain getGain()
     {
-        return mGain;
+        return mComplexGain;
     }
 
     @Override
@@ -97,7 +98,7 @@ public abstract class ChannelOutputProcessor implements IPolyphaseChannelOutputP
     /**
      * Oscillator/mixer to use for frequency correction against incoming sample stream
      */
-    protected IOscillator getFrequencyCorrectionMixer()
+    protected ComplexMixer getFrequencyCorrectionMixer()
     {
         return mFrequencyCorrectionMixer;
     }

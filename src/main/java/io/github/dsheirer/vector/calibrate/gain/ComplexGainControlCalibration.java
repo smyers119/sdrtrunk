@@ -1,8 +1,8 @@
 package io.github.dsheirer.vector.calibrate.gain;
 
-import io.github.dsheirer.dsp.gain.complex.ComplexGain;
-import io.github.dsheirer.dsp.gain.complex.ScalarComplexGain;
-import io.github.dsheirer.dsp.gain.complex.VectorComplexGain;
+import io.github.dsheirer.dsp.gain.complex.ComplexGainControl;
+import io.github.dsheirer.dsp.gain.complex.IComplexGainControl;
+import io.github.dsheirer.dsp.gain.complex.VectorComplexGainControl;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
@@ -12,20 +12,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Determines the optimal scalar vs vector implementation of complex gain.
+ * Determines the optimal scalar vs vector implementation of complex gain control.
  */
-public class ComplexGainCalibration extends Calibration
+public class ComplexGainControlCalibration extends Calibration
 {
-    private static final Logger mLog = LoggerFactory.getLogger(ComplexGainCalibration.class);
-    private static final int ITERATIONS = 1_000_000;
+    private static final Logger mLog = LoggerFactory.getLogger(ComplexGainControlCalibration.class);
+    private static final int ITERATIONS = 5_000_000;
     private static final int SAMPLE_BUFFER_SIZE = 2048;
 
     /**
      * Constructs an instance
      */
-    public ComplexGainCalibration()
+    public ComplexGainControlCalibration()
     {
-        super(CalibrationType.COMPLEX_GAIN);
+        super(CalibrationType.COMPLEX_GAIN_CONTROL);
     }
 
     @Override public void calibrate() throws CalibrationException
@@ -34,33 +34,32 @@ public class ComplexGainCalibration extends Calibration
         float[] q = getSamples(SAMPLE_BUFFER_SIZE);
 
         float accumulator = 0.0f;
-        float gain = 0.75f;
 
-        ComplexGain scalar = new ScalarComplexGain(gain);
-        ComplexGain vector = new VectorComplexGain(gain);
+        IComplexGainControl scalar = new ComplexGainControl();
+        IComplexGainControl vector = new VectorComplexGainControl();
 
         long start = System.currentTimeMillis();
 
         for(int scalarCount = 0; scalarCount < ITERATIONS; scalarCount++)
         {
-            ComplexSamples amplified = scalar.apply(i, q);
+            ComplexSamples amplified = scalar.process(i, q);
             accumulator += amplified.i()[2];
         }
 
         long scalarDuration = System.currentTimeMillis() - start;
-        mLog.info("COMPLEX GAIN - SCALAR:" + scalarDuration);
+        mLog.info("COMPLEX GAIN CONTROL - SCALAR:" + scalarDuration);
 
         start = System.currentTimeMillis();
         accumulator = 0.0f;
 
         for(int vectorCount = 0; vectorCount < ITERATIONS; vectorCount++)
         {
-            ComplexSamples amplified = vector.apply(i, q);
+            ComplexSamples amplified = vector.process(i, q);
             accumulator += amplified.i()[2];
         }
 
         long vectorDuration = System.currentTimeMillis() - start;
-        mLog.info("COMPLEX GAIN - VECTOR:" + vectorDuration);
+        mLog.info("COMPLEX GAIN CONTROL - VECTOR:" + vectorDuration);
 
         if(scalarDuration < vectorDuration)
         {
@@ -71,6 +70,6 @@ public class ComplexGainCalibration extends Calibration
             setImplementation(Implementation.VECTOR_SIMD_PREFERRED);
         }
 
-        mLog.info("COMPLEX GAIN - SETTING IMPLEMENTATION TO:" + getImplementation());
+        mLog.info("COMPLEX GAIN CONTROL - SETTING IMPLEMENTATION TO:" + getImplementation());
     }
 }

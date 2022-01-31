@@ -51,7 +51,7 @@ public class P25P1DecoderC4FM extends P25P1Decoder
     protected CostasLoop mCostasLoop;
     protected FrequencyCorrectionSyncMonitor mFrequencyCorrectionSyncMonitor;
     protected P25P1MessageFramer mMessageFramer;
-    protected IComplexGainControl mAGC = ComplexGainFactory.getGainControl();
+    protected IComplexGainControl mAGC = ComplexGainFactory.getComplexGainControl();
     private Map<Double,float[]> mBasebandFilters = new HashMap<>();
     protected IRealFilter mIBasebandFilter;
     protected IRealFilter mQBasebandFilter;

@@ -14,7 +14,6 @@ public abstract class ComplexMixer
     public ComplexMixer(double frequency, double sampleRate)
     {
         mOscillator = OscillatorFactory.getComplexOscillator(frequency, sampleRate);
-        System.out.println("Base Oscillator is: " + mOscillator.getClass());
     }
 
     /**

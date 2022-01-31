@@ -57,7 +57,7 @@ public class P25P2DecoderHDQPSK extends P25P2Decoder implements IdentifierUpdate
     protected DQPSKGardnerDemodulator mQPSKDemodulator;
     protected CostasLoop mCostasLoop;
     protected P25P2MessageFramer mMessageFramer;
-    protected IComplexGainControl mAGC = ComplexGainFactory.getGainControl();
+    protected IComplexGainControl mAGC = ComplexGainFactory.getComplexGainControl();
     private Map<Double,float[]> mBasebandFilters = new HashMap<>();
     protected IRealFilter mIBasebandFilter;
     protected IRealFilter mQBasebandFilter;

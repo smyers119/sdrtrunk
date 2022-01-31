@@ -19,6 +19,7 @@
 
 package io.github.dsheirer.vector;
 
+import io.github.dsheirer.sample.complex.ComplexSamples;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.VectorSpecies;
@@ -62,6 +63,16 @@ public class VectorUtilities
             throw new IllegalArgumentException("I/Q buffer lengths must be a power of 2 multiple of SIMD lane width [" +
                     species.length() + "]");
         }
+    }
+
+    /**
+     * Checks the I/Q sample array length to be an integer multiple of the SIMD lane width.
+     * @param samples buffer
+     * @param species used for SIMD operations
+     */
+    public static void checkComplexArrayLength(ComplexSamples samples, VectorSpecies<Float> species)
+    {
+        checkComplexArrayLength(samples.i(), samples.q(), species);
     }
 
     /**

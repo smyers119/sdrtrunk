@@ -13,7 +13,8 @@ public class ComplexSamplesAssembler implements ComplexSampleListener
     private float[] mQSamples = new float[BUFFER_SIZE];
     private int mPointer = 0;
 
-    @Override public void receive(float i, float q)
+    @Override
+    public void receive(float i, float q)
     {
         mISamples[mPointer] = i;
         mQSamples[mPointer] = q;
@@ -30,6 +31,17 @@ public class ComplexSamplesAssembler implements ComplexSampleListener
             mISamples = new float[BUFFER_SIZE];
             mQSamples = new float[BUFFER_SIZE];
             mPointer = 0;
+        }
+    }
+
+    public void receive(ComplexSamples samples)
+    {
+        float[] i = samples.i();
+        float[] q = samples.q();
+
+        for(int x = 0; x < i.length; x++)
+        {
+            receive(i[x], q[x]);
         }
     }
 

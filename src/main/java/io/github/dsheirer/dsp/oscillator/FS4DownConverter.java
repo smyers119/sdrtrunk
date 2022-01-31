@@ -18,6 +18,8 @@
  */
 package io.github.dsheirer.dsp.oscillator;
 
+import io.github.dsheirer.sample.complex.ComplexSamples;
+
 public class FS4DownConverter
 {
     private int mPointer = 0;
@@ -35,10 +37,11 @@ public class FS4DownConverter
     public float[] mixComplex(float[] samples)
     {
         float real;
+        int pointer = mPointer;
 
         for(int x = 0; x < samples.length; x += 2)
         {
-            switch(mPointer)
+            switch(pointer)
             {
                 case 0:
                     //no-op
@@ -59,9 +62,51 @@ public class FS4DownConverter
                     break;
             }
 
-            mPointer++;
-            mPointer %= 4;
+            pointer++;
+            pointer %= 4;
         }
+
+        mPointer = pointer;
+
+        return samples;
+    }
+
+    public ComplexSamples mixComplex(ComplexSamples samples)
+    {
+        float temp;
+        int pointer = mPointer;
+
+        float[] i = samples.i();
+        float[] q = samples.q();;
+
+        for(int x = 0; x < i.length; x++)
+        {
+            switch(pointer)
+            {
+                case 0:
+                    //no-op
+                    break;
+                case 1:
+                    temp = i[x];
+                    i[x] = q[x];
+                    q[x] = -temp;
+                    break;
+                case 2:
+                    i[x] = -i[x];
+                    q[x] = -q[x];
+                    break;
+                case 3:
+                    temp = i[x];
+                    i[x] = -q[x];
+                    q[x] = temp;
+                    break;
+            }
+
+            pointer++;
+            pointer %= 4;
+        }
+
+        mPointer = pointer;
 
         return samples;
     }

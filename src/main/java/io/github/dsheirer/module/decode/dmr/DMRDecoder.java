@@ -62,7 +62,7 @@ public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener,
     private Broadcaster<Dibit> mDibitBroadcaster = new Broadcaster<>();
     private DibitToByteBufferAssembler mByteBufferAssembler = new DibitToByteBufferAssembler(300);
     private DMRMessageProcessor mMessageProcessor;
-    protected IComplexGainControl mAGC = ComplexGainFactory.getGainControl();
+    protected IComplexGainControl mAGC = ComplexGainFactory.getComplexGainControl();
     private Map<Double,float[]> mBasebandFilters = new HashMap<>();
     protected IRealFilter mIBasebandFilter;
     protected IRealFilter mQBasebandFilter;
