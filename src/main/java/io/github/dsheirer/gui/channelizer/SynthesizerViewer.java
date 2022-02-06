@@ -27,8 +27,6 @@ import io.github.dsheirer.dsp.oscillator.OscillatorFactory;
 import io.github.dsheirer.sample.IOverflowListener;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.SampleType;
-import io.github.dsheirer.sample.SampleUtils;
-import io.github.dsheirer.sample.buffer.ReusableComplexBufferQueue;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.settings.SettingsManager;
 import io.github.dsheirer.source.SourceEvent;
@@ -142,7 +140,6 @@ public class SynthesizerViewer extends JFrame
 
     public class PrimarySpectrumPanel extends JPanel implements Listener<ComplexSamples>
     {
-        private ReusableComplexBufferQueue mBufferQueue = new ReusableComplexBufferQueue("PrimarySpectrumPanel");
         private DFTProcessor mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
         private ComplexDecibelConverter mComplexDecibelConverter = new ComplexDecibelConverter();
         private SpectrumPanel mSpectrumPanel;
@@ -177,13 +174,12 @@ public class SynthesizerViewer extends JFrame
         @Override
         public void receive(ComplexSamples complexSamples)
         {
-            mDFTProcessor.receive(mBufferQueue.getBuffer(SampleUtils.interleave(complexSamples), System.currentTimeMillis()));
+            mDFTProcessor.receive(complexSamples.toInterleaved());
         }
     }
 
     public class ChannelPanel extends JPanel implements Listener<ComplexSamples>
     {
-        private ReusableComplexBufferQueue mBufferQueue = new ReusableComplexBufferQueue("SynthesizerViewer's ChannelPanel");
         private DFTProcessor mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
         private ComplexDecibelConverter mComplexDecibelConverter = new ComplexDecibelConverter();
         private SpectrumPanel mSpectrumPanel;
@@ -212,7 +208,7 @@ public class SynthesizerViewer extends JFrame
         @Override
         public void receive(ComplexSamples complexSamples)
         {
-            mDFTProcessor.receive(mBufferQueue.getBuffer(SampleUtils.interleave(complexSamples), System.currentTimeMillis()));
+            mDFTProcessor.receive(complexSamples.toInterleaved());
         }
     }
 
@@ -276,7 +272,6 @@ public class SynthesizerViewer extends JFrame
         private TwoChannelSynthesizerM2 mSynthesizer;
         private FS4DownConverter mFS4DownConverter = new FS4DownConverter();
         private int mSamplesPerCycle = CHANNEL_SAMPLE_RATE / DATA_GENERATOR_FRAME_RATE;
-        private ReusableComplexBufferQueue mReusableComplexBufferQueue = new ReusableComplexBufferQueue("SynthesizerViewer");
 
         public DataGenerationManager()
         {

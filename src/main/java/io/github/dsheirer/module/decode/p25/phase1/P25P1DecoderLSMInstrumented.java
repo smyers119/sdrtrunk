@@ -1,7 +1,6 @@
 /*
- * ******************************************************************************
- * sdrtrunk
- * Copyright (C) 2014-2019 Dennis Sheirer
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
- * *****************************************************************************
+ * ****************************************************************************
  */
 package io.github.dsheirer.module.decode.p25.phase1;
 
@@ -23,7 +22,6 @@ import io.github.dsheirer.dsp.psk.DQPSKGardnerDemodulatorInstrumented;
 import io.github.dsheirer.dsp.psk.InterpolatingSampleBufferInstrumented;
 import io.github.dsheirer.dsp.psk.SymbolDecisionData;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.complex.Complex;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 
@@ -33,7 +31,7 @@ public class P25P1DecoderLSMInstrumented extends P25P1DecoderLSM
     private Listener<Double> mPLLFrequencyListener;
     private Listener<Double> mSamplesPerSymbolListener;
     private Listener<Complex> mComplexSymbolListener;
-    private Listener<ReusableComplexBuffer> mFilteredSymbolListener;
+    private Listener<ComplexSamples> mFilteredSymbolListener;
     private Listener<SymbolDecisionData> mSymbolDecisionDataListener;
 
     /**
@@ -60,8 +58,7 @@ public class P25P1DecoderLSMInstrumented extends P25P1DecoderLSM
 
         if(mFilteredSymbolListener != null)
         {
-            //TODO: update instrumentation to use complex sample arrays
-//            mFilteredSymbolListener.receive(i, q);
+            mFilteredSymbolListener.receive(new ComplexSamples(i, q));
         }
 
         //Process the buffer for power measurements
@@ -111,7 +108,7 @@ public class P25P1DecoderLSMInstrumented extends P25P1DecoderLSM
         ((DQPSKGardnerDemodulatorInstrumented)mQPSKDemodulator).setPLLFrequencyListener(listener);
     }
 
-    public void setFilteredBufferListener(Listener<ReusableComplexBuffer> listener)
+    public void setFilteredBufferListener(Listener<ComplexSamples> listener)
     {
         mFilteredSymbolListener = listener;
     }

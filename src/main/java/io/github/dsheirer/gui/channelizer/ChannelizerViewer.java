@@ -21,10 +21,8 @@ package io.github.dsheirer.gui.channelizer;
 import io.github.dsheirer.preference.UserPreferences;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.SampleType;
-import io.github.dsheirer.sample.SampleUtils;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
-import io.github.dsheirer.sample.buffer.ReusableComplexBufferQueue;
 import io.github.dsheirer.sample.complex.ComplexSamples;
+import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.settings.SettingsManager;
 import io.github.dsheirer.source.ISourceEventProcessor;
 import io.github.dsheirer.source.SourceEvent;
@@ -42,16 +40,10 @@ import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSpinner;
-import javax.swing.JToggleButton;
-import javax.swing.SpinnerNumberModel;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.Dimension;
-import java.awt.EventQueue;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -310,7 +302,7 @@ public class ChannelizerViewer extends JFrame
         return tunerChannels;
     }
 
-    public class PrimarySpectrumPanel extends JPanel implements Listener<ReusableComplexBuffer>, ISourceEventProcessor
+    public class PrimarySpectrumPanel extends JPanel implements Listener<InterleavedComplexSamples>, ISourceEventProcessor
     {
         private DFTProcessor mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
         private ComplexDecibelConverter mComplexDecibelConverter = new ComplexDecibelConverter();
@@ -334,9 +326,9 @@ public class ChannelizerViewer extends JFrame
         }
 
         @Override
-        public void receive(ReusableComplexBuffer reusableComplexBuffer)
+        public void receive(InterleavedComplexSamples complexSamples)
         {
-            mDFTProcessor.receive(reusableComplexBuffer);
+            mDFTProcessor.receive(complexSamples);
         }
 
         @Override
@@ -346,9 +338,8 @@ public class ChannelizerViewer extends JFrame
         }
     }
 
-    public class ChannelPanel extends JPanel implements Listener<ReusableComplexBuffer>, ISourceEventProcessor
+    public class ChannelPanel extends JPanel implements Listener<ComplexSamples>, ISourceEventProcessor
     {
-        private ReusableComplexBufferQueue mBufferQueue = new ReusableComplexBufferQueue("Channelizer viewer's ChannelPanel");
         private TunerChannelSource mSource;
         private DFTProcessor mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
         private ComplexDecibelConverter mComplexDecibelConverter = new ComplexDecibelConverter();
@@ -383,9 +374,7 @@ public class ChannelizerViewer extends JFrame
                                     Arrays.toString(complexSamples.q()));
                         }
 
-                        ReusableComplexBuffer reusableComplexBuffer =
-                                mBufferQueue.getBuffer(SampleUtils.interleave(complexSamples), System.currentTimeMillis());
-                        mDFTProcessor.receive(reusableComplexBuffer);
+                        mDFTProcessor.receive(complexSamples.toInterleaved());
                     }
                 });
 
@@ -429,11 +418,9 @@ public class ChannelizerViewer extends JFrame
         }
 
         @Override
-        public void receive(ReusableComplexBuffer reusableComplexBuffer)
+        public void receive(ComplexSamples complexSamples)
         {
-            reusableComplexBuffer.incrementUserCount();
-            mDFTProcessor.receive(reusableComplexBuffer);
-            reusableComplexBuffer.decrementUserCount();
+            mDFTProcessor.receive(complexSamples.toInterleaved());
         }
 
         @Override
@@ -443,7 +430,7 @@ public class ChannelizerViewer extends JFrame
         }
     }
 
-    public class DiscreteChannelPanel extends JPanel implements Listener<ReusableComplexBuffer>, ISourceEventProcessor
+    public class DiscreteChannelPanel extends JPanel implements Listener<ComplexSamples>, ISourceEventProcessor
     {
         private final Logger mLog = LoggerFactory.getLogger(DiscreteChannelPanel.class);
 
@@ -483,16 +470,14 @@ public class ChannelizerViewer extends JFrame
                 mSource.setListener(new Listener<ComplexSamples>()
                 {
                     @Override
-                    public void receive(ComplexSamples complexBuffer)
+                    public void receive(ComplexSamples complexSamples)
                     {
                         if(mLoggingEnabled)
                         {
-//TODO:                            mLog.debug("Samples:" + Arrays.toString(complexBuffer.getSamples()));
+                            mLog.debug("Samples:" + Arrays.toString(complexSamples.toInterleaved().samples()));
                         }
 
-//TODO:                        complexBuffer.incrementUserCount();
-//TODO:                        mDFTProcessor.receive(complexBuffer);
-//TODO:                        complexBuffer.decrementUserCount();
+                        mDFTProcessor.receive(complexSamples.toInterleaved());
                     }
                 });
 
@@ -515,11 +500,9 @@ public class ChannelizerViewer extends JFrame
         }
 
         @Override
-        public void receive(ReusableComplexBuffer reusableComplexBuffer)
+        public void receive(ComplexSamples complexSamples)
         {
-            reusableComplexBuffer.incrementUserCount();
-            mDFTProcessor.receive(reusableComplexBuffer);
-            reusableComplexBuffer.decrementUserCount();
+            mDFTProcessor.receive(complexSamples.toInterleaved());
         }
 
         @Override

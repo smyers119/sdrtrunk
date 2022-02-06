@@ -1,7 +1,6 @@
 /*
- * ******************************************************************************
- * sdrtrunk
- * Copyright (C) 2014-2018 Dennis Sheirer
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,15 +14,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
- * *****************************************************************************
+ * ****************************************************************************
  */
 package io.github.dsheirer.dsp.afsk;
 
 import io.github.dsheirer.bits.IBinarySymbolProcessor;
 import io.github.dsheirer.buffer.FloatAveragingBuffer;
 import io.github.dsheirer.dsp.filter.resample.RealResampler;
-import io.github.dsheirer.dsp.oscillator.IOscillator;
-import io.github.dsheirer.dsp.oscillator.Oscillator;
+import io.github.dsheirer.dsp.oscillator.IRealOscillator;
+import io.github.dsheirer.dsp.oscillator.OscillatorFactory;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
 import org.apache.commons.math3.util.FastMath;
@@ -207,8 +206,8 @@ public class AFSK1200Decoder implements Listener<ReusableFloatBuffer>
         {
             mAveragingBuffer = new FloatAveragingBuffer(averagingPeriod);
 
-            IOscillator referenceSignalGenerator = new Oscillator(frequency, sampleRate);
-            mReferenceSamples = referenceSignalGenerator.generateReal(correlationPeriod);
+            IRealOscillator referenceSignalGenerator = OscillatorFactory.getRealOscillator(frequency, sampleRate);
+            mReferenceSamples = referenceSignalGenerator.generate(correlationPeriod);
 
             mDemodulatedSamples = new float[correlationPeriod];
         }

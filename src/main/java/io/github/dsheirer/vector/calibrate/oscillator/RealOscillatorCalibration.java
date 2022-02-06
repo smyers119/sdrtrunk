@@ -1,10 +1,29 @@
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
+
 package io.github.dsheirer.vector.calibrate.oscillator;
 
 import io.github.dsheirer.dsp.oscillator.IRealOscillator;
-import io.github.dsheirer.dsp.oscillator.RealOscillator;
+import io.github.dsheirer.dsp.oscillator.ScalarRealOscillator;
 import io.github.dsheirer.dsp.oscillator.VectorRealOscillator;
-import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.Calibration;
+import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import org.slf4j.Logger;
@@ -64,7 +83,7 @@ public class RealOscillatorCalibration extends Calibration
 
         long start = System.currentTimeMillis();
 
-        IRealOscillator oscillator = new RealOscillator(FREQUENCY, SAMPLE_RATE);
+        IRealOscillator oscillator = new ScalarRealOscillator(FREQUENCY, SAMPLE_RATE);
 
         for(int i = 0; i < iterations; i++)
         {

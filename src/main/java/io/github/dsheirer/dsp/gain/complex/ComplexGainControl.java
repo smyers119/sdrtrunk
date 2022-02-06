@@ -1,6 +1,6 @@
 /*
  * *****************************************************************************
- * Copyright (C) 2014-2021 Dennis Sheirer
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,6 @@
 package io.github.dsheirer.dsp.gain.complex;
 
 import io.github.dsheirer.sample.SampleUtils;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
-import io.github.dsheirer.sample.buffer.ReusableComplexBufferQueue;
 import io.github.dsheirer.sample.complex.Complex;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 
@@ -31,8 +29,6 @@ public class ComplexGainControl implements IComplexGainControl
 {
     public static final float OBJECTIVE_ENVELOPE = 1.0f;
     public static final float MINIMUM_ENVELOPE = 0.0001f;
-
-    private ReusableComplexBufferQueue mReusableComplexBufferQueue = new ReusableComplexBufferQueue("ComplexFeedForwardGainControl");
 
     /**
      * Dynamic gain control for incoming sample stream to amplify or attenuate
@@ -75,40 +71,6 @@ public class ComplexGainControl implements IComplexGainControl
         }
 
         return new ComplexSamples(iProcessed, qProcessed);
-    }
-
-    /**
-     * Applies gain to the complex sample buffer
-     * @param buffer to apply gain
-     * @return reusable buffer with the user count incremented to 1
-     */
-    public ReusableComplexBuffer process(ReusableComplexBuffer buffer)
-    {
-        float[] samples = buffer.getSamples();
-
-        ReusableComplexBuffer filteredBuffer = mReusableComplexBufferQueue.getBuffer(samples.length);
-        filteredBuffer.setTimestamp(buffer.getTimestamp());
-
-        float[] filtered = filteredBuffer.getSamples();
-
-        float maxEnvelope = MINIMUM_ENVELOPE;
-
-        for(int x = 0; x < samples.length; x += 2)
-        {
-            maxEnvelope = Math.max(maxEnvelope, Complex.envelope(samples[x], samples[x + 1]));
-        }
-
-        float gain = OBJECTIVE_ENVELOPE / maxEnvelope;
-
-        for(int x = 0; x < samples.length; x += 2)
-        {
-            filtered[x] = samples[x] * gain;
-            filtered[x + 1] = samples[x + 1] * gain;
-        }
-
-        buffer.decrementUserCount();
-
-        return filteredBuffer;
     }
 
     public static void main(String[] args)

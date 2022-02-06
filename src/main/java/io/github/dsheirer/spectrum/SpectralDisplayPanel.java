@@ -1,23 +1,20 @@
 /*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- *  * ******************************************************************************
- *  * Copyright (C) 2014-2019 Dennis Sheirer
- *  *
- *  * This program is free software: you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License as published by
- *  * the Free Software Foundation, either version 3 of the License, or
- *  * (at your option) any later version.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  * GNU General Public License for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *  * *****************************************************************************
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
  */
 package io.github.dsheirer.spectrum;
 
@@ -33,7 +30,7 @@ import io.github.dsheirer.playlist.PlaylistManager;
 import io.github.dsheirer.properties.SystemProperties;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.SampleType;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
+import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.settings.ColorSetting.ColorSettingName;
 import io.github.dsheirer.settings.ColorSettingMenuItem;
 import io.github.dsheirer.settings.SettingsManager;
@@ -55,25 +52,11 @@ import org.apache.commons.math3.util.FastMath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JLayeredPane;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.JSlider;
-import javax.swing.JSplitPane;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MouseInputAdapter;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.EventQueue;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -83,7 +66,7 @@ import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
-public class SpectralDisplayPanel extends JPanel implements Listener<ReusableComplexBuffer>, ISourceEventProcessor,
+public class SpectralDisplayPanel extends JPanel implements Listener<InterleavedComplexSamples>, ISourceEventProcessor,
     IDFTWidthChangeProcessor
 {
     private static final long serialVersionUID = 1L;
@@ -420,9 +403,9 @@ public class SpectralDisplayPanel extends JPanel implements Listener<ReusableCom
      * Complex sample buffer receive method
      */
     @Override
-    public void receive(ReusableComplexBuffer reusableComplexBuffer)
+    public void receive(InterleavedComplexSamples complexSamples)
     {
-        mDFTProcessor.receive(reusableComplexBuffer);
+        mDFTProcessor.receive(complexSamples);
     }
 
     /**

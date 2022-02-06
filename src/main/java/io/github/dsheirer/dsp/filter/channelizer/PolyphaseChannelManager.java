@@ -1,23 +1,20 @@
 /*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- *  * ******************************************************************************
- *  * Copyright (C) 2014-2020 Dennis Sheirer
- *  *
- *  * This program is free software: you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License as published by
- *  * the Free Software Foundation, either version 3 of the License, or
- *  * (at your option) any later version.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  * GNU General Public License for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *  * *****************************************************************************
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
  */
 package io.github.dsheirer.dsp.filter.channelizer;
 
@@ -28,14 +25,13 @@ import io.github.dsheirer.dsp.filter.channelizer.output.TwoChannelOutputProcesso
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.sample.Broadcaster;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.IReusableComplexBufferProvider;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
+import io.github.dsheirer.sample.buffer.IInterleavedComplexSamplesProvider;
+import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.ISourceEventProcessor;
 import io.github.dsheirer.source.Source;
 import io.github.dsheirer.source.SourceEvent;
 import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.tuner.TunerController;
-import io.github.dsheirer.source.tuner.channel.ChannelSpecification;
 import io.github.dsheirer.source.tuner.channel.TunerChannel;
 import io.github.dsheirer.source.tuner.channel.TunerChannelSource;
 import org.apache.commons.math3.util.FastMath;
@@ -76,32 +72,32 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
     private static final int POLYPHASE_SYNTHESIZER_TAPS_PER_CHANNEL = 9;
 
     private Broadcaster<SourceEvent> mSourceEventBroadcaster = new Broadcaster<>();
-    private IReusableComplexBufferProvider mReusableBufferProvider;
+    private IInterleavedComplexSamplesProvider mComplexSamplesProvider;
     private List<PolyphaseChannelSource> mChannelSources = new CopyOnWriteArrayList<>();
     private ChannelCalculator mChannelCalculator;
     private ComplexPolyphaseChannelizerM2 mPolyphaseChannelizer;
     private ChannelSourceEventListener mChannelSourceEventListener = new ChannelSourceEventListener();
     private BufferSourceEventMonitor mBufferSourceEventMonitor = new BufferSourceEventMonitor();
-    private ContinuousBufferProcessor<ReusableComplexBuffer> mBufferProcessor;
+    private ContinuousBufferProcessor<InterleavedComplexSamples> mBufferProcessor;
     private Map<Integer,float[]> mOutputProcessorFilters = new HashMap<>();
 
     /**
      * Creates a polyphase channel manager instance.
      *
-     * @param reusableComplexBufferProvider (ie tuner) that supports register/deregister for reusable baseband sample buffer
+     * @param complexSamplesProvider (ie tuner) that supports register/deregister for reusable baseband sample buffer
      * streams
      * @param frequency of the baseband complex buffer sample stream (ie center frequency)
      * @param sampleRate of the baseband complex buffer sample stream
      */
-    public PolyphaseChannelManager(IReusableComplexBufferProvider reusableComplexBufferProvider,
+    public PolyphaseChannelManager(IInterleavedComplexSamplesProvider complexSamplesProvider,
                                    long frequency, double sampleRate)
     {
-        if(reusableComplexBufferProvider == null)
+        if(complexSamplesProvider == null)
         {
             throw new IllegalArgumentException("Complex buffer provider argument cannot be null");
         }
 
-        mReusableBufferProvider = reusableComplexBufferProvider;
+        mComplexSamplesProvider = complexSamplesProvider;
 
         int channelCount = (int)(sampleRate / MINIMUM_CHANNEL_BANDWIDTH);
 
@@ -161,7 +157,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
      * @param tunerChannel specifying center frequency and bandwidth.
      * @return source or null.
      */
-    public TunerChannelSource getChannel(TunerChannel tunerChannel, ChannelSpecification channelSpecification)
+    public TunerChannelSource getChannel(TunerChannel tunerChannel)
     {
         PolyphaseChannelSource channelSource = null;
 
@@ -176,7 +172,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
             try
             {
                 channelSource = new PolyphaseChannelSource(tunerChannel, outputProcessor, mChannelSourceEventListener,
-                    mChannelCalculator.getChannelSampleRate(), centerFrequency, channelSpecification);
+                    mChannelCalculator.getChannelSampleRate(), centerFrequency);
 
                 mChannelSources.add(channelSource);
             }
@@ -241,7 +237,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
             //If this is the first channel, register to start the sample buffers flowing
             if(mPolyphaseChannelizer.getRegisteredChannelCount() == 1)
             {
-                mReusableBufferProvider.addBufferListener(mBufferProcessor);
+                mComplexSamplesProvider.addBufferListener(mBufferProcessor);
                 mPolyphaseChannelizer.start();
                 mBufferProcessor.start();
             }
@@ -265,7 +261,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
             //If this is the last/only channel, deregister to stop the sample buffers
             if(mPolyphaseChannelizer.getRegisteredChannelCount() == 0)
             {
-                mReusableBufferProvider.removeBufferListener(mBufferProcessor);
+                mComplexSamplesProvider.removeBufferListener(mBufferProcessor);
                 mBufferProcessor.stop();
                 mPolyphaseChannelizer.stop();
             }
@@ -565,7 +561,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
      * that they can be processed on the buffer processor calling thread, avoiding unnecessary locks on the channelizer
      * and/or the channel sources and output processors.
      */
-    public class BufferSourceEventMonitor implements Listener<List<ReusableComplexBuffer>>
+    public class BufferSourceEventMonitor implements Listener<List<InterleavedComplexSamples>>
     {
         private Queue<SourceEvent> mQueuedSourceEvents = new ConcurrentLinkedQueue<>();
 
@@ -579,7 +575,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
         }
 
         @Override
-        public void receive(List<ReusableComplexBuffer> reusableComplexBuffers)
+        public void receive(List<InterleavedComplexSamples> complexSamplesList)
         {
             try
             {
@@ -599,26 +595,18 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
                     queuedSourceEvent = mQueuedSourceEvents.poll();
                 }
 
-                for(ReusableComplexBuffer reusableComplexBuffer: reusableComplexBuffers)
+                for(InterleavedComplexSamples complexSamples: complexSamplesList)
                 {
                     if(mPolyphaseChannelizer != null)
                     {
                         //User count management is handled by the channelizer
-                        mPolyphaseChannelizer.receive(reusableComplexBuffer);
-                    }
-                    else
-                    {
-                        reusableComplexBuffer.decrementUserCount();
+                        mPolyphaseChannelizer.receive(complexSamples);
                     }
                 }
             }
             catch(Throwable throwable)
             {
                 mLog.error("Error", throwable);
-                for(ReusableComplexBuffer buffer: reusableComplexBuffers)
-                {
-                    buffer.decrementUserCount();
-                }
             }
         }
     }

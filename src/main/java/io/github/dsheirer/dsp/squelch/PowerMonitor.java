@@ -1,8 +1,26 @@
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
+
 package io.github.dsheirer.dsp.squelch;
 
 import io.github.dsheirer.dsp.filter.iir.SinglePoleIirFilter;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.source.SourceEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,24 +73,6 @@ public class PowerMonitor
         {
             mPowerLevelBroadcastCount = 0;
             broadcast(SourceEvent.channelPowerLevel(null, 10.0 * Math.log10(mPowerFilter.getValue())));
-        }
-    }
-
-    /**
-     * Processes a complex baseband sample buffer.  Note: this method does not decrement the user count
-     * on the buffer.
-     *
-     * @param buffer to process
-     */
-    public void process(ReusableComplexBuffer buffer)
-    {
-        float[] samples = buffer.getSamples();
-        int offset;
-
-        for(int x = 0; x < buffer.getSampleCount(); x++)
-        {
-            offset = x * 2;
-            process(samples[offset], samples[offset + 1]);
         }
     }
 

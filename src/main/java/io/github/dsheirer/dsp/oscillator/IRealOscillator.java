@@ -19,7 +19,7 @@
 
 package io.github.dsheirer.dsp.oscillator;
 
-public interface IRealOscillator extends IBaseOscillator
+public interface IRealOscillator extends IOscillator
 {
     /**
      * Generates the specified number of real samples into a sample array.

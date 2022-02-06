@@ -1,26 +1,29 @@
-/*******************************************************************************
- * sdr-trunk
- * Copyright (C) 2014-2019 Dennis Sheirer
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by  the Free Software Foundation, either version 3 of the License, or  (at your option) any
- * later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,  but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License  along with this program.
- * If not, see <http://www.gnu.org/licenses/>
- *
- ******************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
 
 package io.github.dsheirer.source.tuner.channel;
 
 import io.github.dsheirer.sample.Listener;
+import io.github.dsheirer.sample.OverflowableTransferQueue;
 import io.github.dsheirer.sample.SampleUtils;
-import io.github.dsheirer.sample.buffer.OverflowableReusableBufferTransferQueue;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.complex.ComplexSamples;
+import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.SourceEvent;
 import io.github.dsheirer.source.tuner.TunerController;
@@ -35,13 +38,13 @@ import java.util.List;
  * directly to the registered listener
  */
 public class PassThroughChannelSource extends TunerChannelSource implements ISourceEventListener,
-        Listener<ReusableComplexBuffer>
+        Listener<InterleavedComplexSamples>
 {
     private final static Logger mLog = LoggerFactory.getLogger(PassThroughChannelSource.class);
     private TunerController mTunerController;
-    private OverflowableReusableBufferTransferQueue<ReusableComplexBuffer> mBufferQueue =
-            new OverflowableReusableBufferTransferQueue<>(500, 100);
-    private List<ReusableComplexBuffer> mBuffersToProcess = new ArrayList<>();
+    private OverflowableTransferQueue<InterleavedComplexSamples> mBufferQueue =
+            new OverflowableTransferQueue<>(500, 100);
+    private List<InterleavedComplexSamples> mComplexSamplesToProcess = new ArrayList<>();
     private Listener<ComplexSamples> mComplexSamplesListener;
 
     /**
@@ -91,22 +94,17 @@ public class PassThroughChannelSource extends TunerChannelSource implements ISou
     @Override
     protected void processSamples()
     {
-        mBufferQueue.drainTo(mBuffersToProcess);
+        mBufferQueue.drainTo(mComplexSamplesToProcess);
 
-        for(ReusableComplexBuffer buffer: mBuffersToProcess)
+        for(InterleavedComplexSamples complexSamples: mComplexSamplesToProcess)
         {
             if(mComplexSamplesListener != null)
             {
-                mComplexSamplesListener.receive(SampleUtils.deinterleave(buffer.getSamples()));
-                buffer.decrementUserCount();
-            }
-            else
-            {
-                buffer.decrementUserCount();
+                mComplexSamplesListener.receive(SampleUtils.deinterleave(complexSamples.samples()));
             }
         }
 
-        mBuffersToProcess.clear();
+        mComplexSamplesToProcess.clear();
     }
 
     @Override
@@ -116,8 +114,8 @@ public class PassThroughChannelSource extends TunerChannelSource implements ISou
     }
 
     @Override
-    public void receive(ReusableComplexBuffer reusableComplexBuffer)
+    public void receive(InterleavedComplexSamples complexSamples)
     {
-        mBufferQueue.offer(reusableComplexBuffer);
+        mBufferQueue.offer(complexSamples);
     }
 }

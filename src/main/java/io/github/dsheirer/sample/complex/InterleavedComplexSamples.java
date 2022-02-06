@@ -16,9 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  * ****************************************************************************
  */
-package io.github.dsheirer.sample.adapter;
 
-public abstract class AbstractSampleAdapter<T>
+package io.github.dsheirer.sample.complex;
+
+import io.github.dsheirer.sample.buffer.ITimestamped;
+
+/**
+ * Complex samples array that incorporates a timestamp for the first complex sample.
+ */
+public record InterleavedComplexSamples(float[] samples, long timestamp) implements ITimestamped
 {
-    public abstract T convert(byte[] sampleBytes);
+    /**
+     * Converts this interleaved complex samples to de-interleaved.
+     * @return de-interleaved samples.
+     */
+    public ComplexSamples toDeinterleaved()
+    {
+        float[] i = new float[samples().length / 2];
+        float[] q = new float[samples().length / 2];
+
+        for(int x = 0; x < i.length; x++)
+        {
+            i[x] = samples()[x / 2];
+            q[x] = samples()[x / 2 + 1];
+        }
+
+        return new ComplexSamples(i, q);
+    }
 }

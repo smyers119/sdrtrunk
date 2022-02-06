@@ -21,7 +21,7 @@ package io.github.dsheirer.dsp.oscillator;
 
 import io.github.dsheirer.sample.complex.ComplexSamples;
 
-public interface IComplexOscillator extends IBaseOscillator
+public interface IComplexOscillator extends IOscillator
 {
     /**
      * Generates the specified number of complex samples into an interleaved sample array.

@@ -19,12 +19,8 @@
 
 package io.github.dsheirer.dsp.mixer;
 
-import io.github.dsheirer.dsp.oscillator.IComplexOscillator;
-import io.github.dsheirer.dsp.oscillator.OscillatorFactory;
 import io.github.dsheirer.sample.complex.ComplexSamples;
-
-import java.text.DecimalFormat;
-import java.util.Arrays;
+import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 
 /**
  * Scalar implementation of a complex mixer
@@ -78,49 +74,31 @@ public class ScalarComplexMixer extends ComplexMixer
         return mixer;
     }
 
-    public static void main(String[] args)
+    /**
+     * Mixes the interleaved complex samples with oscillator generated samples
+     * @param samples interleaved
+     * @return mixed samples
+     */
+    @Override
+    public ComplexSamples mix(InterleavedComplexSamples samples)
     {
-        int sampleCount = 2048;
-        IComplexOscillator oscillator = OscillatorFactory.getComplexOscillator(2, 20);
-        ComplexSamples samples = oscillator.generateComplexSamples(sampleCount);
+        ComplexSamples mixer = generate(samples.samples().length / 2);
 
-        double mixFrequency = 3.0;
-        double mixSampleRate = 20.0;
+        float[] iMixer = mixer.i();
+        float[] qMixer = mixer.q();
 
-        ComplexMixer scalar = new ScalarComplexMixer(mixFrequency, mixSampleRate);
-        ComplexMixer vector = new VectorComplexMixer(mixFrequency, mixSampleRate);
+        float inphase, quadrature;
+        int offset = 0;
 
-        boolean validate = false;
-
-        if(validate)
+        for(int x = 0; x < iMixer.length; x++)
         {
-            ComplexSamples scalarMixed = scalar.mix(samples);
-            ComplexSamples vectorMixed = vector.mix(samples);
-
-            System.out.println("Samples I:" + Arrays.toString(samples.i()));
-            System.out.println("Samples Q:" + Arrays.toString(samples.q()));
-            System.out.println("Scalar  I:" + Arrays.toString(scalarMixed.i()));
-            System.out.println("Scalar  Q:" + Arrays.toString(scalarMixed.q()));
-            System.out.println("Vector  I:" + Arrays.toString(vectorMixed.i()));
-            System.out.println("Vector  Q:" + Arrays.toString(vectorMixed.q()));
+            offset = 2 * x;
+            inphase = (iMixer[x] * samples.samples()[offset]) - (qMixer[x] * samples.samples()[offset + 1]);
+            quadrature = (qMixer[x] * samples.samples()[offset]) + (iMixer[x] * samples.samples()[offset + 1]);
+            iMixer[x] = inphase;
+            qMixer[x] = quadrature;
         }
-        else
-        {
-            int iterations = 10_000_000;
-            double accumulator = 0.0;
-            System.out.println("Starting ...");
-            long start = System.currentTimeMillis();
-            for(int count = 0; count < iterations; count++)
-            {
-                ComplexSamples mixedSamples = scalar.mix(samples);
-//                ComplexSamples mixedSamples = vector.mix(samples);
-                accumulator += mixedSamples.i()[1];
-            }
-            double elapsed = System.currentTimeMillis() - start;
 
-            DecimalFormat df = new DecimalFormat("0.000");
-            System.out.println("Accumulator: " + accumulator);
-            System.out.println("Test Complete.  Elapsed Time: " + df.format(elapsed / 1000.0d) + " seconds");
-        }
+        return mixer;
     }
 }

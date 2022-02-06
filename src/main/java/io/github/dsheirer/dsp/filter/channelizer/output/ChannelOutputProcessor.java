@@ -18,14 +18,9 @@
  */
 package io.github.dsheirer.dsp.filter.channelizer.output;
 
-import io.github.dsheirer.dsp.gain.complex.ComplexGain;
-import io.github.dsheirer.dsp.gain.complex.ScalarComplexGain;
-import io.github.dsheirer.dsp.mixer.ComplexMixer;
-import io.github.dsheirer.dsp.mixer.ScalarComplexMixer;
-import io.github.dsheirer.sample.IOverflowListener;
-import io.github.dsheirer.sample.buffer.ComplexSamplesAssembler;
-import io.github.dsheirer.sample.buffer.OverflowableReusableBufferTransferQueue;
-import io.github.dsheirer.sample.buffer.ReusableChannelResultsBuffer;
+import io.github.dsheirer.sample.Listener;
+import io.github.dsheirer.sample.OverflowableTransferQueue;
+import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.source.Source;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,14 +32,10 @@ public abstract class ChannelOutputProcessor implements IPolyphaseChannelOutputP
 {
     private final static Logger mLog = LoggerFactory.getLogger(ChannelOutputProcessor.class);
 
-    private OverflowableReusableBufferTransferQueue<ReusableChannelResultsBuffer> mChannelResultsQueue;
-    private List<ReusableChannelResultsBuffer> mChannelResultsToProcess = new ArrayList<>();
+    private OverflowableTransferQueue<List<float[]>> mChannelResultsQueue;
     private int mMaxResultsToProcess;
-
     private int mInputChannelCount;
-    private ScalarComplexMixer mFrequencyCorrectionMixer;
-    private boolean mFrequencyCorrectionEnabled;
-    private ComplexGain mComplexGain;
+    protected Listener<ComplexSamples> mComplexSamplesListener;
 
     /**
      * Base class for polyphase channelizer output channel processing.  Provides built-in frequency translation
@@ -54,23 +45,20 @@ public abstract class ChannelOutputProcessor implements IPolyphaseChannelOutputP
      * @param sampleRate of the output channel.  This is used to match the oscillator's sample rate to the output
      * channel sample rate for frequency translation/correction.
      */
-    public ChannelOutputProcessor(int inputChannelCount, double sampleRate, float gain)
+    public ChannelOutputProcessor(int inputChannelCount, double sampleRate)
     {
         mInputChannelCount = inputChannelCount;
-
-        //We have to use scalar implementation for gain and mixer ... the vector implementation requires the generated
-        //sample count to be a multiple of the SIMD lane width and we can't guarantee that.
-        mComplexGain = new ScalarComplexGain(gain);
-        mFrequencyCorrectionMixer = new ScalarComplexMixer(0, sampleRate, true);
-
         mMaxResultsToProcess = (int)(sampleRate / 10) * 2;  //process at 100 millis interval, twice the expected inflow rate
-
-        mChannelResultsQueue = new OverflowableReusableBufferTransferQueue<>((int)(sampleRate * 3), (int)(sampleRate * 0.5));
+        mChannelResultsQueue = new OverflowableTransferQueue<>((int)(sampleRate * 3), (int)(sampleRate * 0.5));
     }
 
-    protected ComplexGain getGain()
+    /**
+     * Registers the listener to receive the assembled complex sample buffers from this processor.
+     */
+    @Override
+    public void setListener(Listener<ComplexSamples> listener)
     {
-        return mComplexGain;
+        mComplexSamplesListener = listener;
     }
 
     @Override
@@ -87,63 +75,39 @@ public abstract class ChannelOutputProcessor implements IPolyphaseChannelOutputP
         }
     }
 
-    /**
-     * Sets the frequency offset to apply to the incoming samples to mix the desired signal to baseband.
-     * @param frequencyOffset in hertz
-     */
     @Override
-    public void setFrequencyOffset(long frequencyOffset)
+    public void receiveChannelResults(List<float[]> channelResultsList)
     {
-        mFrequencyCorrectionMixer.setFrequency(frequencyOffset);
-        mFrequencyCorrectionEnabled = (frequencyOffset != 0);
-    }
-
-    /**
-     * Oscillator/mixer to use for frequency correction against incoming sample stream
-     */
-    protected ComplexMixer getFrequencyCorrectionMixer()
-    {
-        return mFrequencyCorrectionMixer;
-    }
-
-    @Override
-    public void receiveChannelResults(ReusableChannelResultsBuffer channelResults)
-    {
-        mChannelResultsQueue.offer(channelResults);
+        mChannelResultsQueue.offer(channelResultsList);
     }
 
     /**
      * Processes all enqueued polyphase channelizer results until the internal queue is empty
-     * @param assembler to receive the processed channel results
      */
     @Override
-    public void processChannelResults(ComplexSamplesAssembler assembler)
+    public void processChannelResults()
     {
-        try
-        {
-            int toProcess = mChannelResultsQueue.drainTo(mChannelResultsToProcess, mMaxResultsToProcess);
+        List<List<float[]>> channelResultsToProcess = new ArrayList<>();
+        int toProcess = mChannelResultsQueue.drainTo(channelResultsToProcess, mMaxResultsToProcess);
 
-            if(toProcess > 0)
+        if(toProcess > 0)
+        {
+            try
             {
-                process(mChannelResultsToProcess, assembler);
+                process(channelResultsToProcess);
+            }
+            catch(Throwable throwable)
+            {
+                mLog.error("Error while processing polyphase channel samples", throwable);
             }
         }
-        catch(Throwable throwable)
-        {
-            mLog.error("Error while processing polyphase channel samples", throwable);
-        }
-
-        mChannelResultsToProcess.clear();
     }
 
     /**
      * Sub-class implementation to process one polyphase channelizer result array.
      * @param channelResults to process
-     * @param assembler to receive the processed channelizer results
      */
-    public abstract void process(List<ReusableChannelResultsBuffer> channelResults,
-                                 ComplexSamplesAssembler assembler);
-
+    public abstract void process(List<List<float[]>> channelResults);
 
     /**
      * Sets the overflow listener to monitor the internal channelizer channel results queue overflow state
@@ -153,25 +117,9 @@ public abstract class ChannelOutputProcessor implements IPolyphaseChannelOutputP
         mChannelResultsQueue.setSourceOverflowListener(source);
     }
 
-    /**
-     * Removes the overflow listener from monitoring the internal channelizer channel results queue overflow state
-     */
-    public void removeOverflowListener(IOverflowListener listener)
-    {
-        mChannelResultsQueue.setOverflowListener(null);
-    }
-
     @Override
     public int getInputChannelCount()
     {
         return mInputChannelCount;
-    }
-
-    /**
-     * Indicates if this channel has a frequency correction offset
-     */
-    public boolean hasFrequencyCorrection()
-    {
-        return mFrequencyCorrectionEnabled;
     }
 }

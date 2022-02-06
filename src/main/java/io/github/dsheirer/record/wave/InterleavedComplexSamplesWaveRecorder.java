@@ -1,26 +1,28 @@
-/*******************************************************************************
- * sdr-trunk
- * Copyright (C) 2014-2018 Dennis Sheirer
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by  the Free Software Foundation, either version 3 of the License, or  (at your option) any
- * later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,  but WITHOUT ANY WARRANTY; without even the implied
- * warranty of  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License  along with this program.
- * If not, see <http://www.gnu.org/licenses/>
- *
- ******************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
 package io.github.dsheirer.record.wave;
 
-import io.github.dsheirer.dsp.filter.channelizer.ContinuousReusableBufferProcessor;
+import io.github.dsheirer.dsp.filter.channelizer.ContinuousBufferProcessor;
 import io.github.dsheirer.module.Module;
 import io.github.dsheirer.sample.ConversionUtils;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.IReusableComplexBufferListener;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
+import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.SourceEvent;
 import io.github.dsheirer.util.ThreadPool;
@@ -39,21 +41,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * WAVE audio recorder module for recording complex (I&Q) samples to a wave file
  */
-public class ComplexBufferWaveRecorder extends Module implements IReusableComplexBufferListener,
-    Listener<ReusableComplexBuffer>, ISourceEventListener
+public class InterleavedComplexSamplesWaveRecorder extends Module implements Listener<InterleavedComplexSamples>, ISourceEventListener
 {
-    private final static Logger mLog = LoggerFactory.getLogger(ComplexBufferWaveRecorder.class);
+    private final static Logger mLog = LoggerFactory.getLogger(ComplexSamplesWaveRecorder.class);
 
-    private ContinuousReusableBufferProcessor<ReusableComplexBuffer> mBufferProcessor =
-        new ContinuousReusableBufferProcessor<>(500, 50);
+    private ContinuousBufferProcessor<InterleavedComplexSamples> mBufferProcessor =
+                            new ContinuousBufferProcessor<>(500, 50);
 
     private AtomicBoolean mRunning = new AtomicBoolean();
-    private ReusableBufferWaveWriter mWriter;
+    private InterleavedComplexSamplesWaveWriter mWriter;
     private String mFilePrefix;
     private Path mFile;
     private AudioFormat mAudioFormat;
 
-    public ComplexBufferWaveRecorder(float sampleRate, String filePrefix)
+    public InterleavedComplexSamplesWaveRecorder(float sampleRate, String filePrefix)
     {
         mFilePrefix = filePrefix;
         setSampleRate(sampleRate);
@@ -91,7 +92,7 @@ public class ComplexBufferWaveRecorder extends Module implements IReusableComple
                 sb.append(".wav");
                 mFile = Paths.get(sb.toString());
 
-                mWriter = new ReusableBufferWaveWriter(mAudioFormat, mFile);
+                mWriter = new InterleavedComplexSamplesWaveWriter(mAudioFormat, mFile);
 
                 mBufferProcessor.setListener(mWriter);
                 mBufferProcessor.start();
@@ -137,14 +138,13 @@ public class ComplexBufferWaveRecorder extends Module implements IReusableComple
     }
 
     @Override
-    public void receive(ReusableComplexBuffer buffer)
+    public void receive(InterleavedComplexSamples complexSamples)
     {
         //Queue the buffer with the buffer processor so that recording occurs on the buffer processor thread
-        mBufferProcessor.receive(buffer);
+        mBufferProcessor.receive(complexSamples);
     }
 
-    @Override
-    public Listener<ReusableComplexBuffer> getReusableComplexBufferListener()
+    public Listener<InterleavedComplexSamples> getReusableComplexBufferListener()
     {
         return this;
     }
@@ -173,27 +173,27 @@ public class ComplexBufferWaveRecorder extends Module implements IReusableComple
     }
 
     /**
-     * Wave writer implementation for reusable complex buffers delivered from buffer processor
+     * Wave writer implementation for complex samples delivered from buffer processor
      */
-    public class ReusableBufferWaveWriter extends WaveWriter implements Listener<List<ReusableComplexBuffer>>
+    public class InterleavedComplexSamplesWaveWriter extends WaveWriter implements Listener<List<InterleavedComplexSamples>>
     {
-        public ReusableBufferWaveWriter(AudioFormat format, Path file) throws IOException
+        public InterleavedComplexSamplesWaveWriter(AudioFormat format, Path file) throws IOException
         {
             super(format, file);
         }
 
         @Override
-        public void receive(List<ReusableComplexBuffer> reusableComplexBuffers)
+        public void receive(List<InterleavedComplexSamples> complexSamplesList)
         {
             boolean error = false;
 
-            for(ReusableComplexBuffer reusableComplexBuffer: reusableComplexBuffers)
+            for(InterleavedComplexSamples complexSamples: complexSamplesList)
             {
                 if(!error)
                 {
                     try
                     {
-                        mWriter.writeData(ConversionUtils.convertToSigned16BitSamples(reusableComplexBuffer));
+                        mWriter.writeData(ConversionUtils.convertToSigned16BitSamples(complexSamples));
                     }
                     catch(IOException ioe)
                     {
@@ -202,8 +202,6 @@ public class ComplexBufferWaveRecorder extends Module implements IReusableComple
                         stop();
                     }
                 }
-
-                reusableComplexBuffer.decrementUserCount();
             }
         }
     }

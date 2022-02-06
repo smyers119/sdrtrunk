@@ -1,21 +1,23 @@
-/*******************************************************************************
- * sdr-trunk
- * Copyright (C) 2014-2018 Dennis Sheirer
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by  the Free Software Foundation, either version 3 of the License, or  (at your option) any
- * later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,  but WITHOUT ANY WARRANTY; without even the implied
- * warranty of  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License  along with this program.
- * If not, see <http://www.gnu.org/licenses/>
- *
- ******************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
 package io.github.dsheirer.dsp.filter.channelizer;
 
-import io.github.dsheirer.sample.buffer.ReusableComplexBufferQueue;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import org.apache.commons.math3.util.FastMath;
 import org.jtransforms.fft.FloatFFT_1D;
@@ -45,8 +47,6 @@ import org.slf4j.LoggerFactory;
 public class TwoChannelSynthesizerM2
 {
     private final static Logger mLog = LoggerFactory.getLogger(TwoChannelSynthesizerM2.class);
-
-    private ReusableComplexBufferQueue mReusableComplexBufferQueue = new ReusableComplexBufferQueue("Two Channel Synthesizer M2");
     private float[] mSerpentineDataBuffer;
     private float[] mIQInterleavedFilter;
     private float[] mFilterVectorProduct;

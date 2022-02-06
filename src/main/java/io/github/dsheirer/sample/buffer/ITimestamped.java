@@ -16,9 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  * ****************************************************************************
  */
-package io.github.dsheirer.sample.adapter;
 
-public abstract class AbstractSampleAdapter<T>
+package io.github.dsheirer.sample.buffer;
+
+/**
+ * Interface for objects that have timestamps.
+ */
+public interface ITimestamped
 {
-    public abstract T convert(byte[] sampleBytes);
+    long timestamp();
 }

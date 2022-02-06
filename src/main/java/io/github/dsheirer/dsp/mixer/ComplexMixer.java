@@ -23,6 +23,7 @@ import io.github.dsheirer.dsp.oscillator.IComplexOscillator;
 import io.github.dsheirer.dsp.oscillator.OscillatorFactory;
 import io.github.dsheirer.dsp.oscillator.ScalarComplexOscillator;
 import io.github.dsheirer.sample.complex.ComplexSamples;
+import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 
 /**
  * Base complex mixer that wraps an oscillator implementation and mixes complex sample buffers
@@ -64,6 +65,14 @@ public abstract class ComplexMixer
     }
 
     /**
+     * Indicates if this mixer's oscillator is set to a non-zero frequency value.
+     */
+    public boolean hasFrequency()
+    {
+        return mOscillator.hasFrequency();
+    }
+
+    /**
      * Sets the sample rate of the underlying oscillator
      * @param sampleRate in Hertz
      */
@@ -93,10 +102,22 @@ public abstract class ComplexMixer
     }
 
     /**
+     * Mixes the complex I & Q samples with samples generated from an oscillator
+     * @param samples interleaved
+     * @return mixed samples
+     */
+    public ComplexSamples mix(InterleavedComplexSamples samples)
+    {
+        return mix(samples.toDeinterleaved());
+    }
+
+    /**
      * Mixes the complex I & Q samples with samples generated from an oscillator.
      * @param i complex samples to mix
      * @param q complex samples to mix
      * @return mixed samples
      */
     public abstract ComplexSamples mix(float[] i, float[] q);
+
+
 }

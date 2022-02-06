@@ -25,7 +25,6 @@ import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
 import org.apache.commons.math3.util.FastMath;
 
-import java.text.DecimalFormat;
 import java.util.Arrays;
 
 /**
@@ -35,7 +34,7 @@ import java.util.Arrays;
  * the ComplexOscillator class, but where each oscillator is offset in phase by one sample more than the previous and
  * the entire bank is rotated at the sample phase times the SIMD lane width for each sample generation increment.
  */
-public class VectorComplexOscillator extends BaseOscillator implements IComplexOscillator
+public class VectorComplexOscillator extends AbstractOscillator implements IComplexOscillator
 {
     private static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_PREFERRED;
 
@@ -190,50 +189,5 @@ public class VectorComplexOscillator extends BaseOscillator implements IComplexO
         }
 
         return new ComplexSamples(iSamples, qSamples);
-    }
-
-    public static void main(String[] args)
-    {
-        double frequency = 5.0d;
-        double sampleRate = 100.0d;
-        int samplesToGenerate = 2048;
-        int iterations = 10_000_000;
-
-        boolean validation = true;
-
-        LowPhaseNoiseOscillator legacy = new LowPhaseNoiseOscillator(frequency, sampleRate);
-        ScalarComplexOscillator scalar = new ScalarComplexOscillator(frequency, sampleRate);
-        VectorComplexOscillator vector = new VectorComplexOscillator(frequency, sampleRate);
-
-        if(validation)
-        {
-            float[] legacySamples = legacy.generateComplex(samplesToGenerate);
-            float[] scalarSamples = scalar.generate(samplesToGenerate);
-            float[] vector2Samples = vector.generate(samplesToGenerate);
-            System.out.println("LEGACY:" + Arrays.toString(legacySamples));
-            System.out.println("SCALAR:" + Arrays.toString(scalarSamples));
-            System.out.println("VECTOR:" + Arrays.toString(vector2Samples));
-        }
-        else
-        {
-            System.out.println("Test Starting ...");
-            long start = System.currentTimeMillis();
-
-            double accumulator = 0.0;
-
-            for(int i = 0; i < iterations; i++)
-            {
-                //                float[] samples = legacy.generateComplex(samplesToGenerate);
-                //                float[] samples = scalar.generate(samplesToGenerate);
-                float[] samples = vector.generate(samplesToGenerate);
-                accumulator += samples[3];
-            }
-
-            double elapsed = System.currentTimeMillis() - start;
-
-            DecimalFormat df = new DecimalFormat("0.000");
-            System.out.println("Accumulator: " + accumulator);
-            System.out.println("Test Complete.  Elapsed Time: " + df.format(elapsed / 1000.0d) + " seconds");
-        }
     }
 }

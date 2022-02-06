@@ -25,7 +25,7 @@ import org.apache.commons.math3.util.FastMath;
 /**
  * Scalar implementation of a complex oscillator.
  */
-public class ScalarComplexOscillator extends BaseOscillator implements IComplexOscillator
+public class ScalarComplexOscillator extends AbstractOscillator implements IComplexOscillator
 {
     private float mCosineAngle;
     private float mSineAngle;

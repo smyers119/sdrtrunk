@@ -1,28 +1,25 @@
 /*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- *  * ******************************************************************************
- *  * Copyright (C) 2014-2020 Dennis Sheirer
- *  *
- *  * This program is free software: you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License as published by
- *  * the Free Software Foundation, either version 3 of the License, or
- *  * (at your option) any later version.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  * GNU General Public License for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *  * *****************************************************************************
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
  */
 package io.github.dsheirer.source.tuner.rtl;
 
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
+import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.tuner.ITunerErrorListener;
 import io.github.dsheirer.source.tuner.TunerManager;
@@ -1526,7 +1523,7 @@ public abstract class RTL2832TunerController extends USBTunerController
      * Adds the IQ buffer listener and automatically starts buffer transfer processing, if not already started.
      */
     @Override
-    public void addBufferListener(Listener<ReusableComplexBuffer> listener)
+    public void addBufferListener(Listener<InterleavedComplexSamples> listener)
     {
         boolean hasExistingListeners = hasBufferListeners();
 
@@ -1542,7 +1539,7 @@ public abstract class RTL2832TunerController extends USBTunerController
      * Removes the IQ buffer listener and stops buffer transfer processing if there are no more listeners.
      */
     @Override
-    public void removeBufferListener(Listener<ReusableComplexBuffer> listener)
+    public void removeBufferListener(Listener<InterleavedComplexSamples> listener)
     {
         super.removeBufferListener(listener);
 

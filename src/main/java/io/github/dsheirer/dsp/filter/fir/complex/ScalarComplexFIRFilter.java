@@ -24,10 +24,9 @@ import io.github.dsheirer.dsp.filter.Window;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.text.DecimalFormat;
-import java.util.Arrays;
 import java.util.Random;
 
-public class ComplexFIRFilter implements IComplexFilter
+public class ScalarComplexFIRFilter implements IComplexFilter
 {
     private float[] mBuffer;
     private float[] mCoefficients;
@@ -38,7 +37,7 @@ public class ComplexFIRFilter implements IComplexFilter
      *
      * @param coefficients - filter coefficients in normal order.
      */
-    public ComplexFIRFilter(float[] coefficients)
+    public ScalarComplexFIRFilter(float[] coefficients)
     {
         //Reverse the order of the coefficients.
         ArrayUtils.reverse(coefficients);
@@ -122,7 +121,7 @@ public class ComplexFIRFilter implements IComplexFilter
         float[] coefficients = FilterFactory.getLowPass(1000, 250, 99, Window.WindowType.BLACKMAN);
 
 //        ComplexFIRFilter2 legacyFilter = new ComplexFIRFilter2(coefficients);
-        ComplexFIRFilter filter = new ComplexFIRFilter(coefficients);
+        ScalarComplexFIRFilter filter = new ScalarComplexFIRFilter(coefficients);
         VectorComplexFIRFilter128Bit vectorFilter = new VectorComplexFIRFilter128Bit(coefficients);
 
         double accumulator = 0.0d;

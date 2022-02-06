@@ -16,34 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  * ****************************************************************************
  */
+package io.github.dsheirer.sample.buffer;
 
-package io.github.dsheirer.dsp.oscillator;
+import io.github.dsheirer.sample.Listener;
+import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 
-public class RealOscillator extends BaseOscillator implements IRealOscillator
+/**
+ * Interface for listener of interleaved complex samples
+ */
+public interface IInterleavedComplexSamplesListener
 {
-    /**
-     * Constructs an instance
-     *
-     * @param frequency in hertz
-     * @param sampleRate in hertz
-     */
-    public RealOscillator(double frequency, double sampleRate)
-    {
-        super(frequency, sampleRate);
-    }
-
-    @Override
-    public float[] generate(int sampleCount)
-    {
-        float[] samples = new float[sampleCount];
-
-        for(int samplePointer = 0; samplePointer < sampleCount; samplePointer++)
-        {
-            mCurrentPhase += mAnglePerSample;
-            mCurrentPhase %= TWO_PI;
-            samples[samplePointer] = (float)Math.sin(mCurrentPhase);
-        }
-
-        return samples;
-    }
+	Listener<InterleavedComplexSamples> getReusableComplexBufferListener();
 }

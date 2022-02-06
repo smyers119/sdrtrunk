@@ -1,26 +1,28 @@
-/*******************************************************************************
- * sdr-trunk
- * Copyright (C) 2014-2018 Dennis Sheirer
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by  the Free Software Foundation, either version 3 of the License, or  (at your option) any
- * later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,  but WITHOUT ANY WARRANTY; without even the implied
- * warranty of  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License  along with this program.
- * If not, see <http://www.gnu.org/licenses/>
- *
- ******************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
 package io.github.dsheirer.source.tuner.test;
 
-import io.github.dsheirer.dsp.oscillator.IOscillator;
-import io.github.dsheirer.dsp.oscillator.LowPhaseNoiseOscillator;
+import io.github.dsheirer.dsp.oscillator.IComplexOscillator;
+import io.github.dsheirer.dsp.oscillator.OscillatorFactory;
+import io.github.dsheirer.sample.Broadcaster;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.ReusableBufferBroadcaster;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
-import io.github.dsheirer.sample.buffer.ReusableComplexBufferQueue;
+import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.util.ThreadPool;
 import org.apache.commons.math3.util.FastMath;
 import org.slf4j.Logger;
@@ -33,12 +35,11 @@ public class SampleGenerator
 {
     private final static Logger mLog = LoggerFactory.getLogger(SampleGenerator.class);
 
-    private ReusableBufferBroadcaster mComplexBufferBroadcaster = new ReusableBufferBroadcaster();
-    private IOscillator mOscillator;
+    private Broadcaster<InterleavedComplexSamples> mComplexSamplesBroadcaster = new Broadcaster<>();
+    private IComplexOscillator mComplexOscillator;
     private int mSweepUpdateInterval;
     private long mInterval;
     private int mSamplesPerInterval;
-    private boolean mReuseBuffers;
     private ScheduledFuture<?> mScheduledFuture;
 
     /**
@@ -59,7 +60,7 @@ public class SampleGenerator
             throw new IllegalArgumentException("Sweep update rate cannot be greater than sample rate");
         }
 
-        mOscillator = new LowPhaseNoiseOscillator(frequency, sampleRate);
+        mComplexOscillator = OscillatorFactory.getComplexOscillator(frequency, sampleRate);
         mInterval = interval;
         mSweepUpdateInterval = sweepUpdateRate;
 
@@ -85,7 +86,7 @@ public class SampleGenerator
      */
     private void updateSamplesPerInterval()
     {
-        mSamplesPerInterval = (int)((double)mOscillator.getSampleRate() * ((double)mInterval / 1000.0));
+        mSamplesPerInterval = (int)((double) mComplexOscillator.getSampleRate() * ((double)mInterval / 1000.0));
     }
 
     /**
@@ -125,11 +126,11 @@ public class SampleGenerator
      *
      * @param listener to receive complex sample buffers
      */
-    public void addListener(Listener<ReusableComplexBuffer> listener)
+    public void addListener(Listener<InterleavedComplexSamples> listener)
     {
-        mComplexBufferBroadcaster.addListener(listener);
+        mComplexSamplesBroadcaster.addListener(listener);
 
-        if(mComplexBufferBroadcaster.getListenerCount() == 1)
+        if(mComplexSamplesBroadcaster.getListenerCount() == 1)
         {
             start();
         }
@@ -138,11 +139,11 @@ public class SampleGenerator
     /**
      * Removes the listener and stops the sample generator if there are no more listeners.
      */
-    public void removeListener(Listener<ReusableComplexBuffer> listener)
+    public void removeListener(Listener<InterleavedComplexSamples> listener)
     {
-        mComplexBufferBroadcaster.removeListener(listener);
+        mComplexSamplesBroadcaster.removeListener(listener);
 
-        if(mComplexBufferBroadcaster.getListenerCount() == 0)
+        if(mComplexSamplesBroadcaster.getListenerCount() == 0)
         {
             stop();
         }
@@ -154,7 +155,7 @@ public class SampleGenerator
      */
     public void setFrequency(long frequency)
     {
-        mOscillator.setFrequency(frequency);
+        mComplexOscillator.setFrequency(frequency);
     }
 
     /**
@@ -162,7 +163,7 @@ public class SampleGenerator
      */
     public long getFrequency()
     {
-        return (long)mOscillator.getFrequency();
+        return (long) mComplexOscillator.getFrequency();
     }
 
     /**
@@ -171,13 +172,13 @@ public class SampleGenerator
      */
     public void setSampleRate(int sampleRate)
     {
-        mOscillator.setSampleRate(sampleRate);
+        mComplexOscillator.setSampleRate(sampleRate);
         updateSamplesPerInterval();
     }
 
     public double getSampleRate()
     {
-        return mOscillator.getSampleRate();
+        return mComplexOscillator.getSampleRate();
     }
 
     /**
@@ -186,18 +187,15 @@ public class SampleGenerator
     public class Generator implements Runnable
     {
         private int mTriggerInterval = 0;
-        private ReusableComplexBufferQueue mReusableComplexBufferQueue = new ReusableComplexBufferQueue("SampleGenerator");
 
         @Override
         public void run()
         {
-            if(mComplexBufferBroadcaster.hasListeners())
+            if(mComplexSamplesBroadcaster.hasListeners())
             {
-                ReusableComplexBuffer reusableComplexBuffer = mReusableComplexBufferQueue.getBuffer(mSamplesPerInterval);
+                float[] samples = mComplexOscillator.generate(mSamplesPerInterval);
 
-                mOscillator.generateComplex(reusableComplexBuffer);
-
-                mComplexBufferBroadcaster.broadcast(reusableComplexBuffer);
+                mComplexSamplesBroadcaster.broadcast(new InterleavedComplexSamples(samples, System.currentTimeMillis()));
 
                 if(mSweepUpdateInterval != 0)
                 {
@@ -207,19 +205,19 @@ public class SampleGenerator
                     {
                         mTriggerInterval = 0;
 
-                        long updatedFrequency = (long)mOscillator.getFrequency() + mSweepUpdateInterval;
+                        long updatedFrequency = (long) mComplexOscillator.getFrequency() + mSweepUpdateInterval;
 
-                        if(updatedFrequency > mOscillator.getSampleRate() / 2)
+                        if(updatedFrequency > mComplexOscillator.getSampleRate() / 2)
                         {
-                            mOscillator.setFrequency(mOscillator.getSampleRate() / -2);
+                            mComplexOscillator.setFrequency(mComplexOscillator.getSampleRate() / -2);
                         }
-                        else if(updatedFrequency < mOscillator.getSampleRate() / -2)
+                        else if(updatedFrequency < mComplexOscillator.getSampleRate() / -2)
                         {
-                            mOscillator.setFrequency(mOscillator.getSampleRate() / 2);
+                            mComplexOscillator.setFrequency(mComplexOscillator.getSampleRate() / 2);
                         }
                         else
                         {
-                            mOscillator.setFrequency(updatedFrequency);
+                            mComplexOscillator.setFrequency(updatedFrequency);
                         }
                     }
                 }

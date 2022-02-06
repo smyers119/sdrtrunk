@@ -1,23 +1,20 @@
 /*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- *  * ******************************************************************************
- *  * Copyright (C) 2014-2019 Dennis Sheirer
- *  *
- *  * This program is free software: you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License as published by
- *  * the Free Software Foundation, either version 3 of the License, or
- *  * (at your option) any later version.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  * GNU General Public License for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *  * *****************************************************************************
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
  */
 package io.github.dsheirer.module.decode.p25.phase2;
 
@@ -25,7 +22,6 @@ import io.github.dsheirer.dsp.psk.DQPSKGardnerDemodulatorInstrumented;
 import io.github.dsheirer.dsp.psk.InterpolatingSampleBufferInstrumented;
 import io.github.dsheirer.dsp.psk.SymbolDecisionData;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
 import io.github.dsheirer.sample.complex.Complex;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 
@@ -35,7 +31,7 @@ public class P25P2DecoderHDQPSKInstrumented extends P25P2DecoderHDQPSK
     private Listener<Double> mPLLFrequencyListener;
     private Listener<Double> mSamplesPerSymbolListener;
     private Listener<Complex> mComplexSymbolListener;
-    private Listener<ReusableComplexBuffer> mFilteredSymbolListener;
+    private Listener<ComplexSamples> mFilteredSymbolListener;
     private Listener<SymbolDecisionData> mSymbolDecisionDataListener;
 
     /**
@@ -69,8 +65,7 @@ public class P25P2DecoderHDQPSKInstrumented extends P25P2DecoderHDQPSK
 
         if(mFilteredSymbolListener != null)
         {
-            //TODO: update instrumentation to use complex sample arrays
-//            mFilteredSymbolListener.receive(i, q);
+            mFilteredSymbolListener.receive(samples);
         }
 
         //Process the buffer for power measurements
@@ -129,7 +124,7 @@ public class P25P2DecoderHDQPSKInstrumented extends P25P2DecoderHDQPSK
         getDemodulator().setPLLFrequencyListener(listener);
     }
 
-    public void setFilteredBufferListener(Listener<ReusableComplexBuffer> listener)
+    public void setFilteredBufferListener(Listener<ComplexSamples> listener)
     {
         mFilteredSymbolListener = listener;
     }

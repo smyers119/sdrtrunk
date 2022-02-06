@@ -16,9 +16,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  * ****************************************************************************
  */
-package io.github.dsheirer.sample.adapter;
 
-public abstract class AbstractSampleAdapter<T>
+package io.github.dsheirer.dsp.oscillator;
+
+public class ScalarRealOscillator extends AbstractOscillator implements IRealOscillator
 {
-    public abstract T convert(byte[] sampleBytes);
+    /**
+     * Constructs an instance
+     *
+     * @param frequency in hertz
+     * @param sampleRate in hertz
+     */
+    public ScalarRealOscillator(double frequency, double sampleRate)
+    {
+        super(frequency, sampleRate);
+    }
+
+    @Override
+    public float[] generate(int sampleCount)
+    {
+        float[] samples = new float[sampleCount];
+
+        for(int samplePointer = 0; samplePointer < sampleCount; samplePointer++)
+        {
+            mCurrentPhase += mAnglePerSample;
+            mCurrentPhase %= TWO_PI;
+            samples[samplePointer] = (float)Math.sin(mCurrentPhase);
+        }
+
+        return samples;
+    }
 }

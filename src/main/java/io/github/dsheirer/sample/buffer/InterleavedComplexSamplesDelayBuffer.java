@@ -1,28 +1,33 @@
-/*******************************************************************************
- * sdr-trunk
- * Copyright (C) 2014-2018 Dennis Sheirer
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by  the Free Software Foundation, either version 3 of the License, or  (at your option) any
- * later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,  but WITHOUT ANY WARRANTY; without even the implied
- * warranty of  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License  along with this program.
- * If not, see <http://www.gnu.org/licenses/>
- *
- ******************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
 package io.github.dsheirer.sample.buffer;
 
+import io.github.dsheirer.sample.Broadcaster;
 import io.github.dsheirer.sample.Listener;
+import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.LinkedTransferQueue;
 
 /**
- * Delay buffer/queue for reusable complex buffers with support for pre-loading new buffer listeners (ie channels)
+ * Delay buffer/queue with support for pre-loading new listeners (ie channels)
  * with delayed sample buffers and broadcasting of incoming sample buffers to a list of listeners.
  *
  * This class is designed to compensate/account for any delays in processing of a control channel and subsequent
@@ -39,15 +44,13 @@ import java.util.concurrent.LinkedTransferQueue;
  * so as not to delay the stream of sample buffers.  Channel listeners are expected to implement buffer queue processing
  * on another thread.
  */
-public class ReusableComplexDelayBuffer implements Listener<ReusableComplexBuffer>
+public class InterleavedComplexSamplesDelayBuffer implements Listener<InterleavedComplexSamples>
 {
-    private final static Logger mLog = LoggerFactory.getLogger(ReusableComplexDelayBuffer.class);
+    private final static Logger mLog = LoggerFactory.getLogger(InterleavedComplexSamplesDelayBuffer.class);
 
-    private ReusableBufferBroadcaster<ReusableComplexBuffer> mBroadcaster = new ReusableBufferBroadcaster<>();
-    private LinkedTransferQueue<ActionRequest> mActionRequestQueue = new LinkedTransferQueue<>();
-    private ActionRequest mActionRequest;
-
-    private ReusableComplexBuffer[] mDelayBuffer;
+    private Broadcaster<InterleavedComplexSamples> mBroadcaster = new Broadcaster<>();
+    private LinkedTransferQueue<ActionRequest> mActionQueue = new LinkedTransferQueue<>();
+    private InterleavedComplexSamples[] mDelayBuffer;
     private int mDelayBufferPointer = 0;
     private long mBufferDuration;
 
@@ -57,9 +60,9 @@ public class ReusableComplexDelayBuffer implements Listener<ReusableComplexBuffe
      * @param size of the delay queue
      * @param bufferDuration in milliseconds for each complex buffer processed by this instance
      */
-    public ReusableComplexDelayBuffer(int size, long bufferDuration)
+    public InterleavedComplexSamplesDelayBuffer(int size, long bufferDuration)
     {
-        mDelayBuffer = new ReusableComplexBuffer[size];
+        mDelayBuffer = new InterleavedComplexSamples[size];
         mBufferDuration = bufferDuration;
     }
 
@@ -69,12 +72,13 @@ public class ReusableComplexDelayBuffer implements Listener<ReusableComplexBuffe
     public void dispose()
     {
         clearBuffer();
+        mBroadcaster.clear();
     }
 
     public void clear()
     {
         //Submit a clear buffer request to be processed upon the next buffer that arrives
-        mActionRequestQueue.offer(new ActionRequest());
+        mActionQueue.offer(new ActionRequest());
     }
 
     /**
@@ -84,59 +88,42 @@ public class ReusableComplexDelayBuffer implements Listener<ReusableComplexBuffe
     {
         for(int x = 0; x < mDelayBuffer.length; x++)
         {
-            if(mDelayBuffer[x] != null)
-            {
-                mDelayBuffer[x].decrementUserCount();
-                mDelayBuffer[x] = null;
-            }
+            mDelayBuffer[x] = null;
         }
 
         mDelayBufferPointer = 0;
     }
 
     @Override
-    public synchronized void receive(ReusableComplexBuffer reusableComplexBuffer)
+    public synchronized void receive(InterleavedComplexSamples samples)
     {
-        mActionRequest = mActionRequestQueue.poll();
+        ActionRequest actionRequest = mActionQueue.poll();
 
-        while(mActionRequest != null)
+        while(actionRequest != null)
         {
-            switch(mActionRequest.getAction())
+            switch(actionRequest.getAction())
             {
-                case ADD_USER:
-                    processNewListener(mActionRequest);
+                case ADD_LISTENER:
+                    processNewListener(actionRequest);
                     break;
-                case REMOVE_USER:
-                    mBroadcaster.removeListener(mActionRequest.getListener());
+                case REMOVE_LISTENER:
+                    mBroadcaster.removeListener(actionRequest.getListener());
                     break;
                 case CLEAR_BUFFER:
                     clearBuffer();
                     break;
             }
 
-            mActionRequest = mActionRequestQueue.poll();
+            actionRequest = mActionQueue.poll();
         }
 
-        //Increment user count before we hand it to the broadcaster so that we can keep it as a copy for the
-        //delay buffer
-        reusableComplexBuffer.incrementUserCount();
-
-        mBroadcaster.receive(reusableComplexBuffer);
-
-        //Decrement the user count on the oldest buffer before we replace it in the delay queue
-        if(mDelayBuffer[mDelayBufferPointer] != null)
-        {
-            mDelayBuffer[mDelayBufferPointer].decrementUserCount();
-        }
+        mBroadcaster.receive(samples);
 
         //Store the new buffer in the delay queue and increment the pointer
-        mDelayBuffer[mDelayBufferPointer++] = reusableComplexBuffer;
+        mDelayBuffer[mDelayBufferPointer++] = samples;
 
         //Wrap the delay buffer pointer as needed
-        if(mDelayBufferPointer >= mDelayBuffer.length)
-        {
-            mDelayBufferPointer = 0;
-        }
+        mDelayBufferPointer %= mDelayBuffer.length;
     }
 
     /**
@@ -153,23 +140,18 @@ public class ReusableComplexDelayBuffer implements Listener<ReusableComplexBuffe
      */
     private void processNewListener(ActionRequest listenerToAdd)
     {
-        ReusableComplexBuffer bufferToEvaluate;
+        InterleavedComplexSamples toEvaluate;
 
         int pointer = mDelayBufferPointer;
 
-        int preloadedBufferCount = 0;
-
         for(int x = 0; x < mDelayBuffer.length; x++)
         {
-            bufferToEvaluate = mDelayBuffer[pointer];
+            toEvaluate = mDelayBuffer[pointer];
 
-            if(bufferToEvaluate != null &&
-                (bufferToEvaluate.getTimestamp() >= listenerToAdd.getTimestamp() ||
-                    bufferToEvaluate.getTimestamp() + mBufferDuration >= listenerToAdd.getTimestamp()))
+            if(toEvaluate != null &&
+                ((toEvaluate.timestamp() + mBufferDuration) >= listenerToAdd.getTimestamp()))
             {
-                bufferToEvaluate.incrementUserCount();
-                listenerToAdd.getListener().receive(bufferToEvaluate);
-                preloadedBufferCount++;
+                listenerToAdd.getListener().receive(toEvaluate);
             }
 
             pointer++;
@@ -190,20 +172,20 @@ public class ReusableComplexDelayBuffer implements Listener<ReusableComplexBuffe
      * @param listener to add
      * @param timestamp of the oldest sample buffers to preload to the listener
      */
-    public void addListener(Listener<ReusableComplexBuffer> listener, long timestamp)
+    public void addListener(Listener<InterleavedComplexSamples> listener, long timestamp)
     {
-        mActionRequestQueue.add(new ActionRequest(listener, timestamp));
+        mActionQueue.add(new ActionRequest(listener, timestamp));
     }
 
     /**
      * Removes the listener from receiving sample buffers
      */
-    public void removeListener(Listener<ReusableComplexBuffer> listener)
+    public void removeListener(Listener<InterleavedComplexSamples> listener)
     {
-        mActionRequestQueue.add(new ActionRequest(listener));
+        mActionQueue.add(new ActionRequest(listener));
     }
 
-    private enum Action{ADD_USER, REMOVE_USER, CLEAR_BUFFER};
+    private enum Action{ADD_LISTENER, REMOVE_LISTENER, CLEAR_BUFFER};
 
     /**
      * Actions that must be completed on the incoming sample stream thread.
@@ -211,7 +193,7 @@ public class ReusableComplexDelayBuffer implements Listener<ReusableComplexBuffe
     public class ActionRequest
     {
         private Action mAction;
-        private Listener<ReusableComplexBuffer> mListener;
+        private Listener<InterleavedComplexSamples> mListener;
         private long mTimestamp;
 
         /**
@@ -219,9 +201,9 @@ public class ReusableComplexDelayBuffer implements Listener<ReusableComplexBuffe
          * @param listener to add
          * @param timestamp for the preloading buffers to the listener from the delay queue
          */
-        public ActionRequest(Listener<ReusableComplexBuffer> listener, long timestamp)
+        public ActionRequest(Listener<InterleavedComplexSamples> listener, long timestamp)
         {
-            mAction = Action.ADD_USER;
+            mAction = Action.ADD_LISTENER;
             mListener = listener;
             mTimestamp = timestamp;
         }
@@ -230,9 +212,9 @@ public class ReusableComplexDelayBuffer implements Listener<ReusableComplexBuffe
          * Creates a remove listener request
          * @param listener
          */
-        public ActionRequest(Listener<ReusableComplexBuffer> listener)
+        public ActionRequest(Listener<InterleavedComplexSamples> listener)
         {
-            mAction = Action.REMOVE_USER;
+            mAction = Action.REMOVE_LISTENER;
             mListener = listener;
         }
 
@@ -252,7 +234,7 @@ public class ReusableComplexDelayBuffer implements Listener<ReusableComplexBuffe
         /**
          * Listener to be added/removed
          */
-        public Listener<ReusableComplexBuffer> getListener()
+        public Listener<InterleavedComplexSamples> getListener()
         {
             return mListener;
         }
