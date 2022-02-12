@@ -18,10 +18,11 @@
  */
 package io.github.dsheirer.source.wave;
 
+import io.github.dsheirer.buffer.FloatNativeBuffer;
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.sample.ConversionUtils;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.SampleType;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.IControllableFileSource;
 import io.github.dsheirer.source.IFrameLocationListener;
 import io.github.dsheirer.source.Source;
@@ -49,7 +50,7 @@ public class ComplexWaveSource extends Source implements IControllableFileSource
     private int mBytesPerFrame;
     private int mFrameCounter = 0;
     private long mFrequency = 0;
-    private Listener<InterleavedComplexSamples> mListener;
+    private Listener<INativeBuffer> mListener;
     private AudioInputStream mInputStream;
     private File mFile;
     private boolean mAutoReplay;
@@ -275,7 +276,7 @@ public class ComplexWaveSource extends Source implements IControllableFileSource
                 }
 
                 float[] samples = ConversionUtils.convertFromSigned16BitSamples(buffer);
-                mListener.receive(new InterleavedComplexSamples(samples, System.currentTimeMillis()));
+                mListener.receive(new FloatNativeBuffer(samples, System.currentTimeMillis()));
             }
         }
     }
@@ -284,7 +285,7 @@ public class ComplexWaveSource extends Source implements IControllableFileSource
      * Registers the listener to receive sample buffers as they are read from
      * the wave file
      */
-    public void setListener(Listener<InterleavedComplexSamples> listener)
+    public void setListener(Listener<INativeBuffer> listener)
     {
         mListener = listener;
     }
@@ -292,7 +293,7 @@ public class ComplexWaveSource extends Source implements IControllableFileSource
     /**
      * Unregisters the listener from receiving sample buffers
      */
-    public void removeListener(Listener<InterleavedComplexSamples> listener)
+    public void removeListener(Listener<INativeBuffer> listener)
     {
         mListener = null;
     }

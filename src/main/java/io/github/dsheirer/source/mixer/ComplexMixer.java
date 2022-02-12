@@ -18,9 +18,9 @@
  */
 package io.github.dsheirer.source.mixer;
 
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.adapter.ComplexSampleAdapter;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
+import io.github.dsheirer.sample.adapter.ISampleAdapter;
 import io.github.dsheirer.source.SourceEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,7 @@ import javax.sound.sampled.TargetDataLine;
 public class ComplexMixer
 {
     private final static Logger mLog = LoggerFactory.getLogger(ComplexMixer.class);
-    private MixerReader<InterleavedComplexSamples> mMixerReader;
+    private MixerReader<INativeBuffer> mMixerReader;
     private String mName;
 
     /**
@@ -41,11 +41,11 @@ public class ComplexMixer
      * @param targetDataLine - mixer or sound card to be used
      * @param format - audio format
      * @param name - token name to use for this mixer
-     * @param complexSampleAdapter - adapter to convert byte array data read from the mixer into ReusableComplexBuffer.
+     * @param sampleAdapter - adapter to convert byte array data read from the mixer into ReusableComplexBuffer.
      */
-    public ComplexMixer(TargetDataLine targetDataLine, AudioFormat format, String name, ComplexSampleAdapter complexSampleAdapter)
+    public ComplexMixer(TargetDataLine targetDataLine, AudioFormat format, String name, ISampleAdapter sampleAdapter)
     {
-        mMixerReader = new MixerReader<InterleavedComplexSamples>(format, targetDataLine, complexSampleAdapter);
+        mMixerReader = new MixerReader<INativeBuffer>(format, targetDataLine, sampleAdapter);
         mName = name;
     }
 
@@ -76,7 +76,7 @@ public class ComplexMixer
         mMixerReader.stop();
     }
 
-    public void setBufferListener(Listener<InterleavedComplexSamples> listener)
+    public void setBufferListener(Listener<INativeBuffer> listener)
     {
         mMixerReader.setBufferListener(listener);
     }

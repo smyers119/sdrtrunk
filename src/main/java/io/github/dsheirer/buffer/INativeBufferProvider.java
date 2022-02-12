@@ -16,9 +16,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  * ****************************************************************************
  */
-package io.github.dsheirer.sample.adapter;
+package io.github.dsheirer.buffer;
 
-public abstract class AbstractSampleAdapter<T>
+import io.github.dsheirer.sample.Listener;
+
+/**
+ * Interface for a provider of interleaved complex samples
+ */
+public interface INativeBufferProvider
 {
-    public abstract T convert(byte[] sampleBytes);
+    /**
+     * Adds the listener to receive buffers
+     */
+    void addBufferListener(Listener<INativeBuffer> listener);
+
+    /**
+     * Removes the listener from receiving buffers
+     */
+    void removeBufferListener(Listener<INativeBuffer> listener);
+
+    /**
+     * Indicates if there are any buffer listeners registered
+     */
+    boolean hasBufferListeners();
 }

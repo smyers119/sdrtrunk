@@ -19,11 +19,10 @@
 
 package io.github.dsheirer.source.tuner.channel;
 
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.OverflowableTransferQueue;
-import io.github.dsheirer.sample.SampleUtils;
 import io.github.dsheirer.sample.complex.ComplexSamples;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.SourceEvent;
 import io.github.dsheirer.source.tuner.TunerController;
@@ -31,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -38,13 +38,12 @@ import java.util.List;
  * directly to the registered listener
  */
 public class PassThroughChannelSource extends TunerChannelSource implements ISourceEventListener,
-        Listener<InterleavedComplexSamples>
+        Listener<INativeBuffer>
 {
     private final static Logger mLog = LoggerFactory.getLogger(PassThroughChannelSource.class);
     private TunerController mTunerController;
-    private OverflowableTransferQueue<InterleavedComplexSamples> mBufferQueue =
+    private OverflowableTransferQueue<INativeBuffer> mBufferQueue =
             new OverflowableTransferQueue<>(500, 100);
-    private List<InterleavedComplexSamples> mComplexSamplesToProcess = new ArrayList<>();
     private Listener<ComplexSamples> mComplexSamplesListener;
 
     /**
@@ -94,17 +93,21 @@ public class PassThroughChannelSource extends TunerChannelSource implements ISou
     @Override
     protected void processSamples()
     {
-        mBufferQueue.drainTo(mComplexSamplesToProcess);
+        List<INativeBuffer> buffers = new ArrayList<>();
+        mBufferQueue.drainTo(buffers);
 
-        for(InterleavedComplexSamples complexSamples: mComplexSamplesToProcess)
+        if(mComplexSamplesListener != null)
         {
-            if(mComplexSamplesListener != null)
+            for(INativeBuffer buffer: buffers)
             {
-                mComplexSamplesListener.receive(SampleUtils.deinterleave(complexSamples.samples()));
+                Iterator<ComplexSamples> iterator = buffer.iterator();
+
+                while(iterator.hasNext())
+                {
+                    mComplexSamplesListener.receive(iterator.next());
+                }
             }
         }
-
-        mComplexSamplesToProcess.clear();
     }
 
     @Override
@@ -114,8 +117,8 @@ public class PassThroughChannelSource extends TunerChannelSource implements ISou
     }
 
     @Override
-    public void receive(InterleavedComplexSamples complexSamples)
+    public void receive(INativeBuffer buffer)
     {
-        mBufferQueue.offer(complexSamples);
+        mBufferQueue.offer(buffer);
     }
 }

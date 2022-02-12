@@ -18,11 +18,12 @@
  */
 package io.github.dsheirer.gui.channelizer;
 
+import io.github.dsheirer.buffer.FloatNativeBuffer;
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.preference.UserPreferences;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.SampleType;
 import io.github.dsheirer.sample.complex.ComplexSamples;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.settings.SettingsManager;
 import io.github.dsheirer.source.ISourceEventProcessor;
 import io.github.dsheirer.source.SourceEvent;
@@ -48,7 +49,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ChannelizerViewer2 extends JFrame
@@ -317,7 +317,7 @@ public class ChannelizerViewer2 extends JFrame
         return tunerChannels;
     }
 
-    public class PrimarySpectrumPanel extends JPanel implements Listener<InterleavedComplexSamples>, ISourceEventProcessor
+    public class PrimarySpectrumPanel extends JPanel implements Listener<INativeBuffer>, ISourceEventProcessor
     {
         private DFTProcessor mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
         private ComplexDecibelConverter mComplexDecibelConverter = new ComplexDecibelConverter();
@@ -341,9 +341,9 @@ public class ChannelizerViewer2 extends JFrame
         }
 
         @Override
-        public void receive(InterleavedComplexSamples reusableComplexBuffer)
+        public void receive(INativeBuffer nativeBuffer)
         {
-            mDFTProcessor.receive(reusableComplexBuffer);
+            mDFTProcessor.receive(nativeBuffer);
         }
 
         @Override
@@ -353,7 +353,7 @@ public class ChannelizerViewer2 extends JFrame
         }
     }
 
-    public class ChannelPanel extends JPanel implements Listener<ComplexSamples>, ISourceEventProcessor
+    public class ChannelPanel extends JPanel implements Listener<INativeBuffer>, ISourceEventProcessor
     {
         private TunerChannelSource mSource;
         private DFTProcessor mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
@@ -379,19 +379,9 @@ public class ChannelizerViewer2 extends JFrame
             if(mSource != null)
             {
                 mLog.debug("Channel: " + mSource.getTunerChannel() + " Rate:" + mSource.getSampleRate());
-                mSource.setListener(new Listener<ComplexSamples>()
+                mSource.setListener((Listener<ComplexSamples>) complexSamples ->
                 {
-                    @Override
-                    public void receive(ComplexSamples complexSamples)
-                    {
-                        if(mLoggingEnabled)
-                        {
-                            mLog.debug("Samples:" + Arrays.toString(complexSamples.i()) + " " +
-                                    Arrays.toString(complexSamples.q()));
-                        }
-
-                        mDFTProcessor.receive(complexSamples.toInterleaved());
-                    }
+                    mDFTProcessor.receive(new FloatNativeBuffer(complexSamples.toInterleaved()));
                 });
 
                 mSource.start();
@@ -414,14 +404,7 @@ public class ChannelizerViewer2 extends JFrame
             }
 
             mLoggingButton = new JToggleButton("Logging");
-            mLoggingButton.addActionListener(new ActionListener()
-            {
-                @Override
-                public void actionPerformed(ActionEvent e)
-                {
-                    mLoggingEnabled = mLoggingButton.isSelected();
-                }
-            });
+            mLoggingButton.addActionListener(e -> mLoggingEnabled = mLoggingButton.isSelected());
         }
 
         public TunerChannelSource getSource()
@@ -435,9 +418,9 @@ public class ChannelizerViewer2 extends JFrame
         }
 
         @Override
-        public void receive(ComplexSamples complexSamples)
+        public void receive(INativeBuffer nativeBuffer)
         {
-            mDFTProcessor.receive(complexSamples.toInterleaved());
+            mDFTProcessor.receive(nativeBuffer);
         }
 
         @Override

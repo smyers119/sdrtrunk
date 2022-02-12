@@ -18,8 +18,8 @@
  */
 package io.github.dsheirer.source.tuner.usb;
 
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.tuner.TunerController;
 
 public abstract class USBTunerController extends TunerController
@@ -44,7 +44,7 @@ public abstract class USBTunerController extends TunerController
      * Adds the IQ buffer listener and automatically starts buffer transfer processing, if not already started.
      */
     @Override
-    public void addBufferListener(Listener<InterleavedComplexSamples> listener)
+    public void addBufferListener(Listener<INativeBuffer> listener)
     {
         boolean hasExistingListeners = hasBufferListeners();
 
@@ -60,7 +60,7 @@ public abstract class USBTunerController extends TunerController
      * Removes the IQ buffer listener and stops buffer transfer processing if there are no more listeners.
      */
     @Override
-    public void removeBufferListener(Listener<InterleavedComplexSamples> listener)
+    public void removeBufferListener(Listener<INativeBuffer> listener)
     {
         super.removeBufferListener(listener);
 

@@ -18,6 +18,8 @@
  */
 package io.github.dsheirer.gui.channelizer;
 
+import io.github.dsheirer.buffer.FloatNativeBuffer;
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.channelizer.TwoChannelSynthesizerM2;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
@@ -138,7 +140,7 @@ public class SynthesizerViewer extends JFrame
         return mChannel2Panel;
     }
 
-    public class PrimarySpectrumPanel extends JPanel implements Listener<ComplexSamples>
+    public class PrimarySpectrumPanel extends JPanel implements Listener<INativeBuffer>
     {
         private DFTProcessor mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
         private ComplexDecibelConverter mComplexDecibelConverter = new ComplexDecibelConverter();
@@ -172,13 +174,13 @@ public class SynthesizerViewer extends JFrame
         }
 
         @Override
-        public void receive(ComplexSamples complexSamples)
+        public void receive(INativeBuffer nativeBuffer)
         {
-            mDFTProcessor.receive(complexSamples.toInterleaved());
+            mDFTProcessor.receive(nativeBuffer);
         }
     }
 
-    public class ChannelPanel extends JPanel implements Listener<ComplexSamples>
+    public class ChannelPanel extends JPanel implements Listener<INativeBuffer>
     {
         private DFTProcessor mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
         private ComplexDecibelConverter mComplexDecibelConverter = new ComplexDecibelConverter();
@@ -206,9 +208,9 @@ public class SynthesizerViewer extends JFrame
         }
 
         @Override
-        public void receive(ComplexSamples complexSamples)
+        public void receive(INativeBuffer nativeBuffer)
         {
-            mDFTProcessor.receive(complexSamples.toInterleaved());
+            mDFTProcessor.receive(nativeBuffer);
         }
     }
 
@@ -293,11 +295,11 @@ public class SynthesizerViewer extends JFrame
             ComplexSamples channel2Buffer = getChannel2ControlPanel().getOscillator().generateComplexSamples(mSamplesPerCycle);
 
             ComplexSamples synthesizedBuffer = mSynthesizer.process(channel1Buffer, channel2Buffer);
-            getChannel1Panel().receive(channel1Buffer);
+            getChannel1Panel().receive(new FloatNativeBuffer(channel1Buffer, System.currentTimeMillis()));
 
-            getChannel2Panel().receive(channel2Buffer);
+            getChannel2Panel().receive(new FloatNativeBuffer(channel2Buffer, System.currentTimeMillis()));
 
-            getSpectrumPanel().receive(synthesizedBuffer);
+            getSpectrumPanel().receive(new FloatNativeBuffer(synthesizedBuffer, System.currentTimeMillis()));
         }
     }
 

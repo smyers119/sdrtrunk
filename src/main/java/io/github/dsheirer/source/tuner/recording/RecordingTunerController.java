@@ -18,8 +18,8 @@
  */
 package io.github.dsheirer.source.tuner.recording;
 
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.SourceEvent;
 import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.tuner.TunerController;
@@ -124,7 +124,7 @@ public class RecordingTunerController extends TunerController
     }
 
     @Override
-    public void addBufferListener(Listener<InterleavedComplexSamples> listener)
+    public void addBufferListener(Listener<INativeBuffer> listener)
     {
         super.addBufferListener(listener);
 
@@ -139,13 +139,13 @@ public class RecordingTunerController extends TunerController
     }
 
     @Override
-    public void removeBufferListener(Listener<InterleavedComplexSamples> listener)
+    public void removeBufferListener(Listener<INativeBuffer> listener)
     {
         super.removeBufferListener(listener);
 
-        if(!mComplexSamplesBroadcaster.hasListeners() && mComplexWaveSource != null)
+        if(!mNativeBufferBroadcaster.hasListeners() && mComplexWaveSource != null)
         {
-            mComplexWaveSource.setListener((Listener<InterleavedComplexSamples>)null);
+            mComplexWaveSource.setListener((Listener<INativeBuffer>)null);
             mComplexWaveSource.stop();
             mRunning = false;
         }

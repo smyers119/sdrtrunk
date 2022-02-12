@@ -18,9 +18,9 @@
  */
 package io.github.dsheirer.sample.buffer;
 
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.sample.Broadcaster;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,13 +44,13 @@ import java.util.concurrent.LinkedTransferQueue;
  * so as not to delay the stream of sample buffers.  Channel listeners are expected to implement buffer queue processing
  * on another thread.
  */
-public class InterleavedComplexSamplesDelayBuffer implements Listener<InterleavedComplexSamples>
+public class INativeSampleDelayBuffer implements Listener<INativeBuffer>
 {
-    private final static Logger mLog = LoggerFactory.getLogger(InterleavedComplexSamplesDelayBuffer.class);
+    private final static Logger mLog = LoggerFactory.getLogger(INativeSampleDelayBuffer.class);
 
-    private Broadcaster<InterleavedComplexSamples> mBroadcaster = new Broadcaster<>();
+    private Broadcaster<INativeBuffer> mBroadcaster = new Broadcaster<>();
     private LinkedTransferQueue<ActionRequest> mActionQueue = new LinkedTransferQueue<>();
-    private InterleavedComplexSamples[] mDelayBuffer;
+    private INativeBuffer[] mDelayBuffer;
     private int mDelayBufferPointer = 0;
     private long mBufferDuration;
 
@@ -60,9 +60,9 @@ public class InterleavedComplexSamplesDelayBuffer implements Listener<Interleave
      * @param size of the delay queue
      * @param bufferDuration in milliseconds for each complex buffer processed by this instance
      */
-    public InterleavedComplexSamplesDelayBuffer(int size, long bufferDuration)
+    public INativeSampleDelayBuffer(int size, long bufferDuration)
     {
-        mDelayBuffer = new InterleavedComplexSamples[size];
+        mDelayBuffer = new INativeBuffer[size];
         mBufferDuration = bufferDuration;
     }
 
@@ -95,7 +95,7 @@ public class InterleavedComplexSamplesDelayBuffer implements Listener<Interleave
     }
 
     @Override
-    public synchronized void receive(InterleavedComplexSamples samples)
+    public synchronized void receive(INativeBuffer samples)
     {
         ActionRequest actionRequest = mActionQueue.poll();
 
@@ -140,7 +140,7 @@ public class InterleavedComplexSamplesDelayBuffer implements Listener<Interleave
      */
     private void processNewListener(ActionRequest listenerToAdd)
     {
-        InterleavedComplexSamples toEvaluate;
+        INativeBuffer toEvaluate;
 
         int pointer = mDelayBufferPointer;
 
@@ -149,7 +149,7 @@ public class InterleavedComplexSamplesDelayBuffer implements Listener<Interleave
             toEvaluate = mDelayBuffer[pointer];
 
             if(toEvaluate != null &&
-                ((toEvaluate.timestamp() + mBufferDuration) >= listenerToAdd.getTimestamp()))
+                ((toEvaluate.getTimestamp() + mBufferDuration) >= listenerToAdd.getTimestamp()))
             {
                 listenerToAdd.getListener().receive(toEvaluate);
             }
@@ -172,7 +172,7 @@ public class InterleavedComplexSamplesDelayBuffer implements Listener<Interleave
      * @param listener to add
      * @param timestamp of the oldest sample buffers to preload to the listener
      */
-    public void addListener(Listener<InterleavedComplexSamples> listener, long timestamp)
+    public void addListener(Listener<INativeBuffer> listener, long timestamp)
     {
         mActionQueue.add(new ActionRequest(listener, timestamp));
     }
@@ -180,7 +180,7 @@ public class InterleavedComplexSamplesDelayBuffer implements Listener<Interleave
     /**
      * Removes the listener from receiving sample buffers
      */
-    public void removeListener(Listener<InterleavedComplexSamples> listener)
+    public void removeListener(Listener<INativeBuffer> listener)
     {
         mActionQueue.add(new ActionRequest(listener));
     }
@@ -190,10 +190,10 @@ public class InterleavedComplexSamplesDelayBuffer implements Listener<Interleave
     /**
      * Actions that must be completed on the incoming sample stream thread.
      */
-    public class ActionRequest
+    public class ActionRequest<T extends INativeBuffer>
     {
         private Action mAction;
-        private Listener<InterleavedComplexSamples> mListener;
+        private Listener<T> mListener;
         private long mTimestamp;
 
         /**
@@ -201,7 +201,7 @@ public class InterleavedComplexSamplesDelayBuffer implements Listener<Interleave
          * @param listener to add
          * @param timestamp for the preloading buffers to the listener from the delay queue
          */
-        public ActionRequest(Listener<InterleavedComplexSamples> listener, long timestamp)
+        public ActionRequest(Listener<T> listener, long timestamp)
         {
             mAction = Action.ADD_LISTENER;
             mListener = listener;
@@ -212,7 +212,7 @@ public class InterleavedComplexSamplesDelayBuffer implements Listener<Interleave
          * Creates a remove listener request
          * @param listener
          */
-        public ActionRequest(Listener<InterleavedComplexSamples> listener)
+        public ActionRequest(Listener<T> listener)
         {
             mAction = Action.REMOVE_LISTENER;
             mListener = listener;
@@ -234,7 +234,7 @@ public class InterleavedComplexSamplesDelayBuffer implements Listener<Interleave
         /**
          * Listener to be added/removed
          */
-        public Listener<InterleavedComplexSamples> getListener()
+        public Listener<T> getListener()
         {
             return mListener;
         }

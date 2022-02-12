@@ -18,7 +18,6 @@
  */
 package io.github.dsheirer.audio.invert;
 
-import io.github.dsheirer.dsp.filter.Filters;
 import io.github.dsheirer.dsp.filter.FloatFIRFilter;
 import io.github.dsheirer.dsp.oscillator.IRealOscillator;
 import io.github.dsheirer.dsp.oscillator.OscillatorFactory;
@@ -30,6 +29,25 @@ import io.github.dsheirer.sample.real.RealSampleListener;
  */
 public class AudioInverter implements RealSampleListener
 {
+	private static final float[] LOW_PASS_FILTER = new float[] { -0.0052419787903715655f,
+			-0.0003789909443307852f,  0.0012970137854134386f,  0.004210460544067679f,
+			0.008221266221665309f,   0.012951576579356689f,   0.017794312853913318f,
+			0.021959871931790928f,   0.024583800118549094f,   0.024878144443784132f,
+			0.022296319647647538f,   0.016685495012933472f,   0.008390268267799136f,
+			-0.001718264469387386f,  -0.012288389660616603f,  -0.02161633130497537f,
+			-0.027882128567957774f, 	-0.02943377233328899f,	-0.025006516193566884f,
+			-0.014040074880106284f,   0.0032217508351258103f,  0.025660031586092195f,
+			0.05136009984280478f,    0.0778336106888181f,     0.10230926486919244f,
+			0.12209961841343948f,    0.13496813439824185f,    0.13943117253534673f,
+			0.13496813439824185f,    0.12209961841343948f,    0.10230926486919244f,
+			0.0778336106888181f,     0.05136009984280478f,    0.025660031586092195f,
+			0.0032217508351258103f, -0.014040074880106284f,  -0.025006516193566884f,
+			-0.02943377233328899f,   -0.027882128567957774f,  -0.02161633130497537f,
+			-0.012288389660616603f, 	-0.001718264469387386f,   0.008390268267799136f,
+			0.016685495012933472f,   0.022296319647647538f,   0.024878144443784132f,
+			0.024583800118549094f,   0.021959871931790928f,   0.017794312853913318f,
+			0.012951576579356689f,   0.008221266221665309f,   0.004210460544067679f,
+			0.0012970137854134386f, -0.0003789909443307852f, -0.0052419787903715655f };
 	private IRealOscillator mSineWaveGenerator;
 	private FloatFIRFilter mPostInversionLowPassFilter;
 	private RealSampleListener mListener;
@@ -37,10 +55,7 @@ public class AudioInverter implements RealSampleListener
 	public AudioInverter( int inversionFrequency, int sampleRate )
 	{
 		mSineWaveGenerator = OscillatorFactory.getRealOscillator( inversionFrequency, sampleRate );
-		
-		mPostInversionLowPassFilter = new FloatFIRFilter( 
-				Filters.FIRLP_55TAP_48000FS_3000FC.getCoefficients(), 1.04f );
-
+		mPostInversionLowPassFilter = new FloatFIRFilter(LOW_PASS_FILTER, 1.04f );
 		mPostInversionLowPassFilter.setListener( new FilteredSampleProcessor() );
 	}
 	

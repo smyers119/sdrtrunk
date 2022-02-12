@@ -18,11 +18,12 @@
  */
 package io.github.dsheirer.source.tuner.test;
 
+import io.github.dsheirer.buffer.FloatNativeBuffer;
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.dsp.oscillator.IComplexOscillator;
 import io.github.dsheirer.dsp.oscillator.OscillatorFactory;
 import io.github.dsheirer.sample.Broadcaster;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.util.ThreadPool;
 import org.apache.commons.math3.util.FastMath;
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ public class SampleGenerator
 {
     private final static Logger mLog = LoggerFactory.getLogger(SampleGenerator.class);
 
-    private Broadcaster<InterleavedComplexSamples> mComplexSamplesBroadcaster = new Broadcaster<>();
+    private Broadcaster<INativeBuffer> mNativeBufferBroadcaster = new Broadcaster<>();
     private IComplexOscillator mComplexOscillator;
     private int mSweepUpdateInterval;
     private long mInterval;
@@ -126,11 +127,11 @@ public class SampleGenerator
      *
      * @param listener to receive complex sample buffers
      */
-    public void addListener(Listener<InterleavedComplexSamples> listener)
+    public void addListener(Listener<INativeBuffer> listener)
     {
-        mComplexSamplesBroadcaster.addListener(listener);
+        mNativeBufferBroadcaster.addListener(listener);
 
-        if(mComplexSamplesBroadcaster.getListenerCount() == 1)
+        if(mNativeBufferBroadcaster.getListenerCount() == 1)
         {
             start();
         }
@@ -139,11 +140,11 @@ public class SampleGenerator
     /**
      * Removes the listener and stops the sample generator if there are no more listeners.
      */
-    public void removeListener(Listener<InterleavedComplexSamples> listener)
+    public void removeListener(Listener<INativeBuffer> listener)
     {
-        mComplexSamplesBroadcaster.removeListener(listener);
+        mNativeBufferBroadcaster.removeListener(listener);
 
-        if(mComplexSamplesBroadcaster.getListenerCount() == 0)
+        if(mNativeBufferBroadcaster.getListenerCount() == 0)
         {
             stop();
         }
@@ -191,11 +192,15 @@ public class SampleGenerator
         @Override
         public void run()
         {
-            if(mComplexSamplesBroadcaster.hasListeners())
+            if(mNativeBufferBroadcaster.hasListeners())
             {
                 float[] samples = mComplexOscillator.generate(mSamplesPerInterval);
 
-                mComplexSamplesBroadcaster.broadcast(new InterleavedComplexSamples(samples, System.currentTimeMillis()));
+                long now = System.currentTimeMillis();
+
+                FloatNativeBuffer buffer = new FloatNativeBuffer(samples, now);
+
+                mNativeBufferBroadcaster.broadcast(buffer);
 
                 if(mSweepUpdateInterval != 0)
                 {

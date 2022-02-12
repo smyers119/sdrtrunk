@@ -16,10 +16,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  * ****************************************************************************
  */
-package io.github.dsheirer.sample.adapter;
 
+package io.github.dsheirer.source.tuner.usb.converter;
+
+import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 
-public abstract class ComplexSampleAdapter extends AbstractSampleAdapter<InterleavedComplexSamples>
+import java.util.List;
+
+/**
+ * Base class for native samples byte buffer.  This class holds a copy of the byte array of samples
+ * that was copied from a native byte buffer into the JVM heap space.
+ *
+ * Consumers of this sample buffer must make a copy of the contents in either interleaved or non-interleaved
+ * sample array buffers.
+ */
+public abstract class NativeSampleBuffer
 {
+    private byte[] mSamples;
+
+    public NativeSampleBuffer(byte[] samples)
+    {
+        mSamples = samples;
+    }
+
+    protected byte[] getSamples()
+    {
+        return mSamples;
+    }
+
+    public abstract List<ComplexSamples> convert();
+
+    public abstract List<InterleavedComplexSamples> convertInterleaved();
 }

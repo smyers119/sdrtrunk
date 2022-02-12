@@ -18,11 +18,11 @@
  */
 package io.github.dsheirer.source.tuner.usb;
 
+import io.github.dsheirer.buffer.INativeBuffer;
+import io.github.dsheirer.buffer.INativeBufferFactory;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.tuner.ITunerErrorListener;
 import io.github.dsheirer.source.tuner.TunerManager;
-import io.github.dsheirer.source.tuner.usb.converter.NativeBufferConverter;
 import io.github.dsheirer.util.ThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,13 +56,13 @@ public class USBTransferProcessor implements TransferCallback
     private List<Transfer> mTransfersToDispose = new ArrayList<>();
     private List<Transfer> mTransfersToSubmit = new ArrayList<>();
 
-    //Tuner format-specific byte buffer to IQ float sample converter
-    private NativeBufferConverter mNativeBufferConverter;
+    //Tuner specific native buffer factory for processing/conversion of raw samples
+    private INativeBufferFactory mNativeBufferFactory;
 
     //Byte array transfer buffers size in bytes
     private int mBufferSize;
 
-    private Listener<InterleavedComplexSamples> mComplexBufferListener;
+    private Listener<INativeBuffer> mNativeBufferListener;
 
     //Handle to the USB bulk transfer device
     private DeviceHandle mUsbBulkTransferDeviceHandle;
@@ -81,16 +81,16 @@ public class USBTransferProcessor implements TransferCallback
      *
      * @param deviceName to use when logging information or errors
      * @param usbBulkTransferDeviceHandle to the USB bulk transfer device
-     * @param nativeBufferConverter specific to the tuner's byte buffer format for converting to floating point I/Q samples
+     * @param nativeBufferFactory specific to the tuner's byte buffer format for converting to floating point I/Q samples
      * @param bufferSize in bytes.  Should be a multiple of two: 65536, 131072 or 262144.
      */
     public USBTransferProcessor(String deviceName, DeviceHandle usbBulkTransferDeviceHandle,
-                                NativeBufferConverter nativeBufferConverter, int bufferSize,
+                                INativeBufferFactory nativeBufferFactory, int bufferSize,
                                 ITunerErrorListener tunerErrorListener)
     {
         mDeviceName = deviceName;
         mUsbBulkTransferDeviceHandle = usbBulkTransferDeviceHandle;
-        mNativeBufferConverter = nativeBufferConverter;
+        mNativeBufferFactory = nativeBufferFactory;
         mBufferSize = bufferSize;
         mITunerErrorListener = tunerErrorListener;
     }
@@ -355,11 +355,11 @@ public class USBTransferProcessor implements TransferCallback
     /**
      * Sets the listener and auto-starts the buffer processor
      */
-    public void setListener(Listener<InterleavedComplexSamples> listener)
+    public void setListener(Listener<INativeBuffer> listener)
     {
-        if(mComplexBufferListener == null || !mComplexBufferListener.equals(listener))
+        if(mNativeBufferListener == null || !mNativeBufferListener.equals(listener))
         {
-            mComplexBufferListener = listener;
+            mNativeBufferListener = listener;
 
             boolean success = start();
 
@@ -375,10 +375,10 @@ public class USBTransferProcessor implements TransferCallback
      */
     public void removeListener()
     {
-        if(mComplexBufferListener != null)
+        if(mNativeBufferListener != null)
         {
             stop();
-            mComplexBufferListener = null;
+            mNativeBufferListener = null;
         }
     }
 
@@ -552,14 +552,13 @@ public class USBTransferProcessor implements TransferCallback
                 {
                     if(mRunning.get())
                     {
-                        if(mComplexBufferListener != null)
+                        if(mNativeBufferListener != null)
                         {
-                            ByteBuffer nativeBuffer = transfer.buffer();
+                            byte[] samples = new byte[transfer.buffer().capacity()];
+                            transfer.buffer().get(samples);
 
-                            InterleavedComplexSamples complexSamples =
-                                    mNativeBufferConverter.convert(nativeBuffer, transfer.actualLength());
-
-                            mComplexBufferListener.receive(complexSamples);
+                            INativeBuffer nativeBuffer = mNativeBufferFactory.getBuffer(samples, System.currentTimeMillis());
+                            mNativeBufferListener.receive(nativeBuffer);
                         }
                     }
 

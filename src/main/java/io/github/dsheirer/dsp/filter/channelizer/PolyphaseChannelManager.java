@@ -18,6 +18,8 @@
  */
 package io.github.dsheirer.dsp.filter.channelizer;
 
+import io.github.dsheirer.buffer.INativeBuffer;
+import io.github.dsheirer.buffer.INativeBufferProvider;
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.channelizer.output.IPolyphaseChannelOutputProcessor;
 import io.github.dsheirer.dsp.filter.channelizer.output.OneChannelOutputProcessor;
@@ -25,7 +27,6 @@ import io.github.dsheirer.dsp.filter.channelizer.output.TwoChannelOutputProcesso
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.sample.Broadcaster;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.IInterleavedComplexSamplesProvider;
 import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.ISourceEventProcessor;
 import io.github.dsheirer.source.Source;
@@ -39,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -72,32 +74,31 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
     private static final int POLYPHASE_SYNTHESIZER_TAPS_PER_CHANNEL = 9;
 
     private Broadcaster<SourceEvent> mSourceEventBroadcaster = new Broadcaster<>();
-    private IInterleavedComplexSamplesProvider mComplexSamplesProvider;
+    private INativeBufferProvider mNativeBufferProvider;
     private List<PolyphaseChannelSource> mChannelSources = new CopyOnWriteArrayList<>();
     private ChannelCalculator mChannelCalculator;
     private ComplexPolyphaseChannelizerM2 mPolyphaseChannelizer;
     private ChannelSourceEventListener mChannelSourceEventListener = new ChannelSourceEventListener();
     private BufferSourceEventMonitor mBufferSourceEventMonitor = new BufferSourceEventMonitor();
-    private ContinuousBufferProcessor<InterleavedComplexSamples> mBufferProcessor;
+    private ContinuousBufferProcessor<INativeBuffer> mBufferProcessor;
     private Map<Integer,float[]> mOutputProcessorFilters = new HashMap<>();
 
     /**
      * Creates a polyphase channel manager instance.
      *
-     * @param complexSamplesProvider (ie tuner) that supports register/deregister for reusable baseband sample buffer
+     * @param nativeBufferProvider (ie tuner) that supports register/deregister for reusable baseband sample buffer
      * streams
      * @param frequency of the baseband complex buffer sample stream (ie center frequency)
      * @param sampleRate of the baseband complex buffer sample stream
      */
-    public PolyphaseChannelManager(IInterleavedComplexSamplesProvider complexSamplesProvider,
-                                   long frequency, double sampleRate)
+    public PolyphaseChannelManager(INativeBufferProvider nativeBufferProvider, long frequency, double sampleRate)
     {
-        if(complexSamplesProvider == null)
+        if(nativeBufferProvider == null)
         {
             throw new IllegalArgumentException("Complex buffer provider argument cannot be null");
         }
 
-        mComplexSamplesProvider = complexSamplesProvider;
+        mNativeBufferProvider = nativeBufferProvider;
 
         int channelCount = (int)(sampleRate / MINIMUM_CHANNEL_BANDWIDTH);
 
@@ -237,7 +238,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
             //If this is the first channel, register to start the sample buffers flowing
             if(mPolyphaseChannelizer.getRegisteredChannelCount() == 1)
             {
-                mComplexSamplesProvider.addBufferListener(mBufferProcessor);
+                mNativeBufferProvider.addBufferListener(mBufferProcessor);
                 mPolyphaseChannelizer.start();
                 mBufferProcessor.start();
             }
@@ -261,7 +262,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
             //If this is the last/only channel, deregister to stop the sample buffers
             if(mPolyphaseChannelizer.getRegisteredChannelCount() == 0)
             {
-                mComplexSamplesProvider.removeBufferListener(mBufferProcessor);
+                mNativeBufferProvider.removeBufferListener(mBufferProcessor);
                 mBufferProcessor.stop();
                 mPolyphaseChannelizer.stop();
             }
@@ -561,7 +562,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
      * that they can be processed on the buffer processor calling thread, avoiding unnecessary locks on the channelizer
      * and/or the channel sources and output processors.
      */
-    public class BufferSourceEventMonitor implements Listener<List<InterleavedComplexSamples>>
+    public class BufferSourceEventMonitor implements Listener<List<INativeBuffer>>
     {
         private Queue<SourceEvent> mQueuedSourceEvents = new ConcurrentLinkedQueue<>();
 
@@ -575,7 +576,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
         }
 
         @Override
-        public void receive(List<InterleavedComplexSamples> complexSamplesList)
+        public void receive(List<INativeBuffer> nativeBufferList)
         {
             try
             {
@@ -595,12 +596,16 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
                     queuedSourceEvent = mQueuedSourceEvents.poll();
                 }
 
-                for(InterleavedComplexSamples complexSamples: complexSamplesList)
+                for(INativeBuffer nativeBuffer: nativeBufferList)
                 {
                     if(mPolyphaseChannelizer != null)
                     {
-                        //User count management is handled by the channelizer
-                        mPolyphaseChannelizer.receive(complexSamples);
+                        Iterator<InterleavedComplexSamples> iterator = nativeBuffer.iteratorInterleaved();
+
+                        while(iterator.hasNext())
+                        {
+                            mPolyphaseChannelizer.receive(iterator.next());
+                        }
                     }
                 }
             }

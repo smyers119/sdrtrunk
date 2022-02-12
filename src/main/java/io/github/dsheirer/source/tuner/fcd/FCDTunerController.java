@@ -18,9 +18,9 @@
  */
 package io.github.dsheirer.source.tuner.fcd;
 
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.adapter.ComplexShortAdapter;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.mixer.ComplexMixer;
 import io.github.dsheirer.source.tuner.MixerTunerType;
@@ -94,7 +94,7 @@ public abstract class FCDTunerController extends TunerController
 
         mComplexMixer.setBufferSize(tunerType.getAudioFormat().getFrameSize() * getBufferSampleCount());
 
-        mComplexMixer.setBufferListener(mComplexSamplesBroadcaster);
+        mComplexMixer.setBufferListener(mNativeBufferBroadcaster);
     }
 
     @Override
@@ -107,7 +107,7 @@ public abstract class FCDTunerController extends TunerController
      * Overrides the super class functionality to auto-start the complex mixer and provide samples to listeners
      */
     @Override
-    public void addBufferListener(Listener<InterleavedComplexSamples> listener)
+    public void addBufferListener(Listener<INativeBuffer> listener)
     {
         boolean hasExistingListeners = hasBufferListeners();
 
@@ -124,7 +124,7 @@ public abstract class FCDTunerController extends TunerController
      * more registered listeners
      */
     @Override
-    public void removeBufferListener(Listener<InterleavedComplexSamples> listener)
+    public void removeBufferListener(Listener<INativeBuffer> listener)
     {
         super.removeBufferListener(listener);
 

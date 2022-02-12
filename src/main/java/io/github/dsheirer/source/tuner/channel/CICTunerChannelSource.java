@@ -18,6 +18,7 @@
  */
 package io.github.dsheirer.source.tuner.channel;
 
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.dsp.filter.cic.PrimeCicDecimationFilter;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.dsp.mixer.ComplexMixer;
@@ -27,10 +28,10 @@ import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.OverflowableTransferQueue;
 import io.github.dsheirer.sample.buffer.ComplexSamplesRepackager;
 import io.github.dsheirer.sample.complex.ComplexSamples;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.SourceEvent;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -38,7 +39,7 @@ import java.util.List;
  * CIC decimation filter that requires the decimation rate to be an integer multiple.  Sample buffer processing
  * occurs on a scheduled runnable thread.
  */
-public class CICTunerChannelSource extends TunerChannelSource implements Listener<InterleavedComplexSamples>
+public class CICTunerChannelSource<T extends INativeBuffer> extends TunerChannelSource implements Listener<T>
 {
     //Maximum number of filled buffers for the blocking queue
     private static final int BUFFER_MAX_CAPACITY = 300;
@@ -48,7 +49,7 @@ public class CICTunerChannelSource extends TunerChannelSource implements Listene
 
     //Samples repackager is set to 2048 (a power of 2) to align with channel processing chain requirements.
     private final ComplexSamplesRepackager mSamplesRepackager = new ComplexSamplesRepackager(2048);
-    private OverflowableTransferQueue<InterleavedComplexSamples> mBuffer;
+    private OverflowableTransferQueue<T> mBuffer;
     private ComplexMixer mFrequencyCorrectionMixer;
     private PrimeCicDecimationFilter mIDecimationFilter;
     private PrimeCicDecimationFilter mQDecimationFilter;
@@ -111,7 +112,7 @@ public class CICTunerChannelSource extends TunerChannelSource implements Listene
      * Primary interface for receiving incoming complex sample buffers to be frequency translated and decimated.
      */
     @Override
-    public void receive(InterleavedComplexSamples complexSamples)
+    public void receive(T complexSamples)
     {
         mBuffer.offer(complexSamples);
     }
@@ -218,22 +219,27 @@ public class CICTunerChannelSource extends TunerChannelSource implements Listene
      */
     protected void processSamples()
     {
-        List<InterleavedComplexSamples> sampleBuffers = new ArrayList<>();
-        mBuffer.drainTo(sampleBuffers);
+        List<T> nativeBuffers = new ArrayList<>();
+        mBuffer.drainTo(nativeBuffers);
 
         if(mListener != null)
         {
-            for(InterleavedComplexSamples complexSamples : sampleBuffers)
+            for(T nativeBuffer : nativeBuffers)
             {
-                ComplexSamples basebanded = mFrequencyCorrectionMixer.mix(complexSamples);
-                float[] i = mIDecimationFilter.decimate(basebanded.i());
-                float[] q = mQDecimationFilter.decimate(basebanded.q());
+                Iterator<ComplexSamples> iterator = nativeBuffer.iterator();
 
-                List<ComplexSamples> repackaged = mSamplesRepackager.process(i, q);
-
-                for(ComplexSamples samples: repackaged)
+                while(iterator.hasNext())
                 {
-                    mListener.receive(samples);
+                    ComplexSamples basebanded = mFrequencyCorrectionMixer.mix(iterator.next());
+                    float[] i = mIDecimationFilter.decimate(basebanded.i());
+                    float[] q = mQDecimationFilter.decimate(basebanded.q());
+
+                    List<ComplexSamples> repackaged = mSamplesRepackager.process(i, q);
+
+                    for(ComplexSamples samples: repackaged)
+                    {
+                        mListener.receive(samples);
+                    }
                 }
             }
         }

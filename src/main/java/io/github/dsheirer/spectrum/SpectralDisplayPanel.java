@@ -19,6 +19,7 @@
 package io.github.dsheirer.spectrum;
 
 import com.jidesoft.swing.JideSplitPane;
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.controller.channel.Channel;
 import io.github.dsheirer.controller.channel.ChannelModel;
 import io.github.dsheirer.controller.channel.ChannelProcessingManager;
@@ -30,7 +31,6 @@ import io.github.dsheirer.playlist.PlaylistManager;
 import io.github.dsheirer.properties.SystemProperties;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.SampleType;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.settings.ColorSetting.ColorSettingName;
 import io.github.dsheirer.settings.ColorSettingMenuItem;
 import io.github.dsheirer.settings.SettingsManager;
@@ -66,7 +66,7 @@ import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
-public class SpectralDisplayPanel extends JPanel implements Listener<InterleavedComplexSamples>, ISourceEventProcessor,
+public class SpectralDisplayPanel extends JPanel implements Listener<INativeBuffer>, ISourceEventProcessor,
     IDFTWidthChangeProcessor
 {
     private static final long serialVersionUID = 1L;
@@ -403,9 +403,9 @@ public class SpectralDisplayPanel extends JPanel implements Listener<Interleaved
      * Complex sample buffer receive method
      */
     @Override
-    public void receive(InterleavedComplexSamples complexSamples)
+    public void receive(INativeBuffer nativeBuffer)
     {
-        mDFTProcessor.receive(complexSamples);
+        mDFTProcessor.receive(nativeBuffer);
     }
 
     /**

@@ -19,7 +19,7 @@
 package io.github.dsheirer.source.mixer;
 
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.adapter.AbstractSampleAdapter;
+import io.github.dsheirer.sample.adapter.ISampleAdapter;
 import io.github.dsheirer.source.SourceEvent;
 import io.github.dsheirer.source.heartbeat.HeartbeatManager;
 import io.github.dsheirer.util.ThreadPool;
@@ -50,14 +50,14 @@ public class MixerReader<T> implements Runnable
     private AtomicBoolean mRunning = new AtomicBoolean();
     private ScheduledFuture mScheduledFuture;
     private int mBytesRead;
-    private AbstractSampleAdapter<T> mSampleAdapter;
+    private ISampleAdapter<T> mSampleAdapter;
     private Listener<T> mListener;
     private Listener<SourceEvent> mSourceEventListener;
     private AudioFormat mAudioFormat;
     private HeartbeatManager mHeartbeatManager;
 
     public MixerReader(AudioFormat audioFormat, TargetDataLine targetDataLine,
-                       AbstractSampleAdapter<T> abstractSampleAdapter, HeartbeatManager heartbeatManager)
+                       ISampleAdapter<T> abstractSampleAdapter, HeartbeatManager heartbeatManager)
     {
         mTargetDataLine = targetDataLine;
         mAudioFormat = audioFormat;
@@ -68,7 +68,7 @@ public class MixerReader<T> implements Runnable
         mBufferSize = (int)(mAudioFormat.getSampleRate() * 0.1) * mAudioFormat.getFrameSize();
     }
 
-    public MixerReader(AudioFormat audioFormat, TargetDataLine targetDataLine, AbstractSampleAdapter<T> abstractSampleAdapter)
+    public MixerReader(AudioFormat audioFormat, TargetDataLine targetDataLine, ISampleAdapter<T> abstractSampleAdapter)
     {
         this(audioFormat, targetDataLine, abstractSampleAdapter, new HeartbeatManager());
     }

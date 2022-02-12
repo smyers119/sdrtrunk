@@ -18,8 +18,8 @@
  */
 package io.github.dsheirer.source.tuner.test;
 
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.tuner.TunerController;
 import io.github.dsheirer.source.tuner.configuration.TunerConfiguration;
@@ -78,13 +78,13 @@ public class TestTunerController extends TunerController
     }
 
     @Override
-    public void addBufferListener(Listener<InterleavedComplexSamples> listener)
+    public void addBufferListener(Listener<INativeBuffer> listener)
     {
         mSampleGenerator.addListener(listener);
     }
 
     @Override
-    public void removeBufferListener(Listener<InterleavedComplexSamples> listener)
+    public void removeBufferListener(Listener<INativeBuffer> listener)
     {
         mSampleGenerator.removeListener(listener);
     }

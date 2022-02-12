@@ -18,16 +18,15 @@
  */
 package io.github.dsheirer.source.tuner.rtl;
 
+import io.github.dsheirer.buffer.ByteNativeBufferFactory;
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.tuner.ITunerErrorListener;
 import io.github.dsheirer.source.tuner.TunerManager;
 import io.github.dsheirer.source.tuner.TunerType;
 import io.github.dsheirer.source.tuner.usb.USBTransferProcessor;
 import io.github.dsheirer.source.tuner.usb.USBTunerController;
-import io.github.dsheirer.source.tuner.usb.converter.ByteSampleConverter;
-import io.github.dsheirer.source.tuner.usb.converter.NativeBufferConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.usb4java.Device;
@@ -76,7 +75,7 @@ public abstract class RTL2832TunerController extends USBTunerController
 
     private SampleRate mSampleRate = DEFAULT_SAMPLE_RATE;
 
-    protected NativeBufferConverter mNativeBufferConverter = new ByteSampleConverter();
+    protected ByteNativeBufferFactory mNativeBufferFactory = new ByteNativeBufferFactory();
     protected int mOscillatorFrequency = 28800000; //28.8 MHz
     protected USBTransferProcessor mUSBTransferProcessor;
     protected Descriptor mDescriptor;
@@ -159,7 +158,7 @@ public abstract class RTL2832TunerController extends USBTunerController
 
         String deviceName = getTunerType().getLabel() + " " + getUniqueID();
 
-        mUSBTransferProcessor = new RTL2832USBTransferProcessor(deviceName, mDeviceHandle, mNativeBufferConverter,
+        mUSBTransferProcessor = new RTL2832USBTransferProcessor(deviceName, mDeviceHandle, mNativeBufferFactory,
             USB_TRANSFER_BUFFER_SIZE_HIGH_SAMPLE_RATE, this);
     }
 
@@ -1523,7 +1522,7 @@ public abstract class RTL2832TunerController extends USBTunerController
      * Adds the IQ buffer listener and automatically starts buffer transfer processing, if not already started.
      */
     @Override
-    public void addBufferListener(Listener<InterleavedComplexSamples> listener)
+    public void addBufferListener(Listener<INativeBuffer> listener)
     {
         boolean hasExistingListeners = hasBufferListeners();
 
@@ -1539,7 +1538,7 @@ public abstract class RTL2832TunerController extends USBTunerController
      * Removes the IQ buffer listener and stops buffer transfer processing if there are no more listeners.
      */
     @Override
-    public void removeBufferListener(Listener<InterleavedComplexSamples> listener)
+    public void removeBufferListener(Listener<INativeBuffer> listener)
     {
         super.removeBufferListener(listener);
 
@@ -1561,15 +1560,15 @@ public abstract class RTL2832TunerController extends USBTunerController
          *
          * @param deviceName to use when logging information or errors
          * @param deviceHandle to the USB bulk transfer device
-         * @param nativeBufferConverter specific to the tuner's byte buffer format for converting to floating point I/Q samples
+         * @param nativeBufferFactory specific to the tuner's byte buffer format for converting to floating point I/Q samples
          * @param bufferSize in bytes.  Should be a multiple of two: 65536, 131072 or 262144.
          * @param tunerErrorListener to receive error state message
          */
         public RTL2832USBTransferProcessor(String deviceName, DeviceHandle deviceHandle,
-                                           NativeBufferConverter nativeBufferConverter, int bufferSize,
+                                           ByteNativeBufferFactory nativeBufferFactory, int bufferSize,
                                            ITunerErrorListener tunerErrorListener)
         {
-            super(deviceName, deviceHandle, nativeBufferConverter, bufferSize, tunerErrorListener);
+            super(deviceName, deviceHandle, nativeBufferFactory, bufferSize, tunerErrorListener);
         }
 
         @Override

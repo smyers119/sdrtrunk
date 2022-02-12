@@ -18,7 +18,8 @@
  */
 package io.github.dsheirer.sample.adapter;
 
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
+import io.github.dsheirer.buffer.FloatNativeBuffer;
+import io.github.dsheirer.buffer.INativeBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,7 @@ import java.nio.ByteOrder;
 /**
  * Converts 16-bit/2-byte little endian byte data into a reusable buffer of complex float sample data
  */
-public class ComplexShortAdapter extends ComplexSampleAdapter
+public class ComplexShortAdapter implements ISampleAdapter<INativeBuffer>
 {
     private final static Logger mLog = LoggerFactory.getLogger(ComplexShortAdapter.class);
     private ByteOrder mByteOrder = ByteOrder.LITTLE_ENDIAN;
@@ -42,7 +43,7 @@ public class ComplexShortAdapter extends ComplexSampleAdapter
     }
 
     @Override
-    public InterleavedComplexSamples convert(byte[] samples)
+    public INativeBuffer convert(byte[] samples)
     {
         float[] convertedSamples = new float[samples.length / 2];
 
@@ -59,7 +60,9 @@ public class ComplexShortAdapter extends ComplexSampleAdapter
             pointer++;
         }
 
-        return new InterleavedComplexSamples(convertedSamples, System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+
+        return new FloatNativeBuffer(convertedSamples, now);
     }
 
     /**

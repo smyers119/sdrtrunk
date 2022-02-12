@@ -18,6 +18,7 @@
  */
 package io.github.dsheirer.record.wave;
 
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.dsp.filter.channelizer.ContinuousBufferProcessor;
 import io.github.dsheirer.module.Module;
 import io.github.dsheirer.sample.ConversionUtils;
@@ -34,6 +35,7 @@ import javax.sound.sampled.AudioFormat;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,20 +43,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * WAVE audio recorder module for recording complex (I&Q) samples to a wave file
  */
-public class InterleavedComplexSamplesWaveRecorder extends Module implements Listener<InterleavedComplexSamples>, ISourceEventListener
+public class NativeBufferWaveRecorder extends Module implements Listener<INativeBuffer>, ISourceEventListener
 {
     private final static Logger mLog = LoggerFactory.getLogger(ComplexSamplesWaveRecorder.class);
 
-    private ContinuousBufferProcessor<InterleavedComplexSamples> mBufferProcessor =
+    private ContinuousBufferProcessor<INativeBuffer> mBufferProcessor =
                             new ContinuousBufferProcessor<>(500, 50);
 
     private AtomicBoolean mRunning = new AtomicBoolean();
-    private InterleavedComplexSamplesWaveWriter mWriter;
+    private INativeBufferWaveWriter mWriter;
     private String mFilePrefix;
     private Path mFile;
     private AudioFormat mAudioFormat;
 
-    public InterleavedComplexSamplesWaveRecorder(float sampleRate, String filePrefix)
+    public NativeBufferWaveRecorder(float sampleRate, String filePrefix)
     {
         mFilePrefix = filePrefix;
         setSampleRate(sampleRate);
@@ -92,7 +94,7 @@ public class InterleavedComplexSamplesWaveRecorder extends Module implements Lis
                 sb.append(".wav");
                 mFile = Paths.get(sb.toString());
 
-                mWriter = new InterleavedComplexSamplesWaveWriter(mAudioFormat, mFile);
+                mWriter = new INativeBufferWaveWriter(mAudioFormat, mFile);
 
                 mBufferProcessor.setListener(mWriter);
                 mBufferProcessor.start();
@@ -138,13 +140,13 @@ public class InterleavedComplexSamplesWaveRecorder extends Module implements Lis
     }
 
     @Override
-    public void receive(InterleavedComplexSamples complexSamples)
+    public void receive(INativeBuffer nativeBuffer)
     {
         //Queue the buffer with the buffer processor so that recording occurs on the buffer processor thread
-        mBufferProcessor.receive(complexSamples);
+        mBufferProcessor.receive(nativeBuffer);
     }
 
-    public Listener<InterleavedComplexSamples> getReusableComplexBufferListener()
+    public Listener<INativeBuffer> getReusableComplexBufferListener()
     {
         return this;
     }
@@ -175,25 +177,27 @@ public class InterleavedComplexSamplesWaveRecorder extends Module implements Lis
     /**
      * Wave writer implementation for complex samples delivered from buffer processor
      */
-    public class InterleavedComplexSamplesWaveWriter extends WaveWriter implements Listener<List<InterleavedComplexSamples>>
+    public class INativeBufferWaveWriter extends WaveWriter implements Listener<List<INativeBuffer>>
     {
-        public InterleavedComplexSamplesWaveWriter(AudioFormat format, Path file) throws IOException
+        public INativeBufferWaveWriter(AudioFormat format, Path file) throws IOException
         {
             super(format, file);
         }
 
         @Override
-        public void receive(List<InterleavedComplexSamples> complexSamplesList)
+        public void receive(List<INativeBuffer> nativeBufferList)
         {
             boolean error = false;
 
-            for(InterleavedComplexSamples complexSamples: complexSamplesList)
+            for(INativeBuffer nativeBuffer: nativeBufferList)
             {
-                if(!error)
+                Iterator<InterleavedComplexSamples> iterator = nativeBuffer.iteratorInterleaved();
+
+                while(iterator.hasNext() & !error)
                 {
                     try
                     {
-                        mWriter.writeData(ConversionUtils.convertToSigned16BitSamples(complexSamples));
+                        mWriter.writeData(ConversionUtils.convertToSigned16BitSamples(iterator.next()));
                     }
                     catch(IOException ioe)
                     {

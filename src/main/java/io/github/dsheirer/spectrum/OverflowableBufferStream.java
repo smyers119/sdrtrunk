@@ -19,6 +19,7 @@
 package io.github.dsheirer.spectrum;
 
 
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.sample.OverflowableTransferQueue;
 import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import org.slf4j.Logger;
@@ -26,17 +27,19 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
+import java.util.Iterator;
 import java.util.LinkedList;
 
-public class OverflowableBufferStream extends OverflowableTransferQueue<InterleavedComplexSamples>
+public class OverflowableBufferStream<T extends INativeBuffer> extends OverflowableTransferQueue<T>
 {
     private static final Logger mLog = LoggerFactory.getLogger(OverflowableBufferStream.class);
 
     private int mFlushCount = 0;
+    private Iterator<InterleavedComplexSamples> mCurrentNativeBufferIterator;
     private InterleavedComplexSamples mCurrentBuffer;
     private int mCurrentBufferPointer = 0;
     private FloatBuffer mFloatBuffer;
-    private LinkedList<InterleavedComplexSamples> mBufferList = new LinkedList<>();
+    private LinkedList<T> mBufferList = new LinkedList<>();
     private int mBufferFetchLimit;
 
     /**
@@ -184,26 +187,40 @@ public class OverflowableBufferStream extends OverflowableTransferQueue<Interlea
      */
     private void getNextBuffer() throws IOException
     {
-        if(mCurrentBuffer != null)
+        if(mCurrentNativeBufferIterator == null)
+        {
+            if(mBufferList.isEmpty())
+            {
+                drainTo(mBufferList, mBufferFetchLimit);
+            }
+
+            if(!mBufferList.isEmpty())
+            {
+                T buffer = mBufferList.poll();
+
+                if(buffer != null)
+                {
+                    mCurrentNativeBufferIterator = buffer.iteratorInterleaved();
+                }
+            }
+        }
+
+        if(mCurrentNativeBufferIterator != null && !mCurrentNativeBufferIterator.hasNext())
+        {
+            mCurrentNativeBufferIterator = null;
+            getNextBuffer();
+            return;
+        }
+
+        if(mCurrentNativeBufferIterator != null && mCurrentNativeBufferIterator.hasNext())
+        {
+            mCurrentBuffer = mCurrentNativeBufferIterator.next();
+            mCurrentBufferPointer = 0;
+        }
+        else
         {
             mCurrentBuffer = null;
-        }
-
-        mCurrentBufferPointer = 0;
-
-        if(mBufferList.isEmpty())
-        {
-            drainTo(mBufferList, mBufferFetchLimit);
-        }
-
-        if(!mBufferList.isEmpty())
-        {
-            mCurrentBuffer = mBufferList.poll();
-        }
-
-        if(mCurrentBuffer == null)
-        {
-            throw new IOException("Reusable complex buffer queue is (currently) empty");
+            throw new IOException("Buffer queue is empty");
         }
     }
 
@@ -215,13 +232,7 @@ public class OverflowableBufferStream extends OverflowableTransferQueue<Interlea
     {
         synchronized(mQueue)
         {
-            InterleavedComplexSamples buffer = mQueue.poll();
-
-            while(buffer != null)
-            {
-                buffer = mQueue.poll();
-            }
-
+            mQueue.clear();
             mCounter.set(0);
             mOverflow.set(false);
         }

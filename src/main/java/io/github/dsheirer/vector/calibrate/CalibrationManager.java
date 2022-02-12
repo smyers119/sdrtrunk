@@ -1,3 +1,22 @@
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
+
 package io.github.dsheirer.vector.calibrate;
 
 import io.github.dsheirer.vector.calibrate.demodulator.FmDemodulatorCalibration;
@@ -5,6 +24,7 @@ import io.github.dsheirer.vector.calibrate.demodulator.SquelchingFmDemodulatorCa
 import io.github.dsheirer.vector.calibrate.filter.ComplexHalfBand11TapFilterCalibration;
 import io.github.dsheirer.vector.calibrate.filter.ComplexHalfBand15TapFilterCalibration;
 import io.github.dsheirer.vector.calibrate.filter.FirFilterCalibration;
+import io.github.dsheirer.vector.calibrate.filter.RealDcRemovalCalibration;
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBand11TapFilterCalibration;
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBand15TapFilterCalibration;
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBand23TapFilterCalibration;
@@ -12,6 +32,7 @@ import io.github.dsheirer.vector.calibrate.filter.RealHalfBand63TapFilterCalibra
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBandDefaultFilterCalibration;
 import io.github.dsheirer.vector.calibrate.gain.ComplexGainCalibration;
 import io.github.dsheirer.vector.calibrate.gain.ComplexGainControlCalibration;
+import io.github.dsheirer.vector.calibrate.hilbert.HilbertCalibration;
 import io.github.dsheirer.vector.calibrate.mixer.ComplexMixerCalibration;
 import io.github.dsheirer.vector.calibrate.oscillator.ComplexOscillatorCalibration;
 import io.github.dsheirer.vector.calibrate.oscillator.RealOscillatorCalibration;
@@ -45,6 +66,8 @@ public class CalibrationManager
         add(new ComplexMixerCalibration());
         add(new FirFilterCalibration());
         add(new FmDemodulatorCalibration());
+        add(new HilbertCalibration());
+        add(new RealDcRemovalCalibration());
         add(new RealHalfBand11TapFilterCalibration());
         add(new RealHalfBand15TapFilterCalibration());
         add(new RealHalfBand23TapFilterCalibration());
@@ -199,7 +222,7 @@ public class CalibrationManager
     {
         CalibrationManager manager = getInstance();
 
-        manager.reset(CalibrationType.COMPLEX_GAIN);
+        manager.reset(CalibrationType.HILBERT_TRANSFORM);
 //        manager.reset();
 
         if(!manager.isCalibrated())
