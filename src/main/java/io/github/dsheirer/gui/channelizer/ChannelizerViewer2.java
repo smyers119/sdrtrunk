@@ -22,7 +22,6 @@ import io.github.dsheirer.buffer.FloatNativeBuffer;
 import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.preference.UserPreferences;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.SampleType;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.settings.SettingsManager;
 import io.github.dsheirer.source.ISourceEventProcessor;
@@ -34,7 +33,7 @@ import io.github.dsheirer.source.tuner.channel.TunerChannel;
 import io.github.dsheirer.source.tuner.channel.TunerChannelSource;
 import io.github.dsheirer.source.tuner.configuration.TunerConfigurationModel;
 import io.github.dsheirer.source.tuner.test.TestTuner;
-import io.github.dsheirer.spectrum.DFTProcessor;
+import io.github.dsheirer.spectrum.ComplexDftProcessor;
 import io.github.dsheirer.spectrum.DFTSize;
 import io.github.dsheirer.spectrum.SpectrumPanel;
 import io.github.dsheirer.spectrum.converter.ComplexDecibelConverter;
@@ -319,7 +318,7 @@ public class ChannelizerViewer2 extends JFrame
 
     public class PrimarySpectrumPanel extends JPanel implements Listener<INativeBuffer>, ISourceEventProcessor
     {
-        private DFTProcessor mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
+        private ComplexDftProcessor mComplexDftProcessor = new ComplexDftProcessor();
         private ComplexDecibelConverter mComplexDecibelConverter = new ComplexDecibelConverter();
         private SpectrumPanel mSpectrumPanel;
 
@@ -330,20 +329,19 @@ public class ChannelizerViewer2 extends JFrame
             mSpectrumPanel.setSampleSize(16);
             add(mSpectrumPanel);
 
-            mDFTProcessor.addConverter(mComplexDecibelConverter);
-            mDFTProcessor.process(SourceEvent.sampleRateChange(sampleRate));
+            mComplexDftProcessor.addConverter(mComplexDecibelConverter);
             mComplexDecibelConverter.addListener(mSpectrumPanel);
         }
 
         public void setDFTSize(DFTSize dftSize)
         {
-            mDFTProcessor.setDFTSize(dftSize);
+            mComplexDftProcessor.setDFTSize(dftSize);
         }
 
         @Override
         public void receive(INativeBuffer nativeBuffer)
         {
-            mDFTProcessor.receive(nativeBuffer);
+            mComplexDftProcessor.receive(nativeBuffer);
         }
 
         @Override
@@ -356,7 +354,7 @@ public class ChannelizerViewer2 extends JFrame
     public class ChannelPanel extends JPanel implements Listener<INativeBuffer>, ISourceEventProcessor
     {
         private TunerChannelSource mSource;
-        private DFTProcessor mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
+        private ComplexDftProcessor mComplexDftProcessor = new ComplexDftProcessor();
         private ComplexDecibelConverter mComplexDecibelConverter = new ComplexDecibelConverter();
         private SpectrumPanel mSpectrumPanel;
         private JToggleButton mLoggingButton;
@@ -369,8 +367,7 @@ public class ChannelizerViewer2 extends JFrame
             mSpectrumPanel.setSampleSize(16);
             add(mSpectrumPanel, "span");
 
-            mDFTProcessor.addConverter(mComplexDecibelConverter);
-            mDFTProcessor.process(SourceEvent.sampleRateChange(sampleRate));
+            mComplexDftProcessor.addConverter(mComplexDecibelConverter);
             mComplexDecibelConverter.addListener(mSpectrumPanel);
 
             TunerChannel tunerChannel = new TunerChannel(frequency, bandwidth);
@@ -381,7 +378,7 @@ public class ChannelizerViewer2 extends JFrame
                 mLog.debug("Channel: " + mSource.getTunerChannel() + " Rate:" + mSource.getSampleRate());
                 mSource.setListener((Listener<ComplexSamples>) complexSamples ->
                 {
-                    mDFTProcessor.receive(new FloatNativeBuffer(complexSamples.toInterleaved()));
+                    mComplexDftProcessor.receive(new FloatNativeBuffer(complexSamples.toInterleaved()));
                 });
 
                 mSource.start();
@@ -414,13 +411,13 @@ public class ChannelizerViewer2 extends JFrame
 
         public void setDFTSize(DFTSize dftSize)
         {
-            mDFTProcessor.setDFTSize(dftSize);
+            mComplexDftProcessor.setDFTSize(dftSize);
         }
 
         @Override
         public void receive(INativeBuffer nativeBuffer)
         {
-            mDFTProcessor.receive(nativeBuffer);
+            mComplexDftProcessor.receive(nativeBuffer);
         }
 
         @Override

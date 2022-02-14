@@ -17,10 +17,24 @@
  * ****************************************************************************
  */
 
-package io.github.dsheirer.spectrum;
+package io.github.dsheirer.buffer.airspy;
 
-public interface IDFTWidthChangeProcessor
+import java.nio.ByteBuffer;
+
+/**
+ * Interface to convert airspy samples from a byte buffer to an array of shorts.
+ */
+public interface IAirspySampleConverter
 {
-	void setDFTSize( DFTSize size );
-	DFTSize getDFTSize();
+    /**
+     * Converts the airspy byte samples contained in the byte buffer to their short-valued representation
+     * @param buffer of airspy samples
+     * @return converted samples
+     */
+    short[] convert(ByteBuffer buffer);
+
+    /**
+     * Current DC average of the samples that have been processed thus far.
+     */
+    float getAverageDc();
 }

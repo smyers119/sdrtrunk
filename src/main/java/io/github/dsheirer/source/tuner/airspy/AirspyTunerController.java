@@ -19,7 +19,7 @@
 
 package io.github.dsheirer.source.tuner.airspy;
 
-import io.github.dsheirer.buffer.AirspyNativeBufferFactory;
+import io.github.dsheirer.buffer.airspy.AirspyNativeBufferFactory;
 import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.tuner.configuration.TunerConfiguration;
 import io.github.dsheirer.source.tuner.usb.USBTransferProcessor;

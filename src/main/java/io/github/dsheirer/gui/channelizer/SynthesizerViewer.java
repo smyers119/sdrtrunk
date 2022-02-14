@@ -26,14 +26,11 @@ import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.dsp.oscillator.FS4DownConverter;
 import io.github.dsheirer.dsp.oscillator.IComplexOscillator;
 import io.github.dsheirer.dsp.oscillator.OscillatorFactory;
-import io.github.dsheirer.sample.IOverflowListener;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.SampleType;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.settings.SettingsManager;
-import io.github.dsheirer.source.SourceEvent;
 import io.github.dsheirer.source.tuner.configuration.TunerConfigurationModel;
-import io.github.dsheirer.spectrum.DFTProcessor;
+import io.github.dsheirer.spectrum.ComplexDftProcessor;
 import io.github.dsheirer.spectrum.DFTSize;
 import io.github.dsheirer.spectrum.SpectrumPanel;
 import io.github.dsheirer.spectrum.converter.ComplexDecibelConverter;
@@ -142,7 +139,7 @@ public class SynthesizerViewer extends JFrame
 
     public class PrimarySpectrumPanel extends JPanel implements Listener<INativeBuffer>
     {
-        private DFTProcessor mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
+        private ComplexDftProcessor mComplexDftProcessor = new ComplexDftProcessor();
         private ComplexDecibelConverter mComplexDecibelConverter = new ComplexDecibelConverter();
         private SpectrumPanel mSpectrumPanel;
 
@@ -153,36 +150,26 @@ public class SynthesizerViewer extends JFrame
             mSpectrumPanel.setSampleSize(16);
             add(mSpectrumPanel);
 
-            mDFTProcessor.addConverter(mComplexDecibelConverter);
-            mDFTProcessor.process(SourceEvent.sampleRateChange(CHANNEL_SAMPLE_RATE));
-            mDFTProcessor.setFrameRate(CHANNEL_FFT_FRAME_RATE);
+            mComplexDftProcessor.addConverter(mComplexDecibelConverter);
+            mComplexDftProcessor.setFrameRate(CHANNEL_FFT_FRAME_RATE);
             mComplexDecibelConverter.addListener(mSpectrumPanel);
-
-            mDFTProcessor.setOverflowListener(new IOverflowListener()
-            {
-                @Override
-                public void sourceOverflow(boolean overflow)
-                {
-                    mLog.debug("Buffer " + (overflow ? "overflow" : "reset"));
-                }
-            });
         }
 
         public void setDFTSize(DFTSize dftSize)
         {
-            mDFTProcessor.setDFTSize(dftSize);
+            mComplexDftProcessor.setDFTSize(dftSize);
         }
 
         @Override
         public void receive(INativeBuffer nativeBuffer)
         {
-            mDFTProcessor.receive(nativeBuffer);
+            mComplexDftProcessor.receive(nativeBuffer);
         }
     }
 
     public class ChannelPanel extends JPanel implements Listener<INativeBuffer>
     {
-        private DFTProcessor mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
+        private ComplexDftProcessor mComplexDftProcessor = new ComplexDftProcessor();
         private ComplexDecibelConverter mComplexDecibelConverter = new ComplexDecibelConverter();
         private SpectrumPanel mSpectrumPanel;
         private boolean mLoggingEnabled = false;
@@ -195,22 +182,21 @@ public class SynthesizerViewer extends JFrame
             add(mSpectrumPanel, "wrap");
             add(channelControlPanel);
 
-            mDFTProcessor.addConverter(mComplexDecibelConverter);
-            mDFTProcessor.process(SourceEvent.sampleRateChange(CHANNEL_SAMPLE_RATE));
-            mDFTProcessor.setFrameRate(CHANNEL_FFT_FRAME_RATE);
+            mComplexDftProcessor.addConverter(mComplexDecibelConverter);
+            mComplexDftProcessor.setFrameRate(CHANNEL_FFT_FRAME_RATE);
 
             mComplexDecibelConverter.addListener(mSpectrumPanel);
         }
 
         public void setDFTSize(DFTSize dftSize)
         {
-            mDFTProcessor.setDFTSize(dftSize);
+            mComplexDftProcessor.setDFTSize(dftSize);
         }
 
         @Override
         public void receive(INativeBuffer nativeBuffer)
         {
-            mDFTProcessor.receive(nativeBuffer);
+            mComplexDftProcessor.receive(nativeBuffer);
         }
     }
 

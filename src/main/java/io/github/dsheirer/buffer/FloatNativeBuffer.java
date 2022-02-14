@@ -85,6 +85,12 @@ public class FloatNativeBuffer implements INativeBuffer
     }
 
     @Override
+    public int sampleCount()
+    {
+        return mInterleavedComplexSamples.length / 2;
+    }
+
+    @Override
     public long getTimestamp()
     {
         return mTimestamp;

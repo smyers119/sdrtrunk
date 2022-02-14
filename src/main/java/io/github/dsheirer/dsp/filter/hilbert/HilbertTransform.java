@@ -109,11 +109,11 @@ public abstract class HilbertTransform
         {
             if(x < middle)
             {
-                hilbert[x / 2] = 2.0f * FastMath.abs(coefficients[x]);
+                hilbert[x / 2] = -2.0f * FastMath.abs(coefficients[x]);
             }
             else if(x > middle)
             {
-                hilbert[x / 2] = -2.0f * FastMath.abs(coefficients[x]);
+                hilbert[x / 2] = 2.0f * FastMath.abs(coefficients[x]);
             }
         }
 

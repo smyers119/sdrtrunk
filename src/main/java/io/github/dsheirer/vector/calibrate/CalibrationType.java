@@ -21,6 +21,7 @@ package io.github.dsheirer.vector.calibrate;
 
 public enum CalibrationType
 {
+    AIRSPY_SAMPLE_CONVERTER("Airspy Sample Converter"),
     COMPLEX_GAIN_CONTROL("Complex Gain Control"),
     COMPLEX_GAIN("Complex Gain"),
     COMPLEX_MIXER("Complex Mixer"),

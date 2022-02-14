@@ -19,6 +19,7 @@
 
 package io.github.dsheirer.vector.calibrate;
 
+import io.github.dsheirer.vector.calibrate.airspy.AirspySampleConverterCalibration;
 import io.github.dsheirer.vector.calibrate.demodulator.FmDemodulatorCalibration;
 import io.github.dsheirer.vector.calibrate.demodulator.SquelchingFmDemodulatorCalibration;
 import io.github.dsheirer.vector.calibrate.filter.ComplexHalfBand11TapFilterCalibration;
@@ -32,7 +33,6 @@ import io.github.dsheirer.vector.calibrate.filter.RealHalfBand63TapFilterCalibra
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBandDefaultFilterCalibration;
 import io.github.dsheirer.vector.calibrate.gain.ComplexGainCalibration;
 import io.github.dsheirer.vector.calibrate.gain.ComplexGainControlCalibration;
-import io.github.dsheirer.vector.calibrate.hilbert.HilbertCalibration;
 import io.github.dsheirer.vector.calibrate.mixer.ComplexMixerCalibration;
 import io.github.dsheirer.vector.calibrate.oscillator.ComplexOscillatorCalibration;
 import io.github.dsheirer.vector.calibrate.oscillator.RealOscillatorCalibration;
@@ -58,6 +58,7 @@ public class CalibrationManager
      */
     private CalibrationManager()
     {
+        add(new AirspySampleConverterCalibration());
         add(new ComplexGainCalibration());
         add(new ComplexGainControlCalibration());
         add(new ComplexHalfBand11TapFilterCalibration());
@@ -66,7 +67,7 @@ public class CalibrationManager
         add(new ComplexMixerCalibration());
         add(new FirFilterCalibration());
         add(new FmDemodulatorCalibration());
-        add(new HilbertCalibration());
+//        add(new HilbertCalibration()); //Not currently used
         add(new RealDcRemovalCalibration());
         add(new RealHalfBand11TapFilterCalibration());
         add(new RealHalfBand15TapFilterCalibration());
@@ -222,7 +223,7 @@ public class CalibrationManager
     {
         CalibrationManager manager = getInstance();
 
-        manager.reset(CalibrationType.HILBERT_TRANSFORM);
+        manager.reset(CalibrationType.AIRSPY_SAMPLE_CONVERTER);
 //        manager.reset();
 
         if(!manager.isCalibrated())

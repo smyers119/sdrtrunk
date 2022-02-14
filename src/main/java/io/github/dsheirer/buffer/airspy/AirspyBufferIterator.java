@@ -17,7 +17,7 @@
  * ****************************************************************************
  */
 
-package io.github.dsheirer.buffer;
+package io.github.dsheirer.buffer.airspy;
 
 import io.github.dsheirer.dsp.filter.hilbert.HilbertTransform;
 
@@ -40,15 +40,20 @@ public abstract class AirspyBufferIterator<T> implements Iterator<T>
 
     protected float[] mIBuffer = new float[FRAGMENT_SIZE + I_OVERLAP];
     protected float[] mQBuffer = new float[FRAGMENT_SIZE + Q_OVERLAP];
-    protected byte[] mSamples;
+    protected short[] mSamples;
     protected int mSamplesPointer = 0;
     protected long mTimestamp;
+    protected float mAverageDc;
 
     /**
      * Constructs an instance
-     * @param samples from the airspy, either packed or unpacked.
+     * @param samples from the airspy.
+     * @param residualI samples from previous buffer
+     * @param residualQ samples from previous buffer
+     * @param averageDc as measured
+     * @param timestamp of the buffer
      */
-    public AirspyBufferIterator(byte[] samples, float[] residualI, float[] residualQ, long timestamp)
+    public AirspyBufferIterator(short[] samples, short[] residualI, short[] residualQ, float averageDc, long timestamp)
     {
         if(residualI.length != I_OVERLAP || residualQ.length != Q_OVERLAP)
         {
@@ -57,18 +62,28 @@ public abstract class AirspyBufferIterator<T> implements Iterator<T>
                     "] must be " + Q_OVERLAP);
         }
 
-        int requiredInterval = FRAGMENT_SIZE * 4; //requires 4 bytes (2 samples) per fragment
+        int requiredInterval = FRAGMENT_SIZE * 2; //requires 4 bytes (2 samples) per fragment
 
         if(samples.length % requiredInterval != 0)
         {
-            throw new IllegalArgumentException("Sample byte array length [" + mSamples.length +
+            throw new IllegalArgumentException("Samples short array length [" + mSamples.length +
                     "]must be an integer multiple of " + requiredInterval);
         }
 
+        mAverageDc = averageDc;
         mSamples = samples;
-        System.arraycopy(residualI, 0, mIBuffer, 0, residualI.length);
-        System.arraycopy(residualQ, 0, mQBuffer, 0, residualQ.length);
         mTimestamp = timestamp;
+
+        //Transfer and scale the residual I & Q samples from the previous buffer
+        for(int i = 0; i < residualI.length; i++)
+        {
+            mIBuffer[i] = scale(residualI[i], averageDc);
+        }
+
+        for(int q = 0; q < residualQ.length; q++)
+        {
+            mQBuffer[q] = scale(residualQ[q], averageDc);
+        }
     }
 
     @Override
@@ -78,24 +93,13 @@ public abstract class AirspyBufferIterator<T> implements Iterator<T>
     }
 
     /**
-     * Converts the two-byte sample into a signed 32-bit float sample that has not been scaled.
-     * @param msb most significant byte
-     * @param lsb least significant byte
-     * @return converted sample
+     * Scales the short sample value to a 12-bit floating point and subtracts the average DC offset
+     * @param value to scale
+     * @param averageDc detected
+     * @return scaled and normalized sample
      */
-    public static float convert(byte msb, byte lsb)
+    public static float scale(short value, float averageDc)
     {
-        return (((lsb & 0xFF) | (msb << 8)) & 0xFFF) - 2048.0f;
-    }
-
-    /**
-     * Converts the two-byte sample into a signed and scaled 32-bit float sample
-     * @param msb most significant byte
-     * @param lsb least significant byte
-     * @return converted sample
-     */
-    public static float convertAndScale(byte msb, byte lsb)
-    {
-        return convert(msb, lsb) * SCALE_SIGNED_12_BIT_TO_FLOAT;
+        return ((float)value - 2048) * SCALE_SIGNED_12_BIT_TO_FLOAT - averageDc;
     }
 }

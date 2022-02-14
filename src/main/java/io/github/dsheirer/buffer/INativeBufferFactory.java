@@ -19,6 +19,8 @@
 
 package io.github.dsheirer.buffer;
 
+import java.nio.ByteBuffer;
+
 /**
  * Factory for creating native buffer wrapper instances
  */
@@ -26,9 +28,12 @@ public interface INativeBufferFactory
 {
     /**
      * Create a native buffer implementation that wraps the samples argument.
+     *
+     * Note: implementations of this factory should treat the samples argument as read-only and only make data copies.
+     *
      * @param samples byte array copied from native memory
      * @param timestamp of the samples
      * @return instance
      */
-    INativeBuffer getBuffer(byte[] samples, long timestamp);
+    INativeBuffer getBuffer(ByteBuffer samples, long timestamp);
 }

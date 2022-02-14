@@ -17,7 +17,7 @@
  * ****************************************************************************
  */
 
-package io.github.dsheirer.buffer;
+package io.github.dsheirer.buffer.airspy;
 
 import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 
@@ -32,10 +32,13 @@ public class AirspyInterleavedBufferIteratorScalar extends AirspyBufferIterator<
      * @param samples from the airspy, either packed or unpacked.
      * @param residualI samples from last buffer
      * @param residualQ samples from last buffer
+     * @param averageDc measured
+     * @param timestamp of the buffer
      */
-    public AirspyInterleavedBufferIteratorScalar(byte[] samples, float[] residualI, float[] residualQ, long timestamp)
+    public AirspyInterleavedBufferIteratorScalar(short[] samples, short[] residualI, short[] residualQ, float averageDc,
+                                                 long timestamp)
     {
-        super(samples, residualI, residualQ, timestamp);
+        super(samples, residualI, residualQ, averageDc, timestamp);
     }
 
     @Override
@@ -46,21 +49,15 @@ public class AirspyInterleavedBufferIteratorScalar extends AirspyBufferIterator<
             throw new IllegalStateException("End of buffer exceeded");
         }
 
-        int samplesPointer = mSamplesPointer;
-
-        int offset;
-        float iSample, qSample;
+        int offset = mSamplesPointer;
 
         for(int x = 0; x < FRAGMENT_SIZE; x++)
         {
-            offset = samplesPointer + (x * 4);
-
-            iSample = convertAndScale(mSamples[offset + 1], mSamples[offset]);
-            mIBuffer[I_OVERLAP + x] = iSample;
-
-            qSample = convertAndScale(mSamples[offset + 3], mSamples[offset + 2]);
-            mQBuffer[Q_OVERLAP + x] = qSample;
+            mIBuffer[x + I_OVERLAP] = scale(mSamples[offset++], mAverageDc);
+            mQBuffer[x + Q_OVERLAP] = scale(mSamples[offset++], mAverageDc);
         }
+
+        mSamplesPointer = offset;
 
         float[] samples = new float[FRAGMENT_SIZE * 2];
 
@@ -68,7 +65,6 @@ public class AirspyInterleavedBufferIteratorScalar extends AirspyBufferIterator<
 
         for(int x = 0; x < FRAGMENT_SIZE; x++)
         {
-            samples[2 * x] = mIBuffer[x];
             accumulator = 0;
 
             for(int tap = 0; tap < COEFFICIENTS.length; tap++)
@@ -76,14 +72,22 @@ public class AirspyInterleavedBufferIteratorScalar extends AirspyBufferIterator<
                 accumulator += COEFFICIENTS[tap] * mQBuffer[x + tap];
             }
 
-            samples[2 * x + 1] = accumulator;
+            //Perform FS/2 frequency translation on final filtered values ... multiply sequence by 1, -1, etc.
+            if(x % 2 == 0)
+            {
+                samples[2 * x] = mIBuffer[x];
+                samples[2 * x + 1] = accumulator;
+            }
+            else
+            {
+                samples[2 * x] = -mIBuffer[x];
+                samples[2 * x + 1] = -accumulator;
+            }
         }
 
         //Copy residual end samples to beginning of buffers for the next iteration
         System.arraycopy(mIBuffer, FRAGMENT_SIZE, mIBuffer, 0, I_OVERLAP);
         System.arraycopy(mQBuffer, FRAGMENT_SIZE, mQBuffer, 0, Q_OVERLAP);
-
-        mSamplesPointer += (FRAGMENT_SIZE * 4);
 
         return new InterleavedComplexSamples(samples, mTimestamp);
     }

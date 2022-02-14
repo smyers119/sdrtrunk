@@ -30,7 +30,6 @@ import io.github.dsheirer.gui.playlist.channel.ViewChannelRequest;
 import io.github.dsheirer.playlist.PlaylistManager;
 import io.github.dsheirer.properties.SystemProperties;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.SampleType;
 import io.github.dsheirer.settings.ColorSetting.ColorSettingName;
 import io.github.dsheirer.settings.ColorSettingMenuItem;
 import io.github.dsheirer.settings.SettingsManager;
@@ -87,7 +86,7 @@ public class SpectralDisplayPanel extends JPanel implements Listener<INativeBuff
     private SpectrumPanel mSpectrumPanel;
     private WaterfallPanel mWaterfallPanel;
     private OverlayPanel mOverlayPanel;
-    private DFTProcessor mDFTProcessor;
+    private ComplexDftProcessor mComplexDftProcessor;
     private DFTResultsConverter mDFTConverter;
     private ChannelModel mChannelModel;
     private ChannelProcessingManager mChannelProcessingManager;
@@ -158,8 +157,8 @@ public class SpectralDisplayPanel extends JPanel implements Listener<INativeBuff
 
         mSettingsManager = null;
 
-        mDFTProcessor.dispose();
-        mDFTProcessor = null;
+        mComplexDftProcessor.dispose();
+        mComplexDftProcessor = null;
 
         mDFTConverter.dispose();
         mDFTConverter = null;
@@ -183,7 +182,7 @@ public class SpectralDisplayPanel extends JPanel implements Listener<INativeBuff
      */
     public void setDFTSize(DFTSize size, boolean save)
     {
-        mDFTProcessor.setDFTSize(size);
+        mComplexDftProcessor.setDFTSize(size);
         mOverlayPanel.setDFTSize(size);
         mDFTSize = size;
 
@@ -382,9 +381,9 @@ public class SpectralDisplayPanel extends JPanel implements Listener<INativeBuff
          * Setup DFTProcessor to process samples and register the waterfall and
          * spectrum panel to receive the processed dft results
          */
-        mDFTProcessor = new DFTProcessor(SampleType.COMPLEX);
+        mComplexDftProcessor = new ComplexDftProcessor();
         mDFTConverter = new ComplexDecibelConverter();
-        mDFTProcessor.addConverter(mDFTConverter);
+        mComplexDftProcessor.addConverter(mDFTConverter);
 
         mDFTConverter.addListener((DFTResultsListener)mSpectrumPanel);
         mDFTConverter.addListener((DFTResultsListener)mWaterfallPanel);
@@ -396,7 +395,6 @@ public class SpectralDisplayPanel extends JPanel implements Listener<INativeBuff
     public void process(SourceEvent event)
     {
         mOverlayPanel.process(event);
-        mDFTProcessor.process(event);
     }
 
     /**
@@ -405,7 +403,7 @@ public class SpectralDisplayPanel extends JPanel implements Listener<INativeBuff
     @Override
     public void receive(INativeBuffer nativeBuffer)
     {
-        mDFTProcessor.receive(nativeBuffer);
+        mComplexDftProcessor.receive(nativeBuffer);
     }
 
     /**
@@ -416,9 +414,9 @@ public class SpectralDisplayPanel extends JPanel implements Listener<INativeBuff
     {
         clearTuner();
 
-        mDFTProcessor.clearBuffer();
+        mComplexDftProcessor.clearBuffer();
 
-        mDFTProcessor.start();
+        mComplexDftProcessor.start();
 
         mTuner = tuner;
 
@@ -428,7 +426,7 @@ public class SpectralDisplayPanel extends JPanel implements Listener<INativeBuff
             mTuner.getTunerController().addListener(this);
 
             //Register the dft processor to receive samples from the tuner
-            mTuner.getTunerController().addBufferListener(mDFTProcessor);
+            mTuner.getTunerController().addBufferListener(mComplexDftProcessor);
 
             mSpectrumPanel.setSampleSize(mTuner.getSampleSize());
 
@@ -451,12 +449,12 @@ public class SpectralDisplayPanel extends JPanel implements Listener<INativeBuff
             mTuner.getTunerController().removeListener(this);
 
             //Deregister the dft processor from receiving samples
-            mTuner.getTunerController().removeBufferListener(mDFTProcessor);
+            mTuner.getTunerController().removeBufferListener(mComplexDftProcessor);
             mTuner = null;
         }
 
-        mDFTProcessor.stop();
-        mDFTProcessor.clearBuffer();
+        mComplexDftProcessor.stop();
+        mComplexDftProcessor.clearBuffer();
         mSpectrumPanel.clearSpectrum();
         mWaterfallPanel.clearWaterfall();
     }
@@ -717,14 +715,14 @@ public class SpectralDisplayPanel extends JPanel implements Listener<INativeBuff
                 JMenu frameRateMenu = new JMenu("Frame Rate");
                 displayMenu.add(frameRateMenu);
 
-                frameRateMenu.add(new FrameRateItem(mDFTProcessor, 14));
-                frameRateMenu.add(new FrameRateItem(mDFTProcessor, 16));
-                frameRateMenu.add(new FrameRateItem(mDFTProcessor, 18));
-                frameRateMenu.add(new FrameRateItem(mDFTProcessor, 20));
-                frameRateMenu.add(new FrameRateItem(mDFTProcessor, 25));
-                frameRateMenu.add(new FrameRateItem(mDFTProcessor, 30));
-                frameRateMenu.add(new FrameRateItem(mDFTProcessor, 40));
-                frameRateMenu.add(new FrameRateItem(mDFTProcessor, 50));
+                frameRateMenu.add(new FrameRateItem(mComplexDftProcessor, 14));
+                frameRateMenu.add(new FrameRateItem(mComplexDftProcessor, 16));
+                frameRateMenu.add(new FrameRateItem(mComplexDftProcessor, 18));
+                frameRateMenu.add(new FrameRateItem(mComplexDftProcessor, 20));
+                frameRateMenu.add(new FrameRateItem(mComplexDftProcessor, 25));
+                frameRateMenu.add(new FrameRateItem(mComplexDftProcessor, 30));
+                frameRateMenu.add(new FrameRateItem(mComplexDftProcessor, 40));
+                frameRateMenu.add(new FrameRateItem(mComplexDftProcessor, 50));
 
                 /**
                  * FFT Window Type
@@ -735,7 +733,7 @@ public class SpectralDisplayPanel extends JPanel implements Listener<INativeBuff
                 for(WindowType type : WindowType.values())
                 {
                     fftWindowType.add(
-                        new FFTWindowTypeItem(mDFTProcessor, type));
+                        new FFTWindowTypeItem(mComplexDftProcessor, type));
                 }
 
                 if(event.getComponent() != mWaterfallPanel)

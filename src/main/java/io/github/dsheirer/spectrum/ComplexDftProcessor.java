@@ -22,11 +22,7 @@ import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.dsp.filter.Window;
 import io.github.dsheirer.dsp.filter.Window.WindowType;
 import io.github.dsheirer.properties.SystemProperties;
-import io.github.dsheirer.sample.IOverflowListener;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.SampleType;
-import io.github.dsheirer.source.ISourceEventProcessor;
-import io.github.dsheirer.source.SourceEvent;
 import io.github.dsheirer.spectrum.converter.DFTResultsConverter;
 import io.github.dsheirer.util.ThreadPool;
 import org.jtransforms.fft.FloatFFT_1D;
@@ -43,11 +39,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Processes both complex samples or float samples and dispatches a float array of DFT results, using configurable fft
  * size and output dispatch timelines.
  */
-public class DFTProcessor<T extends INativeBuffer> implements Listener<T>, ISourceEventProcessor, IDFTWidthChangeProcessor
+public class ComplexDftProcessor<T extends INativeBuffer> implements Listener<T>, IDFTWidthChangeProcessor
 {
-    private static final Logger mLog = LoggerFactory.getLogger(DFTProcessor.class);
-    private static final int BUFFER_QUEUE_MAX_SIZE = 20;
-    private static final int BUFFER_QUEUE_OVERFLOW_RESET_THRESHOLD = 6;
+    private static final Logger mLog = LoggerFactory.getLogger(ComplexDftProcessor.class);
     private static final String FRAME_RATE_PROPERTY = "spectral.display.frame.rate";
 
     //The Cosine and Hann windows seem to offer the best spectral display with minimal bin leakage/smearing
@@ -57,23 +51,16 @@ public class DFTProcessor<T extends INativeBuffer> implements Listener<T>, ISour
     private DFTSize mNewDFTSize = DFTSize.FFT04096;
     private FloatFFT_1D mFFT = new FloatFFT_1D(mDFTSize.getSize());
     private int mFrameRate;
-    private int mSampleRate = 2400000; //Initial high value until we receive update from tuner
-    private int mFrameSize;
-    private int mFrameFlushCount;
-    private int mFrameOverlapCount;
-    private SampleType mSampleType;
     private AtomicBoolean mRunning = new AtomicBoolean();
     private ScheduledFuture<?> mProcessorTaskHandle;
-    private CopyOnWriteArrayList<DFTResultsConverter> mListeners = new CopyOnWriteArrayList<DFTResultsConverter>();
-    private OverflowableBufferStream mOverflowableBufferStream = new OverflowableBufferStream(BUFFER_QUEUE_MAX_SIZE,
-        BUFFER_QUEUE_OVERFLOW_RESET_THRESHOLD, mDFTSize.getSize());
-    private float[] mPreviousSamples;
+    private CopyOnWriteArrayList<DFTResultsConverter> mListeners = new CopyOnWriteArrayList<>();
+    private NativeBufferManager mDftBufferManager = new NativeBufferManager(mDFTSize.getSize() * 2);
+    private float[] mPreviousSamples = new float[mDFTSize.getSize() * 2];
 
-    public DFTProcessor(SampleType sampleType)
+    public ComplexDftProcessor()
     {
-        setSampleType(sampleType);
         mFrameRate = SystemProperties.getInstance().get(FRAME_RATE_PROPERTY, 20);
-        calculateConsumptionRate();
+        setWindowType(mWindowType);
         start();
     }
 
@@ -82,17 +69,7 @@ public class DFTProcessor<T extends INativeBuffer> implements Listener<T>, ISour
         stop();
 
         mListeners.clear();
-        mOverflowableBufferStream.clear();
         mWindow = null;
-    }
-
-    /**
-     * Sets the listener to receive buffer overflow/reset indications
-     * @param listener to receive overflow events
-     */
-    public void setOverflowListener(IOverflowListener listener)
-    {
-        mOverflowableBufferStream.setOverflowListener(listener);
     }
 
     public WindowType getWindowType()
@@ -103,30 +80,12 @@ public class DFTProcessor<T extends INativeBuffer> implements Listener<T>, ISour
     public void setWindowType(WindowType windowType)
     {
         mWindowType = windowType;
-
-        if(mSampleType == SampleType.COMPLEX)
-        {
-            mWindow = Window.getWindow(mWindowType, mDFTSize.getSize() * 2);
-        }
-        else
-        {
-            mWindow = Window.getWindow(mWindowType, mDFTSize.getSize());
-        }
+        updateWindow();
     }
 
-    /**
-     * Sets the processor mode to Float or Complex, depending on the sample
-     * types that will be delivered for processing
-     */
-    public void setSampleType(SampleType type)
+    private void updateWindow()
     {
-        mSampleType = type;
-        setWindowType(mWindowType);
-    }
-
-    public SampleType getSampleType()
-    {
-        return mSampleType;
+        mWindow = Window.getWindow(mWindowType, mDFTSize.getSize() * 2);
     }
 
     /**
@@ -157,11 +116,7 @@ public class DFTProcessor<T extends INativeBuffer> implements Listener<T>, ISour
         }
 
         mFrameRate = framesPerSecond;
-
         SystemProperties.getInstance().set(FRAME_RATE_PROPERTY, mFrameRate);
-
-        calculateConsumptionRate();
-
         restart();
     }
 
@@ -205,7 +160,7 @@ public class DFTProcessor<T extends INativeBuffer> implements Listener<T>, ISour
     @Override
     public void receive(T buffer)
     {
-        mOverflowableBufferStream.offer(buffer);
+        mDftBufferManager.add(buffer);
     }
 
     private void calculate()
@@ -217,31 +172,15 @@ public class DFTProcessor<T extends INativeBuffer> implements Listener<T>, ISour
 
         try
         {
-            if(mFrameFlushCount > 0)
-            {
-                mOverflowableBufferStream.flush(mFrameFlushCount);
-            }
-
             //If this throws an IO exception, the buffer queue is (temporarily) empty and we return from the method
-            float[] samples = mOverflowableBufferStream.get(mFrameSize, mFrameOverlapCount);
-
+            float[] samples = mDftBufferManager.get(mDFTSize.getSize());
             Window.apply(mWindow, samples);
-
-            if(mSampleType == SampleType.REAL)
-            {
-                mFFT.realForward(samples);
-            }
-            else
-            {
-                mFFT.complexForward(samples);
-            }
-
+            mFFT.complexForward(samples);
             mPreviousSamples = samples;
         }
         catch(IOException ioe)
         {
-            //No new data, dispatch the previous samples again
-            //no-op
+            //Not enough samples available, dispatch the previous samples again
         }
         catch(Exception e)
         {
@@ -262,8 +201,8 @@ public class DFTProcessor<T extends INativeBuffer> implements Listener<T>, ISour
      */
     private void dispatch(float[] results)
     {
-
-        for (DFTResultsConverter mListener : mListeners) {
+        for (DFTResultsConverter mListener : mListeners)
+        {
             mListener.receive(results);
         }
     }
@@ -284,9 +223,7 @@ public class DFTProcessor<T extends INativeBuffer> implements Listener<T>, ISour
                 if(mRunning.compareAndSet(false, true))
                 {
                     checkFFTSize();
-
                     calculate();
-
                     mRunning.set(false);
                 }
             }
@@ -307,98 +244,13 @@ public class DFTProcessor<T extends INativeBuffer> implements Listener<T>, ISour
         if(mNewDFTSize.getSize() != mDFTSize.getSize())
         {
             mDFTSize = mNewDFTSize;
-
-            calculateConsumptionRate();
-
-            setWindowType(mWindowType);
-
+            updateWindow();
             mFFT = new FloatFFT_1D(mDFTSize.getSize());
         }
     }
 
     public void clearBuffer()
     {
-        mOverflowableBufferStream.clear();
-    }
-
-    @Override
-    public void process(SourceEvent event)
-    {
-        switch(event.getEvent())
-        {
-            case NOTIFICATION_SAMPLE_RATE_CHANGE:
-                mSampleRate = event.getValue().intValue();
-                calculateConsumptionRate();
-                break;
-            default:
-                break;
-        }
-    }
-
-    /**
-     * Calculates the frame size, flush count and overlap count to use for each calculation cycle.
-     */
-    private void calculateConsumptionRate()
-    {
-        int floatsPerSample = mSampleType == SampleType.COMPLEX ? 2 : 1;
-
-        mFrameSize = mDFTSize.getSize() * floatsPerSample;
-        mPreviousSamples = new float[mFrameSize];
-
-        int productionRate = mSampleRate * floatsPerSample;
-        int consumptionRate = mFrameRate * mFrameSize;
-        int residual = productionRate - consumptionRate;
-
-        if(residual < 0)
-        {
-            mFrameFlushCount = 0;
-            mFrameOverlapCount = -residual / mFrameRate;
-
-            if(mFrameOverlapCount * mFrameRate < -residual)
-            {
-                mFrameOverlapCount ++;
-            }
-        }
-        else if(residual > 0)
-        {
-            mFrameOverlapCount = 0;
-            mFrameFlushCount = residual / mFrameRate;
-
-            if(mFrameFlushCount * mFrameRate < residual)
-            {
-                mFrameFlushCount++;
-            }
-        }
-
-        //Ensure we're flushing or overlapping by even multiples of the sample size
-        if(mFrameOverlapCount % floatsPerSample != 0)
-        {
-            mFrameOverlapCount++;
-        }
-
-        if(mFrameFlushCount % floatsPerSample != 0)
-        {
-            mFrameFlushCount++;
-        }
-
-        //If the overlap size is greater than the frame size, we can't do that.  Automatically decrease the frame rate
-        //until we reach a legitimate overlap value.
-        if(mFrameOverlapCount >= mFrameSize)
-        {
-            mLog.warn("Unable to provide frame rate [" + mFrameRate + "] for current DFT size [" + mDFTSize.getSize() +
-                "] - reducing frame rate");
-
-            mFrameRate--;
-
-            if(mFrameRate <= 0)
-            {
-                //Consider reducing the FFT size as a possible alternative corrective measure
-                throw new IllegalStateException("Unable to determine a viable frame rate based on incoming sample " +
-                    "rate, DFT size and DFT frame rate");
-            }
-
-            //Recursively call this method to test the new frame rate
-            calculateConsumptionRate();
-        }
+        mDftBufferManager.clear();
     }
 }

@@ -41,6 +41,11 @@ public interface INativeBuffer
     Iterator<InterleavedComplexSamples> iteratorInterleaved();
 
     /**
+     * Total number of complex samples for this buffer
+     */
+    int sampleCount();
+
+    /**
      * Timestamp for this buffer
      * @return millis since epoch
      */

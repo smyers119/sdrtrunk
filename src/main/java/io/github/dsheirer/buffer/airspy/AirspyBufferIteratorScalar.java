@@ -17,7 +17,7 @@
  * ****************************************************************************
  */
 
-package io.github.dsheirer.buffer;
+package io.github.dsheirer.buffer.airspy;
 
 import io.github.dsheirer.sample.complex.ComplexSamples;
 
@@ -34,11 +34,12 @@ public class AirspyBufferIteratorScalar extends AirspyBufferIterator<ComplexSamp
      * @param samples from the airspy, either packed or unpacked.
      * @param residualI samples from last buffer
      * @param residualQ samples from last buffer
+     * @param averageDc measured
      * @param timestamp of the buffer
      */
-    public AirspyBufferIteratorScalar(byte[] samples, float[] residualI, float[] residualQ, long timestamp)
+    public AirspyBufferIteratorScalar(short[] samples, short[] residualI, short[] residualQ, float averageDc, long timestamp)
     {
-        super(samples, residualI, residualQ, timestamp);
+        super(samples, residualI, residualQ, averageDc, timestamp);
     }
 
     @Override
@@ -49,21 +50,15 @@ public class AirspyBufferIteratorScalar extends AirspyBufferIterator<ComplexSamp
             throw new IllegalStateException("End of buffer exceeded");
         }
 
-        int samplesPointer = mSamplesPointer;
-
-        int offset;
-        float iSample, qSample;
+        int offset = mSamplesPointer;
 
         for(int x = 0; x < FRAGMENT_SIZE; x++)
         {
-            offset = samplesPointer + (x * 4);
-
-            iSample = convertAndScale(mSamples[offset + 1], mSamples[offset]);
-            mIBuffer[I_OVERLAP + x] = iSample;
-
-            qSample = convertAndScale(mSamples[offset + 3], mSamples[offset + 2]);
-            mQBuffer[Q_OVERLAP + x] = qSample;
+            mIBuffer[x + I_OVERLAP] = scale(mSamples[offset++], mAverageDc);
+            mQBuffer[x + Q_OVERLAP] = scale(mSamples[offset++], mAverageDc);
         }
+
+        mSamplesPointer = offset;
 
         //The i line is a simple delay line, so we'll just copy those as a new array here.
         float[] i = Arrays.copyOf(mIBuffer, FRAGMENT_SIZE);
@@ -80,14 +75,21 @@ public class AirspyBufferIteratorScalar extends AirspyBufferIterator<ComplexSamp
                 accumulator += COEFFICIENTS[tap] * mQBuffer[x + tap];
             }
 
-            q[x] = accumulator;
+            //Perform FS/2 frequency translation on final filtered values ... multiply sequence by 1, -1, etc.
+            if(x % 2 == 0)
+            {
+                q[x] = accumulator;
+            }
+            else
+            {
+                i[x] = -i[x];
+                q[x] = -accumulator;
+            }
         }
 
         //Copy residual end samples to beginning of buffers for the next iteration
         System.arraycopy(mIBuffer, FRAGMENT_SIZE, mIBuffer, 0, I_OVERLAP);
         System.arraycopy(mQBuffer, FRAGMENT_SIZE, mQBuffer, 0, Q_OVERLAP);
-
-        mSamplesPointer += (FRAGMENT_SIZE * 4);
 
         return new ComplexSamples(i, q);
     }

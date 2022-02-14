@@ -19,14 +19,20 @@
 
 package io.github.dsheirer.buffer;
 
+import java.nio.ByteBuffer;
+
 /**
  * Implements a factory for creating SignedByteNativeBuffer instances
  */
 public class SignedByteNativeBufferFactory implements INativeBufferFactory
 {
     @Override
-    public INativeBuffer getBuffer(byte[] samples, long timestamp)
+    public INativeBuffer getBuffer(ByteBuffer samples, long timestamp)
     {
-        return new SignedByteNativeBuffer(samples, timestamp);
+        //TODO: perform DC removal here
+        byte[] copy = new byte[samples.capacity()];
+        samples.get(copy);
+
+        return new SignedByteNativeBuffer(copy, timestamp);
     }
 }

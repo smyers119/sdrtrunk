@@ -66,6 +66,12 @@ public class ByteNativeBuffer implements INativeBuffer
     }
 
     @Override
+    public int sampleCount()
+    {
+        return mSamples.length / 2;
+    }
+
+    @Override
     public long getTimestamp()
     {
         return mTimestamp;

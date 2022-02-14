@@ -73,6 +73,12 @@ public class SignedByteNativeBuffer implements INativeBuffer
     }
 
     @Override
+    public int sampleCount()
+    {
+        return mSamples.length / 2;
+    }
+
+    @Override
     public Iterator<ComplexSamples> iterator()
     {
         return new ComplexSamplesIterator();

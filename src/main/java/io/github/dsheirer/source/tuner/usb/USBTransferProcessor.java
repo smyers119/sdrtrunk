@@ -554,10 +554,10 @@ public class USBTransferProcessor implements TransferCallback
                     {
                         if(mNativeBufferListener != null)
                         {
-                            byte[] samples = new byte[transfer.buffer().capacity()];
-                            transfer.buffer().get(samples);
-
-                            INativeBuffer nativeBuffer = mNativeBufferFactory.getBuffer(samples, System.currentTimeMillis());
+                            //Pass the transfer's byte buffer so the native buffer factory can make a copy of the
+                            //byte array contents and package it as a native buffer.
+                            INativeBuffer nativeBuffer = mNativeBufferFactory.getBuffer(transfer.buffer(),
+                                    System.currentTimeMillis());
                             mNativeBufferListener.receive(nativeBuffer);
                         }
                     }
