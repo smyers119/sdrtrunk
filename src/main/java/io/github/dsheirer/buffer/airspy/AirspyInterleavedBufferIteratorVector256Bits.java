@@ -21,14 +21,15 @@ package io.github.dsheirer.buffer.airspy;
 
 import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import jdk.incubator.vector.FloatVector;
+import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
 
 /**
- * Scalar implementation for non-packed Airspy native buffers
+ * Vector SIMD implementation for non-packed Airspy native buffers
  */
-public class AirspyInterleavedBufferIteratorVector extends AirspyBufferIterator<InterleavedComplexSamples>
+public class AirspyInterleavedBufferIteratorVector256Bits extends AirspyBufferIterator<InterleavedComplexSamples>
 {
-    private static final VectorSpecies<Float> FLOAT_SPECIES = FloatVector.SPECIES_PREFERRED;
+    private static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_256;
 
     /**
      * Constructs an instance
@@ -39,8 +40,8 @@ public class AirspyInterleavedBufferIteratorVector extends AirspyBufferIterator<
      * @param averageDc measured
      * @param timestamp of the buffer
      */
-    public AirspyInterleavedBufferIteratorVector(short[] samples, short[] residualI, short[] residualQ, float averageDc,
-                                                 long timestamp)
+    public AirspyInterleavedBufferIteratorVector256Bits(short[] samples, short[] residualI, short[] residualQ, float averageDc,
+                                                        long timestamp)
     {
         super(samples, residualI, residualQ, averageDc, timestamp);
     }
@@ -55,24 +56,24 @@ public class AirspyInterleavedBufferIteratorVector extends AirspyBufferIterator<
 
         int offset = mSamplesPointer;
         int fragmentPointer = 0;
-        float[] scaledSamples = new float[FLOAT_SPECIES.length()];
+        float[] scaledSamples = new float[VECTOR_SPECIES.length()];
 
         while(fragmentPointer < FRAGMENT_SIZE)
         {
-            for(int y = 0; y < FLOAT_SPECIES.length(); y++)
+            for(int y = 0; y < VECTOR_SPECIES.length(); y++)
             {
                 //Couldn't figure out an easy way to load as a short vector and recast to a float vector
                 scaledSamples[y] = mSamples[offset++];
             }
 
             //SIMD scaling operation
-            FloatVector.fromArray(FLOAT_SPECIES, scaledSamples, 0)
+            FloatVector.fromArray(VECTOR_SPECIES, scaledSamples, 0)
                     .sub(2048.0f)
                     .mul(SCALE_SIGNED_12_BIT_TO_FLOAT)
                     .sub(mAverageDc)
                     .intoArray(scaledSamples, 0);
 
-            for(int y = 0; y < FLOAT_SPECIES.length(); y += 2)
+            for(int y = 0; y < VECTOR_SPECIES.length(); y += 2)
             {
                 mIBuffer[fragmentPointer + I_OVERLAP] = scaledSamples[y];
                 mQBuffer[fragmentPointer++ + Q_OVERLAP] = scaledSamples[y + 1];
@@ -81,30 +82,29 @@ public class AirspyInterleavedBufferIteratorVector extends AirspyBufferIterator<
 
         mSamplesPointer = offset;
 
-        //TODO: left off here ...
         float[] samples = new float[FRAGMENT_SIZE * 2];
-
-        float accumulator;
+        FloatVector accumulator;
+        FloatVector f1 = FloatVector.fromArray(VECTOR_SPECIES, COEFFICIENTS, 0);
+        FloatVector f2 = FloatVector.fromArray(VECTOR_SPECIES, COEFFICIENTS, 8);
+        FloatVector f3 = FloatVector.fromArray(VECTOR_SPECIES, COEFFICIENTS, 16);
 
         for(int x = 0; x < FRAGMENT_SIZE; x++)
         {
-            accumulator = 0;
-
-            for(int tap = 0; tap < COEFFICIENTS.length; tap++)
-            {
-                accumulator += COEFFICIENTS[tap] * mQBuffer[x + tap];
-            }
+            accumulator = FloatVector.zero(VECTOR_SPECIES);
+            accumulator = f1.fma(FloatVector.fromArray(VECTOR_SPECIES, mQBuffer, x), accumulator);
+            accumulator = f2.fma(FloatVector.fromArray(VECTOR_SPECIES, mQBuffer, x + 8), accumulator);
+            accumulator = f3.fma(FloatVector.fromArray(VECTOR_SPECIES, mQBuffer, x + 16), accumulator);
 
             //Perform FS/2 frequency translation on final filtered values ... multiply sequence by 1, -1, etc.
             if(x % 2 == 0)
             {
                 samples[2 * x] = mIBuffer[x];
-                samples[2 * x + 1] = accumulator;
+                samples[2 * x + 1] = accumulator.reduceLanes(VectorOperators.ADD);
             }
             else
             {
                 samples[2 * x] = -mIBuffer[x];
-                samples[2 * x + 1] = -accumulator;
+                samples[2 * x + 1] = -accumulator.reduceLanes(VectorOperators.ADD);
             }
         }
 

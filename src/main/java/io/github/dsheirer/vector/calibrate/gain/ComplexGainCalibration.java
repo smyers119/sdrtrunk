@@ -30,8 +30,8 @@ public class ComplexGainCalibration extends Calibration
 
     @Override public void calibrate() throws CalibrationException
     {
-        float[] i = getSamples(SAMPLE_BUFFER_SIZE);
-        float[] q = getSamples(SAMPLE_BUFFER_SIZE);
+        float[] i = getFloatSamples(SAMPLE_BUFFER_SIZE);
+        float[] q = getFloatSamples(SAMPLE_BUFFER_SIZE);
 
         float accumulator = 0.0f;
         float gain = 0.75f;

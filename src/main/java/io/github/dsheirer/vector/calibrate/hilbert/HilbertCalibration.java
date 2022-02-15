@@ -56,7 +56,7 @@ public class HilbertCalibration extends Calibration
      */
     @Override public void calibrate() throws CalibrationException
     {
-        float[] samples = getSamples(SAMPLE_BUFFER_SIZE);
+        float[] samples = getFloatSamples(SAMPLE_BUFFER_SIZE);
 
         long bestScore = calculateScalar(samples, ITERATIONS);
         mLog.info("HILBERT SCALAR:" + bestScore);

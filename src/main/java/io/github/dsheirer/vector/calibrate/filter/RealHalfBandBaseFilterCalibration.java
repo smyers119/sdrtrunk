@@ -4,8 +4,8 @@ import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.Window;
 import io.github.dsheirer.dsp.filter.decimate.IRealDecimationFilter;
 import io.github.dsheirer.dsp.filter.halfband.real.RealHalfBandDecimationFilter;
-import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.Calibration;
+import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import jdk.incubator.vector.FloatVector;
@@ -48,7 +48,7 @@ public abstract class RealHalfBandBaseFilterCalibration extends Calibration
          */
     @Override public void calibrate() throws CalibrationException
     {
-        float[] samples = getSamples(SAMPLE_BUFFER_SIZE);
+        float[] samples = getFloatSamples(SAMPLE_BUFFER_SIZE);
 
         long bestScore = calculateScalar(mCoefficients, samples, mIterations);
         mLog.info("REAL HALF-BAND " + mCoefficients.length + "-TAP SCALAR:" + bestScore);

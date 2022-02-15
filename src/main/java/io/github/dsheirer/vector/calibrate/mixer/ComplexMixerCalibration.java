@@ -34,8 +34,8 @@ public class ComplexMixerCalibration extends Calibration
 
         ScalarComplexMixer scalar = new ScalarComplexMixer(frequency, sampleRate);
         VectorComplexMixer vector = new VectorComplexMixer(frequency, sampleRate);
-        float[] i = getSamples(sampleSize);
-        float[] q = getSamples(sampleSize);
+        float[] i = getFloatSamples(sampleSize);
+        float[] q = getFloatSamples(sampleSize);
 
         long start = System.currentTimeMillis();
         double accumulator = 0.0;

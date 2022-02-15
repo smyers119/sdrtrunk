@@ -3,8 +3,8 @@ package io.github.dsheirer.vector.calibrate.demodulator;
 import io.github.dsheirer.dsp.fm.FMDemodulator;
 import io.github.dsheirer.dsp.fm.IFmDemodulator;
 import io.github.dsheirer.dsp.fm.VectorFMDemodulator;
-import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.Calibration;
+import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import org.slf4j.Logger;
@@ -60,8 +60,8 @@ public class FmDemodulatorCalibration extends Calibration
 
         IFmDemodulator demodulator = new FMDemodulator();
 
-        float[] iSamples = getSamples(sampleSize);
-        float[] qSamples = getSamples(sampleSize);
+        float[] iSamples = getFloatSamples(sampleSize);
+        float[] qSamples = getFloatSamples(sampleSize);
 
         long start = System.currentTimeMillis();
 
@@ -86,8 +86,8 @@ public class FmDemodulatorCalibration extends Calibration
 
         IFmDemodulator demodulator = new VectorFMDemodulator();
 
-        float[] iSamples = getSamples(sampleSize);
-        float[] qSamples = getSamples(sampleSize);
+        float[] iSamples = getFloatSamples(sampleSize);
+        float[] qSamples = getFloatSamples(sampleSize);
 
         long start = System.currentTimeMillis();
 

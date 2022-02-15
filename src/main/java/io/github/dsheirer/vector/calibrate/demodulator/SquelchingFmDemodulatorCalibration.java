@@ -64,8 +64,8 @@ public class SquelchingFmDemodulatorCalibration extends Calibration
         SquelchingFMDemodulator demodulator = new SquelchingFMDemodulator(POWER_SQUELCH_ALPHA_DECAY,
                 POWER_SQUELCH_THRESHOLD_DB, POWER_SQUELCH_RAMP);
 
-        float[] iSamples = getSamples(sampleSize);
-        float[] qSamples = getSamples(sampleSize);
+        float[] iSamples = getFloatSamples(sampleSize);
+        float[] qSamples = getFloatSamples(sampleSize);
 
         long start = System.currentTimeMillis();
 
@@ -91,8 +91,8 @@ public class SquelchingFmDemodulatorCalibration extends Calibration
         VectorSquelchingFMDemodulator demodulator = new VectorSquelchingFMDemodulator(POWER_SQUELCH_ALPHA_DECAY,
                 POWER_SQUELCH_THRESHOLD_DB, POWER_SQUELCH_RAMP);
 
-        float[] iSamples = getSamples(sampleSize);
-        float[] qSamples = getSamples(sampleSize);
+        float[] iSamples = getFloatSamples(sampleSize);
+        float[] qSamples = getFloatSamples(sampleSize);
 
         long start = System.currentTimeMillis();
 

@@ -22,6 +22,8 @@ package io.github.dsheirer.vector.calibrate;
 public enum CalibrationType
 {
     AIRSPY_SAMPLE_CONVERTER("Airspy Sample Converter"),
+    AIRSPY_UNPACKED_INTERLEAVED_ITERATOR("Airspy Unpacked Interleaved Iterator"),
+    AIRSPY_UNPACKED_ITERATOR("Airspy Unpacked Iterator"),
     COMPLEX_GAIN_CONTROL("Complex Gain Control"),
     COMPLEX_GAIN("Complex Gain"),
     COMPLEX_MIXER("Complex Mixer"),

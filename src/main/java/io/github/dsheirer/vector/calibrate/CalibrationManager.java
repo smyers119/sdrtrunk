@@ -20,6 +20,7 @@
 package io.github.dsheirer.vector.calibrate;
 
 import io.github.dsheirer.vector.calibrate.airspy.AirspySampleConverterCalibration;
+import io.github.dsheirer.vector.calibrate.airspy.AirspyUnpackedInterleavedCalibration;
 import io.github.dsheirer.vector.calibrate.demodulator.FmDemodulatorCalibration;
 import io.github.dsheirer.vector.calibrate.demodulator.SquelchingFmDemodulatorCalibration;
 import io.github.dsheirer.vector.calibrate.filter.ComplexHalfBand11TapFilterCalibration;
@@ -59,6 +60,7 @@ public class CalibrationManager
     private CalibrationManager()
     {
         add(new AirspySampleConverterCalibration());
+        add(new AirspyUnpackedInterleavedCalibration());
         add(new ComplexGainCalibration());
         add(new ComplexGainControlCalibration());
         add(new ComplexHalfBand11TapFilterCalibration());
@@ -223,7 +225,7 @@ public class CalibrationManager
     {
         CalibrationManager manager = getInstance();
 
-        manager.reset(CalibrationType.AIRSPY_SAMPLE_CONVERTER);
+        manager.reset(CalibrationType.AIRSPY_UNPACKED_INTERLEAVED_ITERATOR);
 //        manager.reset();
 
         if(!manager.isCalibrated())

@@ -49,7 +49,7 @@ public class RealDcRemovalCalibration extends Calibration
     @Override
     public void calibrate() throws CalibrationException
     {
-        float[] samples = getSamples(BUFFER_SIZE);
+        float[] samples = getFloatSamples(BUFFER_SIZE);
 
         ScalarDcRemovalFilter scalar = new ScalarDcRemovalFilter(GAIN);
 
@@ -65,7 +65,7 @@ public class RealDcRemovalCalibration extends Calibration
 
 
         VectorDcRemovalFilter vector = new VectorDcRemovalFilter(GAIN);
-        samples = getSamples(BUFFER_SIZE);
+        samples = getFloatSamples(BUFFER_SIZE);
 
         start = System.currentTimeMillis();
 

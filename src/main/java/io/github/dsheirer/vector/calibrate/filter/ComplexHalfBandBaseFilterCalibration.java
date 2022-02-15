@@ -4,8 +4,8 @@ import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.Window;
 import io.github.dsheirer.dsp.filter.decimate.IComplexDecimationFilter;
 import io.github.dsheirer.dsp.filter.halfband.complex.ComplexHalfBandDecimationFilter;
-import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.Calibration;
+import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import jdk.incubator.vector.FloatVector;
@@ -38,7 +38,7 @@ public abstract class ComplexHalfBandBaseFilterCalibration extends Calibration
      */
     @Override public void calibrate() throws CalibrationException
     {
-        float[] samples = getSamples(SAMPLE_BUFFER_SIZE);
+        float[] samples = getFloatSamples(SAMPLE_BUFFER_SIZE);
 
         long bestScore = calculateScalar(mCoefficients, samples, ITERATIONS);
         mLog.info("COMPLEX HALF-BAND " + mCoefficients.length + "-TAP SCALAR:" + bestScore);

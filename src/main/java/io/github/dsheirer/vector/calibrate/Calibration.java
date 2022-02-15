@@ -86,7 +86,7 @@ public abstract class Calibration
      * @param size of array
      * @return generated samples
      */
-    protected float[] getSamples(int size)
+    protected float[] getFloatSamples(int size)
     {
         Random random = new Random();
 
@@ -94,6 +94,24 @@ public abstract class Calibration
         for(int x = 0; x < samples.length; x++)
         {
             samples[x] = random.nextFloat() * 2.0f - 1.0f;
+        }
+
+        return samples;
+    }
+
+    /**
+     * Generates an array of floating point samples in the range -1.0 - 1.0
+     * @param size of array
+     * @return generated samples
+     */
+    protected short[] getShortSamples(int size)
+    {
+        Random random = new Random();
+
+        short[] samples = new short[size];
+        for(int x = 0; x < samples.length; x++)
+        {
+            samples[x] = (short)((random.nextFloat() * 2.0f - 1.0f) * Short.MAX_VALUE);
         }
 
         return samples;
