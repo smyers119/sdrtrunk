@@ -22,19 +22,22 @@ package io.github.dsheirer.buffer.airspy;
 import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
+import io.github.dsheirer.vector.calibrate.Implementation;
 
 import java.util.Iterator;
 
 /**
  * Native buffer scalar implementation for Airspy non-packed samples.
  */
-public class AirspyNativeBufferScalar implements INativeBuffer
+public class AirspyNativeBuffer implements INativeBuffer
 {
     private short[] mSamples;
     private short[] mResidualI;
     private short[] mResidualQ;
     private float mAverageDc;
     private long mTimestamp;
+    private Implementation mInterleavedImplementation;
+    private Implementation mNonInterleavedImplementation;
 
     /**
      * Constructs an instance
@@ -43,8 +46,12 @@ public class AirspyNativeBufferScalar implements INativeBuffer
      * @param residualQ samples from previous buffer
      * @param averageDc measured
      * @param timestamp of the buffer
+     * @param interleavedImplementation optimal, scalar vs vector SIMD
+     * @param nonInterleavedImplementation optimal, scalar vs vector SIMD
      */
-    public AirspyNativeBufferScalar(short[] samples, short[] residualI, short[] residualQ, float averageDc, long timestamp)
+    public AirspyNativeBuffer(short[] samples, short[] residualI, short[] residualQ, float averageDc,
+                              long timestamp, Implementation interleavedImplementation,
+                              Implementation nonInterleavedImplementation)
     {
         //Ensure we're an even multiple of the fragment size.  Typically, this will be 64k or 128k
         if(samples.length % AirspyBufferIterator.FRAGMENT_SIZE != 0)
@@ -58,6 +65,8 @@ public class AirspyNativeBufferScalar implements INativeBuffer
         mResidualQ = residualQ;
         mAverageDc = averageDc;
         mTimestamp = timestamp;
+        mInterleavedImplementation = interleavedImplementation;
+        mNonInterleavedImplementation = nonInterleavedImplementation;
     }
 
     @Override
@@ -75,12 +84,26 @@ public class AirspyNativeBufferScalar implements INativeBuffer
     @Override
     public Iterator<ComplexSamples> iterator()
     {
-        return new AirspyBufferIteratorScalar(mSamples, mResidualI, mResidualQ, mAverageDc, mTimestamp);
+        return switch(mInterleavedImplementation)
+        {
+            case VECTOR_SIMD_512 -> new AirspyBufferIteratorVector512Bits(mSamples, mResidualI, mResidualQ, mAverageDc, mTimestamp);
+            case VECTOR_SIMD_256-> new AirspyBufferIteratorVector256Bits(mSamples, mResidualI, mResidualQ, mAverageDc, mTimestamp);
+            case VECTOR_SIMD_128-> new AirspyBufferIteratorVector128Bits(mSamples, mResidualI, mResidualQ, mAverageDc, mTimestamp);
+            case VECTOR_SIMD_64 ->new AirspyBufferIteratorVector64Bits(mSamples, mResidualI, mResidualQ, mAverageDc, mTimestamp);
+            default -> new AirspyBufferIteratorScalar(mSamples, mResidualI, mResidualQ, mAverageDc, mTimestamp);
+        };
     }
 
     @Override
     public Iterator<InterleavedComplexSamples> iteratorInterleaved()
     {
-        return new AirspyInterleavedBufferIteratorScalar(mSamples, mResidualI, mResidualQ, mAverageDc, mTimestamp);
+        return switch(mInterleavedImplementation)
+        {
+            case VECTOR_SIMD_512 -> new AirspyInterleavedBufferIteratorVector512Bits(mSamples, mResidualI, mResidualQ, mAverageDc, mTimestamp);
+            case VECTOR_SIMD_256-> new AirspyInterleavedBufferIteratorVector256Bits(mSamples, mResidualI, mResidualQ, mAverageDc, mTimestamp);
+            case VECTOR_SIMD_128-> new AirspyInterleavedBufferIteratorVector128Bits(mSamples, mResidualI, mResidualQ, mAverageDc, mTimestamp);
+            case VECTOR_SIMD_64 ->new AirspyInterleavedBufferIteratorVector64Bits(mSamples, mResidualI, mResidualQ, mAverageDc, mTimestamp);
+            default -> new AirspyInterleavedBufferIteratorScalar(mSamples, mResidualI, mResidualQ, mAverageDc, mTimestamp);
+        };
     }
 }

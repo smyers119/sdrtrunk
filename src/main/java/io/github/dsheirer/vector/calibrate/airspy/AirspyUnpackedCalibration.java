@@ -20,11 +20,11 @@
 package io.github.dsheirer.vector.calibrate.airspy;
 
 import io.github.dsheirer.buffer.airspy.AirspyBufferIterator;
-import io.github.dsheirer.buffer.airspy.AirspyInterleavedBufferIteratorScalar;
-import io.github.dsheirer.buffer.airspy.AirspyInterleavedBufferIteratorVector128Bits;
-import io.github.dsheirer.buffer.airspy.AirspyInterleavedBufferIteratorVector256Bits;
-import io.github.dsheirer.buffer.airspy.AirspyInterleavedBufferIteratorVector512Bits;
-import io.github.dsheirer.buffer.airspy.AirspyInterleavedBufferIteratorVector64Bits;
+import io.github.dsheirer.buffer.airspy.AirspyBufferIteratorScalar;
+import io.github.dsheirer.buffer.airspy.AirspyBufferIteratorVector128Bits;
+import io.github.dsheirer.buffer.airspy.AirspyBufferIteratorVector256Bits;
+import io.github.dsheirer.buffer.airspy.AirspyBufferIteratorVector512Bits;
+import io.github.dsheirer.buffer.airspy.AirspyBufferIteratorVector64Bits;
 import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
@@ -34,20 +34,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Calculates optimal implementation (SCALAR vs VECTOR) for interleaved airspy native buffers.
+ * Calculates optimal implementation (SCALAR vs VECTOR) for non-interleaved airspy native buffers.
  */
-public class AirspyUnpackedInterleavedCalibration extends Calibration
+public class AirspyUnpackedCalibration extends Calibration
 {
-    private static final Logger mLog = LoggerFactory.getLogger(AirspyUnpackedInterleavedCalibration.class);
+    private static final Logger mLog = LoggerFactory.getLogger(AirspyUnpackedCalibration.class);
     private static final int BUFFER_SIZE = 131072;
     private static final int ITERATIONS = 10_000;
 
     /**
      * Constructs an instance
      */
-    public AirspyUnpackedInterleavedCalibration()
+    public AirspyUnpackedCalibration()
     {
-        super(CalibrationType.AIRSPY_UNPACKED_INTERLEAVED_ITERATOR);
+        super(CalibrationType.AIRSPY_UNPACKED_ITERATOR);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
 
         long bestScore = calibrateScalar(samples, residualI, residualQ);
         Implementation bestImplementation = Implementation.SCALAR;
-        mLog.info("AIRSPY UNPACKED INTERLEAVED - SCALAR: " + bestScore);
+        mLog.info("AIRSPY UNPACKED - SCALAR: " + bestScore);
 
         switch(FloatVector.SPECIES_PREFERRED.length())
         {
@@ -68,7 +68,7 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
             case 16:
             {
                 long vector512 = calibrateVector512(samples, residualI, residualQ);
-                mLog.info("AIRSPY UNPACKED INTERLEAVED - VECTOR 512: " + vector512);
+                mLog.info("AIRSPY UNPACKED - VECTOR 512: " + vector512);
                 if(vector512 < bestScore)
                 {
                     bestScore = vector512;
@@ -78,7 +78,7 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
             case 8:
             {
                 long vector256 = calibrateVector256(samples, residualI, residualQ);
-                mLog.info("AIRSPY UNPACKED INTERLEAVED - VECTOR 256: " + vector256);
+                mLog.info("AIRSPY UNPACKED - VECTOR 256: " + vector256);
                 if(vector256 < bestScore)
                 {
                     bestScore = vector256;
@@ -88,7 +88,7 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
             case 4:
             {
                 long vector128 = calibrateVector128(samples, residualI, residualQ);
-                mLog.info("AIRSPY UNPACKED INTERLEAVED - VECTOR 128: " + vector128);
+                mLog.info("AIRSPY UNPACKED - VECTOR 128: " + vector128);
                 if(vector128 < bestScore)
                 {
                     bestScore = vector128;
@@ -98,7 +98,7 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
             case 2:
             {
                 long vector64 = calibrateVector64(samples, residualI, residualQ);
-                mLog.info("AIRSPY UNPACKED INTERLEAVED - VECTOR 64: " + vector64);
+                mLog.info("AIRSPY UNPACKED - VECTOR 64: " + vector64);
                 if(vector64 < bestScore)
                 {
                     bestImplementation = Implementation.VECTOR_SIMD_64;
@@ -106,7 +106,7 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
             }
         }
 
-        mLog.info("AIRSPY UNPACKED INTERLEAVED - SETTING OPTIMAL OPERATION TO: " + bestImplementation);
+        mLog.info("AIRSPY UNPACKED - SETTING OPTIMAL OPERATION TO: " + bestImplementation);
         setImplementation(bestImplementation);
     }
 
@@ -116,12 +116,12 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
         long accumulator = 0;
         for(int x = 0; x < ITERATIONS; x++)
         {
-            AirspyInterleavedBufferIteratorScalar iterator = new AirspyInterleavedBufferIteratorScalar(samples, residualI,
+            AirspyBufferIteratorScalar iterator = new AirspyBufferIteratorScalar(samples, residualI,
                     residualQ, 0.0f, System.currentTimeMillis());
 
             while(iterator.hasNext())
             {
-                accumulator += iterator.next().samples()[2];
+                accumulator += iterator.next().i()[2];
             }
         }
 
@@ -134,12 +134,12 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
         long accumulator = 0;
         for(int x = 0; x < ITERATIONS; x++)
         {
-            AirspyInterleavedBufferIteratorVector64Bits iterator = new AirspyInterleavedBufferIteratorVector64Bits(samples, residualI,
+            AirspyBufferIteratorVector64Bits iterator = new AirspyBufferIteratorVector64Bits(samples, residualI,
                     residualQ, 0.0f, System.currentTimeMillis());
 
             while(iterator.hasNext())
             {
-                accumulator += iterator.next().samples()[2];
+                accumulator += iterator.next().i()[2];
             }
         }
 
@@ -152,12 +152,12 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
         long accumulator = 0;
         for(int x = 0; x < ITERATIONS; x++)
         {
-            AirspyInterleavedBufferIteratorVector128Bits iterator = new AirspyInterleavedBufferIteratorVector128Bits(samples, residualI,
+            AirspyBufferIteratorVector128Bits iterator = new AirspyBufferIteratorVector128Bits(samples, residualI,
                     residualQ, 0.0f, System.currentTimeMillis());
 
             while(iterator.hasNext())
             {
-                accumulator += iterator.next().samples()[2];
+                accumulator += iterator.next().i()[2];
             }
         }
 
@@ -170,12 +170,12 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
         long accumulator = 0;
         for(int x = 0; x < ITERATIONS; x++)
         {
-            AirspyInterleavedBufferIteratorVector256Bits iterator =
-                    new AirspyInterleavedBufferIteratorVector256Bits(samples, residualI, residualQ, 0.0f, System.currentTimeMillis());
+            AirspyBufferIteratorVector256Bits iterator =
+                    new AirspyBufferIteratorVector256Bits(samples, residualI, residualQ, 0.0f, System.currentTimeMillis());
 
             while(iterator.hasNext())
             {
-                accumulator += iterator.next().samples()[2];
+                accumulator += iterator.next().i()[2];
             }
         }
 
@@ -188,12 +188,12 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
         long accumulator = 0;
         for(int x = 0; x < ITERATIONS; x++)
         {
-            AirspyInterleavedBufferIteratorVector512Bits iterator =
-                    new AirspyInterleavedBufferIteratorVector512Bits(samples, residualI, residualQ, 0.0f, System.currentTimeMillis());
+            AirspyBufferIteratorVector512Bits iterator =
+                    new AirspyBufferIteratorVector512Bits(samples, residualI, residualQ, 0.0f, System.currentTimeMillis());
 
             while(iterator.hasNext())
             {
-                accumulator += iterator.next().samples()[2];
+                accumulator += iterator.next().i()[2];
             }
         }
 

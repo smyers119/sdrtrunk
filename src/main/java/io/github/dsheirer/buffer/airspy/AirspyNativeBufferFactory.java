@@ -37,6 +37,8 @@ public class AirspyNativeBufferFactory implements INativeBufferFactory
     private short[] mResidualI = new short[AirspyBufferIterator.I_OVERLAP];
     private short[] mResidualQ = new short[AirspyBufferIterator.Q_OVERLAP];
     private IAirspySampleConverter mConverter;
+    private Implementation mInterleavedIteratorImplementation;
+    private Implementation mNonInterleavedIteratorImplementation;
 
     /**
      * Constructs an instance
@@ -44,6 +46,11 @@ public class AirspyNativeBufferFactory implements INativeBufferFactory
     public AirspyNativeBufferFactory()
     {
         updateConverter();
+
+        mInterleavedIteratorImplementation = CalibrationManager.getInstance()
+                .getImplementation(CalibrationType.AIRSPY_UNPACKED_INTERLEAVED_ITERATOR);
+        mNonInterleavedIteratorImplementation = CalibrationManager.getInstance()
+                .getImplementation(CalibrationType.AIRSPY_UNPACKED_ITERATOR);
     }
 
     /**
@@ -96,9 +103,10 @@ public class AirspyNativeBufferFactory implements INativeBufferFactory
     {
         short[] samples = mConverter.convert(buffer);
 
-        INativeBuffer nativeBuffer = new AirspyNativeBufferScalar(samples,
+        INativeBuffer nativeBuffer = new AirspyNativeBuffer(samples,
                 Arrays.copyOf(mResidualI, mResidualI.length),
-                Arrays.copyOf(mResidualQ, mResidualQ.length), mConverter.getAverageDc(), timestamp);
+                Arrays.copyOf(mResidualQ, mResidualQ.length), mConverter.getAverageDc(), timestamp,
+                mInterleavedIteratorImplementation, mNonInterleavedIteratorImplementation);
 
         extractResidual(samples);
 
