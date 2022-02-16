@@ -20,7 +20,7 @@ package io.github.dsheirer.dsp.filter.halfband.real;
 
 import io.github.dsheirer.buffer.FloatCircularBuffer;
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
+import io.github.dsheirer.dsp.window.WindowType;
 
 import java.util.Random;
 
@@ -99,7 +99,7 @@ public class HalfBandFilter2
     public static void main(String[] args)
     {
         System.out.println("Starting ...");
-        float[] taps = FilterFactory.getHalfBand(99, Window.WindowType.HAMMING);
+        float[] taps = FilterFactory.getHalfBand(99, WindowType.HAMMING);
 
         HalfBandFilter2 halfband = new HalfBandFilter2(taps);
 

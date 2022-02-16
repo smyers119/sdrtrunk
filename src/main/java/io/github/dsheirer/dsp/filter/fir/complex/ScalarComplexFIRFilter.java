@@ -20,7 +20,7 @@
 package io.github.dsheirer.dsp.filter.fir.complex;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
+import io.github.dsheirer.dsp.window.WindowType;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.text.DecimalFormat;
@@ -118,7 +118,7 @@ public class ScalarComplexFIRFilter implements IComplexFilter
             samples[x] = random.nextFloat() * 2.0f - 1.0f;
         }
 
-        float[] coefficients = FilterFactory.getLowPass(1000, 250, 99, Window.WindowType.BLACKMAN);
+        float[] coefficients = FilterFactory.getLowPass(1000, 250, 99, WindowType.BLACKMAN);
 
 //        ComplexFIRFilter2 legacyFilter = new ComplexFIRFilter2(coefficients);
         ScalarComplexFIRFilter filter = new ScalarComplexFIRFilter(coefficients);

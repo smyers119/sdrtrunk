@@ -20,7 +20,6 @@
 package io.github.dsheirer.vector.calibrate.filter;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.dsp.filter.fir.real.IRealFilter;
 import io.github.dsheirer.dsp.filter.fir.real.RealFIRFilter;
@@ -29,6 +28,7 @@ import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilter256Bit;
 import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilter512Bit;
 import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilter64Bit;
 import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilterDefaultBit;
+import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
@@ -67,7 +67,7 @@ public class FirFilterCalibration extends Calibration
 
         try
         {
-            coefficients = FilterFactory.getSinc(0.25, 31, Window.WindowType.BLACKMAN);
+            coefficients = FilterFactory.getSinc(0.25, 31, WindowType.BLACKMAN);
         }
         catch(FilterDesignException fde)
         {

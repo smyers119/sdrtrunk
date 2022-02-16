@@ -42,7 +42,8 @@ public enum CalibrationType
     HILBERT_TRANSFORM("Hilbert Transform"),
     OSCILLATOR_COMPLEX("Complex Oscillator"),
     OSCILLATOR_REAL("Real Oscillator"),
-    SQUELCHING_FM_DEMODULATOR("Squelching FM Demodulator");
+    SQUELCHING_FM_DEMODULATOR("Squelching FM Demodulator"),
+    WINDOW("Window");
 
     private String mDescription;
 

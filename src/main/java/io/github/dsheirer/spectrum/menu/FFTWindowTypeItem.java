@@ -19,10 +19,10 @@
 
 package io.github.dsheirer.spectrum.menu;
 
-import io.github.dsheirer.dsp.filter.Window.WindowType;
+import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.spectrum.ComplexDftProcessor;
 
-import javax.swing.*;
+import javax.swing.JCheckBoxMenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -32,27 +32,26 @@ public class FFTWindowTypeItem extends JCheckBoxMenuItem
 
     private ComplexDftProcessor mComplexDftProcessor;
     private WindowType mWindowType;
-    
-    public FFTWindowTypeItem(ComplexDftProcessor processor, WindowType windowType )
-    {
-    	super( windowType.toString() );
-    	
-    	mComplexDftProcessor = processor;
-    	mWindowType = windowType;
 
-    	if( processor.getWindowType() == mWindowType )
-    	{
-    		setSelected( true );
-    	}
-    	
-    	addActionListener( new ActionListener() 
-    	{
-			@Override
-            public void actionPerformed( ActionEvent arg0 )
+    public FFTWindowTypeItem(ComplexDftProcessor processor, WindowType windowType)
+    {
+        super(windowType.toString());
+
+        mComplexDftProcessor = processor;
+        mWindowType = windowType;
+
+        if(processor.getWindowType() == mWindowType)
+        {
+            setSelected(true);
+        }
+
+        addActionListener(new ActionListener()
+        {
+            @Override public void actionPerformed(ActionEvent arg0)
             {
-				mComplexDftProcessor.setWindowType( mWindowType );
+                mComplexDftProcessor.setWindowType(mWindowType);
             }
-		} );
+        });
     }
 }
 

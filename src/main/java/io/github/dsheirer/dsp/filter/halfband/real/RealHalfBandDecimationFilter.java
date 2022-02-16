@@ -19,8 +19,8 @@
 package io.github.dsheirer.dsp.filter.halfband.real;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
 import io.github.dsheirer.dsp.filter.decimate.IRealDecimationFilter;
+import io.github.dsheirer.dsp.window.WindowType;
 
 import java.text.DecimalFormat;
 import java.util.Random;
@@ -125,7 +125,7 @@ public class RealHalfBandDecimationFilter implements IRealDecimationFilter
             samples[x] = random.nextFloat() * 2.0f - 1.0f;
         }
 
-        float[] coefficients = FilterFactory.getHalfBand(63, Window.WindowType.BLACKMAN);
+        float[] coefficients = FilterFactory.getHalfBand(63, WindowType.BLACKMAN);
 
 //        RealHalfBandDecimationFilter filter = new RealHalfBandDecimationFilter(coefficients);
 //        VectorRealHalfBandDecimationFilter63Tap64Bit vectorFilter64 = new VectorRealHalfBandDecimationFilter63Tap64Bit(coefficients);

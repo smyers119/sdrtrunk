@@ -20,11 +20,10 @@
 package io.github.dsheirer.dsp.filter.halfband.complex;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
 import io.github.dsheirer.dsp.filter.decimate.IComplexDecimationFilter;
+import io.github.dsheirer.dsp.window.WindowType;
 
 import java.text.DecimalFormat;
-import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -134,7 +133,7 @@ public class ComplexHalfBandDecimationFilter implements IComplexDecimationFilter
             samples[x] = random.nextFloat() * 2.0f - 1.0f;
         }
 
-        float[] coefficients = FilterFactory.getHalfBand(23, Window.WindowType.BLACKMAN);
+        float[] coefficients = FilterFactory.getHalfBand(23, WindowType.BLACKMAN);
 
 //        ComplexHalfBandDecimationFilter filter = new ComplexHalfBandDecimationFilter(coefficients);
 //        VectorComplexHalfBandDecimationFilterDefaultBit vectorFilter = new VectorComplexHalfBandDecimationFilterDefaultBit(coefficients);

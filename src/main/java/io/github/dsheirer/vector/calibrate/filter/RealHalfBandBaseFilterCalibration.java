@@ -1,9 +1,9 @@
 package io.github.dsheirer.vector.calibrate.filter;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
 import io.github.dsheirer.dsp.filter.decimate.IRealDecimationFilter;
 import io.github.dsheirer.dsp.filter.halfband.real.RealHalfBandDecimationFilter;
+import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
@@ -29,7 +29,7 @@ public abstract class RealHalfBandBaseFilterCalibration extends Calibration
     public RealHalfBandBaseFilterCalibration(CalibrationType type, int filterLength)
     {
         super(type);
-        mCoefficients = FilterFactory.getHalfBand(filterLength, Window.WindowType.BLACKMAN);
+        mCoefficients = FilterFactory.getHalfBand(filterLength, WindowType.BLACKMAN);
     }
 
     /**

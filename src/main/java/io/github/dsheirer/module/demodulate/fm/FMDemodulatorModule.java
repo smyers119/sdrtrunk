@@ -16,13 +16,13 @@
 package io.github.dsheirer.module.demodulate.fm;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.dsp.filter.fir.FIRFilterSpecification;
 import io.github.dsheirer.dsp.filter.fir.real.IRealFilter;
 import io.github.dsheirer.dsp.filter.resample.RealResampler;
 import io.github.dsheirer.dsp.fm.FMDemodulator;
 import io.github.dsheirer.dsp.squelch.PowerMonitor;
+import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.module.Module;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.IReusableBufferProvider;
@@ -201,7 +201,7 @@ public class FMDemodulatorModule extends Module implements ISourceEventListener,
                 if(coefficients == null)
                 {
                     coefficients = FilterFactory.getLowPass(sampleRate, passBandStop, stopBandStart, 60,
-                            Window.WindowType.HAMMING, true);
+                            WindowType.HAMMING, true);
                 }
 
                 mIBasebandFilter = FilterFactory.getRealFilter(coefficients);

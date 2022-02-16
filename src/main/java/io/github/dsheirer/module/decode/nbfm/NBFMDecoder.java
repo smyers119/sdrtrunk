@@ -22,7 +22,6 @@ import io.github.dsheirer.channel.state.DecoderStateEvent;
 import io.github.dsheirer.channel.state.IDecoderStateEventProvider;
 import io.github.dsheirer.channel.state.State;
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
 import io.github.dsheirer.dsp.filter.decimate.DecimationFilterFactory;
 import io.github.dsheirer.dsp.filter.decimate.IRealDecimationFilter;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
@@ -31,6 +30,7 @@ import io.github.dsheirer.dsp.filter.fir.real.IRealFilter;
 import io.github.dsheirer.dsp.filter.resample.RealResampler;
 import io.github.dsheirer.dsp.fm.FmDemodulatorFactory;
 import io.github.dsheirer.dsp.fm.ISquelchingFmDemodulator;
+import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.module.decode.DecoderType;
 import io.github.dsheirer.module.decode.PrimaryDecoder;
 import io.github.dsheirer.sample.Listener;
@@ -340,7 +340,7 @@ public class NBFMDecoder extends PrimaryDecoder implements ISourceEventListener,
 							"] pass band stop [" + passBandStop +
 							"] and stop band start [" + stopBandStart + "] - will proceed using simple low pass filter design");
 					coefficients = FilterFactory.getLowPass(decimatedSampleRate, passBandStop, stopBandStart, 60,
-							Window.WindowType.HAMMING, true);
+							WindowType.HAMMING, true);
 				}
 
 				mIBasebandFilter = FilterFactory.getRealFilter(coefficients);

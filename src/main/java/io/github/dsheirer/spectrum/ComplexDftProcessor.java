@@ -19,8 +19,8 @@
 package io.github.dsheirer.spectrum;
 
 import io.github.dsheirer.buffer.INativeBuffer;
-import io.github.dsheirer.dsp.filter.Window;
-import io.github.dsheirer.dsp.filter.Window.WindowType;
+import io.github.dsheirer.dsp.window.WindowFactory;
+import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.properties.SystemProperties;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.spectrum.converter.DFTResultsConverter;
@@ -46,7 +46,7 @@ public class ComplexDftProcessor<T extends INativeBuffer> implements Listener<T>
 
     //The Cosine and Hann windows seem to offer the best spectral display with minimal bin leakage/smearing
     private WindowType mWindowType = WindowType.HANN;
-    private double[] mWindow;
+    private float[] mWindow;
     private DFTSize mDFTSize = DFTSize.FFT04096;
     private DFTSize mNewDFTSize = DFTSize.FFT04096;
     private FloatFFT_1D mFFT = new FloatFFT_1D(mDFTSize.getSize());
@@ -85,7 +85,7 @@ public class ComplexDftProcessor<T extends INativeBuffer> implements Listener<T>
 
     private void updateWindow()
     {
-        mWindow = Window.getWindow(mWindowType, mDFTSize.getSize() * 2);
+        mWindow = WindowFactory.getWindow(mWindowType, mDFTSize.getSize() * 2);
     }
 
     /**
@@ -174,7 +174,7 @@ public class ComplexDftProcessor<T extends INativeBuffer> implements Listener<T>
         {
             //If this throws an IO exception, the buffer queue is (temporarily) empty and we return from the method
             float[] samples = mDftBufferManager.get(mDFTSize.getSize());
-            Window.apply(mWindow, samples);
+            WindowFactory.apply(mWindow, samples);
             mFFT.complexForward(samples);
             mPreviousSamples = samples;
         }

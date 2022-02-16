@@ -20,8 +20,8 @@
 package io.github.dsheirer.dsp.filter.design;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
 import io.github.dsheirer.dsp.filter.hilbert.HilbertTransform;
+import io.github.dsheirer.dsp.window.WindowType;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -60,7 +60,7 @@ public class FilterViewer extends Application
     private float[] getFilter()
     {
         int filterLength = 47;
-        Window.WindowType windowType = Window.WindowType.HAMMING;
+        WindowType windowType = WindowType.HAMMING;
 
         float[] taps = FilterFactory.getHalfBand(filterLength, windowType);
 

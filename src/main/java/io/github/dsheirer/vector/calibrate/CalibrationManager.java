@@ -38,6 +38,7 @@ import io.github.dsheirer.vector.calibrate.gain.ComplexGainControlCalibration;
 import io.github.dsheirer.vector.calibrate.mixer.ComplexMixerCalibration;
 import io.github.dsheirer.vector.calibrate.oscillator.ComplexOscillatorCalibration;
 import io.github.dsheirer.vector.calibrate.oscillator.RealOscillatorCalibration;
+import io.github.dsheirer.vector.calibrate.window.WindowCalibration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,6 +81,7 @@ public class CalibrationManager
         add(new RealHalfBandDefaultFilterCalibration());
         add(new RealOscillatorCalibration());
         add(new SquelchingFmDemodulatorCalibration());
+        add(new WindowCalibration());
     }
 
     /**
@@ -227,7 +229,7 @@ public class CalibrationManager
     {
         CalibrationManager manager = getInstance();
 
-        manager.reset(CalibrationType.AIRSPY_UNPACKED_ITERATOR);
+        manager.reset(CalibrationType.WINDOW);
 //        manager.reset();
 
         if(!manager.isCalibrated())

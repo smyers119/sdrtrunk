@@ -20,7 +20,7 @@
 package io.github.dsheirer.dsp.filter.decimate;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
+import io.github.dsheirer.dsp.window.WindowType;
 
 /**
  * Decimate by 64 filter for real valued sample buffers.
@@ -29,7 +29,7 @@ public class RealDecimateX64Filter extends RealDecimateX32Filter
 {
     private static final int VALIDATION_LENGTH = 64;
     private static final int DECIMATE_BY_64_FILTER_LENGTH = 11;
-    private static final Window.WindowType DECIMATE_BY_64_WINDOW_TYPE = Window.WindowType.BLACKMAN;
+    private static final WindowType DECIMATE_BY_64_WINDOW_TYPE = WindowType.BLACKMAN;
     private IRealDecimationFilter mFilter;
 
     /**

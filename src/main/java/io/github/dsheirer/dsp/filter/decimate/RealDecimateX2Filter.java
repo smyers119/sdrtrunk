@@ -20,7 +20,7 @@
 package io.github.dsheirer.dsp.filter.decimate;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
+import io.github.dsheirer.dsp.window.WindowType;
 
 /**
  * Constructs the decimation filter.
@@ -28,7 +28,7 @@ import io.github.dsheirer.dsp.filter.Window;
 public class RealDecimateX2Filter implements IRealDecimationFilter
 {
     private static final int DECIMATE_BY_2_FILTER_LENGTH = 63;
-    private static final Window.WindowType DECIMATE_BY_2_WINDOW_TYPE = Window.WindowType.HAMMING;
+    private static final WindowType DECIMATE_BY_2_WINDOW_TYPE = WindowType.HAMMING;
     private IRealDecimationFilter mFilter;
 
     /**

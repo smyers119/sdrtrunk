@@ -19,7 +19,7 @@
 package io.github.dsheirer.dsp.filter.fir.real;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
+import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.sample.buffer.ReusableBufferQueue;
 import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
 import org.apache.commons.lang3.ArrayUtils;
@@ -125,7 +125,7 @@ public class RealFIRFilter implements IRealFilter
             samples[x] = random.nextFloat() * 2.0f - 1.0f;
         }
 
-        float[] coefficients = FilterFactory.getLowPass(1000, 250, 99, Window.WindowType.BLACKMAN);
+        float[] coefficients = FilterFactory.getLowPass(1000, 250, 99, WindowType.BLACKMAN);
 
         RealFIRFilter filter = new RealFIRFilter(coefficients);
         VectorRealFIRFilter256Bit vectorFilter = new VectorRealFIRFilter256Bit(coefficients);

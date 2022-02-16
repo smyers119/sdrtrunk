@@ -17,13 +17,12 @@ package io.github.dsheirer.module.demodulate.am;
 
 import io.github.dsheirer.dsp.am.AMDemodulator;
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
-import io.github.dsheirer.dsp.filter.Window.WindowType;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.dsp.filter.fir.FIRFilterSpecification;
 import io.github.dsheirer.dsp.filter.fir.real.IRealFilter;
 import io.github.dsheirer.dsp.filter.resample.RealResampler;
 import io.github.dsheirer.dsp.gain.AutomaticGainControl;
+import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.module.Module;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.buffer.IReusableBufferProvider;
@@ -39,12 +38,12 @@ import org.slf4j.LoggerFactory;
 /**
  * AM Demodulator Module for demodulating complex baseband channel sample buffers and producing demodulated audio
  * at a specified output sample rate, normally 8 kHz.
- *
+ * <p>
  * This module requires a sample rate SourceEvent prior to processing baseband sample buffers in order to configure
  * internal filters and the resampler.
  */
-public class AMDemodulatorModule extends Module implements ISourceEventListener, IComplexSamplesListener,
-    IReusableBufferProvider, Listener<ComplexSamples>
+public class AMDemodulatorModule extends Module
+        implements ISourceEventListener, IComplexSamplesListener, IReusableBufferProvider, Listener<ComplexSamples>
 {
     private final static Logger mLog = LoggerFactory.getLogger(AMDemodulatorModule.class);
     private IRealFilter mIBasebandFilter;
@@ -59,7 +58,6 @@ public class AMDemodulatorModule extends Module implements ISourceEventListener,
     private Listener<ReusableFloatBuffer> mResampledReusableBufferListener;
     private SourceEventProcessor mSourceEventProcessor = new SourceEventProcessor();
     private ReusableBufferQueue mReusableBufferQueue = new ReusableBufferQueue("AM Demod Audio Buffers");
-
 
     /**
      * Constructs an AM demodulator module
@@ -76,17 +74,9 @@ public class AMDemodulatorModule extends Module implements ISourceEventListener,
 
         float[] lowPassCoefficients = null;
 
-        FIRFilterSpecification specification = FIRFilterSpecification.lowPassBuilder()
-                .sampleRate(mOutputSampleRate)
-                .gridDensity(16)
-                .oddLength(true)
-                .passBandCutoff(3000)
-                .passBandAmplitude(1.0)
-                .passBandRipple(0.01)
-                .stopBandStart(3500)
-                .stopBandAmplitude(0.0)
-                .stopBandRipple(0.028)
-                .build();
+        FIRFilterSpecification specification = FIRFilterSpecification.lowPassBuilder().sampleRate(mOutputSampleRate)
+                .gridDensity(16).oddLength(true).passBandCutoff(3000).passBandAmplitude(1.0).passBandRipple(0.01)
+                .stopBandStart(3500).stopBandAmplitude(0.0).stopBandRipple(0.028).build();
 
         try
         {
@@ -94,21 +84,19 @@ public class AMDemodulatorModule extends Module implements ISourceEventListener,
         }
         catch(FilterDesignException fde)
         {
-            mLog.error("Couldn't design AM demodulator remez filter for sample rate [" + mOutputSampleRate +
-                    "] pass frequency [3000] and stop frequency [3500] - using sinc filter");
+            mLog.error("Couldn't design AM demodulator remez filter for sample rate [" + mOutputSampleRate
+                    + "] pass frequency [3000] and stop frequency [3500] - using sinc filter");
         }
 
         if(lowPassCoefficients == null)
         {
-            lowPassCoefficients = FilterFactory.getLowPass(mOutputSampleRate, 3000, 3500,
-                    60, WindowType.HAMMING, true);
+            lowPassCoefficients = FilterFactory.getLowPass(mOutputSampleRate, 3000, 3500, 60, WindowType.HAMMING, true);
         }
 
         mLowPassFilter = FilterFactory.getRealFilter(lowPassCoefficients);
     }
 
-    @Override
-    public void receive(ComplexSamples samples)
+    @Override public void receive(ComplexSamples samples)
     {
         float[] i = mIBasebandFilter.filter(samples.i());
         float[] q = mQBasebandFilter.filter(samples.q());
@@ -118,6 +106,7 @@ public class AMDemodulatorModule extends Module implements ISourceEventListener,
 
     /**
      * Processes resampled audio buffers produced by the resampler.
+     *
      * @param resampledAudio buffer to process.
      */
     private void processResampledAudio(ReusableFloatBuffer resampledAudio)
@@ -138,41 +127,34 @@ public class AMDemodulatorModule extends Module implements ISourceEventListener,
         }
     }
 
-    @Override
-    public Listener<ComplexSamples> getComplexSamplesListener()
+    @Override public Listener<ComplexSamples> getComplexSamplesListener()
     {
         return this;
     }
 
-    @Override
-    public void reset()
+    @Override public void reset()
     {
     }
 
-    @Override
-    public void start()
+    @Override public void start()
     {
     }
 
-    @Override
-    public void stop()
+    @Override public void stop()
     {
     }
 
-    @Override
-    public void setBufferListener(Listener<ReusableFloatBuffer> listener)
+    @Override public void setBufferListener(Listener<ReusableFloatBuffer> listener)
     {
         mResampledReusableBufferListener = listener;
     }
 
-    @Override
-    public void removeBufferListener()
+    @Override public void removeBufferListener()
     {
         mResampledReusableBufferListener = null;
     }
 
-    @Override
-    public Listener<SourceEvent> getSourceEventListener()
+    @Override public Listener<SourceEvent> getSourceEventListener()
     {
         return mSourceEventProcessor;
     }
@@ -182,8 +164,7 @@ public class AMDemodulatorModule extends Module implements ISourceEventListener,
      */
     public class SourceEventProcessor implements Listener<SourceEvent>
     {
-        @Override
-        public void receive(SourceEvent sourceEvent)
+        @Override public void receive(SourceEvent sourceEvent)
         {
             if(sourceEvent.getEvent() == SourceEvent.Event.NOTIFICATION_SAMPLE_RATE_CHANGE)
             {
@@ -197,9 +178,9 @@ public class AMDemodulatorModule extends Module implements ISourceEventListener,
 
                 if((sampleRate < (2.0 * mChannelBandwidth)))
                 {
-                    throw new IllegalStateException("AM Demodulator with channel bandwidth [" + mChannelBandwidth +
-                        "] requires a channel sample rate of [" + (2.0 * mChannelBandwidth + "] - sample rate of [" +
-                        sampleRate + "] is not supported"));
+                    throw new IllegalStateException("AM Demodulator with channel bandwidth [" + mChannelBandwidth
+                            + "] requires a channel sample rate of [" + (2.0 * mChannelBandwidth
+                            + "] - sample rate of [" + sampleRate + "] is not supported"));
                 }
 
                 double cutoff = sampleRate / 4.0;
@@ -208,17 +189,11 @@ public class AMDemodulatorModule extends Module implements ISourceEventListener,
 
                 float[] coefficients = null;
 
-                FIRFilterSpecification specification = FIRFilterSpecification.lowPassBuilder()
-                    .sampleRate(sampleRate)
-                    .gridDensity(16)
-                    .oddLength(true)
-                    .passBandCutoff(passBandStop)
-                    .passBandAmplitude(1.0)
-                    .passBandRipple(0.01)
-                    .stopBandStart(stopBandStart)
-                    .stopBandAmplitude(0.0)
-                    .stopBandRipple(0.028) //Approximately 60 dB attenuation
-                    .build();
+                FIRFilterSpecification specification = FIRFilterSpecification.lowPassBuilder().sampleRate(sampleRate)
+                        .gridDensity(16).oddLength(true).passBandCutoff(passBandStop).passBandAmplitude(1.0)
+                        .passBandRipple(0.01).stopBandStart(stopBandStart).stopBandAmplitude(0.0)
+                        .stopBandRipple(0.028) //Approximately 60 dB attenuation
+                        .build();
 
                 try
                 {
@@ -226,15 +201,15 @@ public class AMDemodulatorModule extends Module implements ISourceEventListener,
                 }
                 catch(FilterDesignException fde)
                 {
-                    mLog.error("Couldn't design AM demodulator remez filter for sample rate [" + sampleRate +
-                        "] pass frequency [" + passBandStop + "] and stop frequency [" + stopBandStart +
-                        "] - using sinc filter");
+                    mLog.error("Couldn't design AM demodulator remez filter for sample rate [" + sampleRate
+                            + "] pass frequency [" + passBandStop + "] and stop frequency [" + stopBandStart
+                            + "] - using sinc filter");
                 }
 
                 if(coefficients == null)
                 {
                     coefficients = FilterFactory.getLowPass(sampleRate, passBandStop, stopBandStart, 60,
-                        Window.WindowType.HAMMING, true);
+                            WindowType.HAMMING, true);
                 }
 
                 mIBasebandFilter = FilterFactory.getRealFilter(coefficients);
