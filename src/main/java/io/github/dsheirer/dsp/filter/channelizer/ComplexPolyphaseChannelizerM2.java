@@ -21,6 +21,7 @@ package io.github.dsheirer.dsp.filter.channelizer;
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
+import io.github.dsheirer.util.Dispatcher;
 import org.apache.commons.math3.util.FastMath;
 import org.jtransforms.fft.FloatFFT_1D;
 import org.slf4j.Logger;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -68,8 +70,8 @@ public class ComplexPolyphaseChannelizerM2 extends AbstractComplexPolyphaseChann
      */
     private static final int PROCESSED_CHANNEL_RESULTS_THRESHOLD = 1024;
 
-    //Sized at 152 buffers a second where max = 5 seconds and reset = 2 seconds worth of buffers
-    private IFFTProcessor mIFFTProcessor = new IFFTProcessor((5 * 152), (2 * 152));
+    //Sized at 152 buffers a second where max = 5 seconds
+    private IFFTProcessorDispatcher mIFFTProcessorDispatcher = new IFFTProcessorDispatcher(5 * 152);
     private FloatFFT_1D mFFT;
     private float[] mInlineSamples;
     private float[] mInlineFilter;
@@ -130,7 +132,7 @@ public class ComplexPolyphaseChannelizerM2 extends AbstractComplexPolyphaseChann
      */
     public void start()
     {
-        mIFFTProcessor.start();
+        mIFFTProcessorDispatcher.start();
     }
 
     /**
@@ -138,7 +140,7 @@ public class ComplexPolyphaseChannelizerM2 extends AbstractComplexPolyphaseChann
      */
     public void stop()
     {
-        mIFFTProcessor.stop();
+        mIFFTProcessorDispatcher.stop();
     }
 
     /**
@@ -222,7 +224,7 @@ public class ComplexPolyphaseChannelizerM2 extends AbstractComplexPolyphaseChann
 
                 if(mProcessedChannelResultsList.size() >= PROCESSED_CHANNEL_RESULTS_THRESHOLD)
                 {
-                    mIFFTProcessor.receive(new ArrayList<>(mProcessedChannelResultsList));
+                    mIFFTProcessorDispatcher.receive(new ArrayList<>(mProcessedChannelResultsList));
                     mProcessedChannelResultsList.clear();
                 }
 
@@ -403,33 +405,28 @@ public class ComplexPolyphaseChannelizerM2 extends AbstractComplexPolyphaseChann
      * as required to align the phase of each polyphase channel, and then dispatch the results to any registered
      * sample consumer channels.
      */
-    public class IFFTProcessor extends ContinuousBufferProcessor<List<float[]>>
+    public class IFFTProcessorDispatcher extends Dispatcher<List<float[]>>
     {
-        public IFFTProcessor(int maximumSize, int resetThreshold)
+        public IFFTProcessorDispatcher(int maximumSize)
         {
-            super(maximumSize, resetThreshold);
+            super(maximumSize, "sdrtrunk polyphase ifft processor", Collections.emptyList());
 
             //We create a listener interface to receive the batched channel results arrays from the scheduled thread pool
             //dispatcher thread that is part of this continuous buffer processor.  We perform an IFFT on each
             //channel results array contained in each results buffer and then dispatch the buffer
             //so that it can be distributed to each channel listener.
             setListener(list -> {
-                for(List<float[]> channelResultsList: list)
+                List<float[]> processedChannelResults = new ArrayList<>();
+
+                for(float[] channelResults: list)
                 {
-                    List<float[]> processedChannelResults = new ArrayList<>();
-
-                    for(float[] channelResults: channelResultsList)
-                    {
-                        //Rotate each of the channels to the correct phase using the IFFT
-                        mFFT.complexInverse(channelResults, true);
-                        processedChannelResults.add(channelResults);
-                    }
-
-                    dispatch(processedChannelResults);
+                    //Rotate each of the channels to the correct phase using the IFFT
+                    mFFT.complexInverse(channelResults, true);
+                    processedChannelResults.add(channelResults);
                 }
-            });
 
-            setOverflowListener(overflow -> mLog.debug("IFFTProcessor overflow changed - overflow:" + overflow));
+                dispatch(processedChannelResults);
+            });
         }
     }
 }

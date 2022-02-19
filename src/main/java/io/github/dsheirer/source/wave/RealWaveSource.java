@@ -21,8 +21,6 @@ package io.github.dsheirer.source.wave;
 import io.github.dsheirer.sample.ConversionUtils;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.SampleType;
-import io.github.dsheirer.sample.buffer.ReusableBufferQueue;
-import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
 import io.github.dsheirer.source.IControllableFileSource;
 import io.github.dsheirer.source.IFrameLocationListener;
 import io.github.dsheirer.source.Source;
@@ -41,13 +39,11 @@ import java.util.Arrays;
 public class RealWaveSource extends Source implements IControllableFileSource, AutoCloseable
 {
     private final static Logger mLog = LoggerFactory.getLogger(RealWaveSource.class);
-
-    private ReusableBufferQueue mReusableBufferQueue = new ReusableBufferQueue("RealWaveSource");
     private IFrameLocationListener mFrameLocationListener;
     private int mBytesPerFrame;
     private int mFrameCounter = 0;
     private long mFrequency = 0;
-    private Listener<ReusableFloatBuffer> mListener;
+    private Listener<float[]> mListener;
     private AudioInputStream mInputStream;
     private File mFile;
 
@@ -236,9 +232,7 @@ public class RealWaveSource extends Source implements IControllableFileSource, A
                 }
 
                 float[] samples = ConversionUtils.convertFromSigned16BitSamples(buffer);
-
-                ReusableFloatBuffer reusableFloatBuffer = mReusableBufferQueue.getBuffer(samples, System.currentTimeMillis());
-                mListener.receive(reusableFloatBuffer);
+                mListener.receive(samples);
             }
         }
     }
@@ -246,7 +240,7 @@ public class RealWaveSource extends Source implements IControllableFileSource, A
     /**
      * Registers the listener to receive sample buffers as they are read from the wave file
      */
-    public void setListener(Listener<ReusableFloatBuffer> listener)
+    public void setListener(Listener<float[]> listener)
     {
         mListener = listener;
     }
@@ -254,7 +248,7 @@ public class RealWaveSource extends Source implements IControllableFileSource, A
     /**
      * Unregisters the listener from receiving sample buffers
      */
-    public void removeListener(Listener<ReusableFloatBuffer> listener)
+    public void removeListener(Listener<float[]> listener)
     {
         mListener = null;
     }

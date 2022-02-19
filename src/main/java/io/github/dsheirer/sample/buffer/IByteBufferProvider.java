@@ -16,30 +16,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  * ****************************************************************************
  */
-package io.github.dsheirer.module.decode.ltrnet;
+package io.github.dsheirer.sample.buffer;
 
-import io.github.dsheirer.dsp.fsk.LTRDecoderInstrumented;
-import javafx.beans.property.SimpleIntegerProperty;
+import io.github.dsheirer.sample.Listener;
 
-public class LTRNetDecoderInstrumented extends LTRNetDecoder
+import java.nio.ByteBuffer;
+
+public interface IByteBufferProvider
 {
-    public SimpleIntegerProperty bufferCount = new SimpleIntegerProperty();
+    /**
+     * Adds the listener to receive complex buffer samples
+     */
+    void setBufferListener(Listener<ByteBuffer> listener);
 
-    public LTRNetDecoderInstrumented(DecodeConfigLTRNet config)
-    {
-        super(config, new LTRDecoderInstrumented(LTR_NET_MESSAGE_LENGTH));
-    }
+    /**
+     * Removes the listener from receiving complex buffer samples
+     */
+    void removeBufferListener(Listener<ByteBuffer> listener);
 
-    public LTRDecoderInstrumented getLTRDecoder()
-    {
-        return (LTRDecoderInstrumented)mLTRDecoder;
-    }
-
-    @Override
-    public void receive(float[] realBuffer)
-    {
-        super.receive(realBuffer);
-
-        bufferCount.setValue(bufferCount.intValue() + 1);
-    }
+    /**
+     * Indicates if there are any complex buffer listeners registered
+     */
+    boolean hasBufferListeners();
 }

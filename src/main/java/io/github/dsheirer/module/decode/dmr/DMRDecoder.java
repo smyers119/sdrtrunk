@@ -36,8 +36,7 @@ import io.github.dsheirer.module.decode.DecoderType;
 import io.github.dsheirer.module.decode.FeedbackDecoder;
 import io.github.dsheirer.sample.Broadcaster;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.IReusableByteBufferProvider;
-import io.github.dsheirer.sample.buffer.ReusableByteBuffer;
+import io.github.dsheirer.sample.buffer.IByteBufferProvider;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.sample.complex.IComplexSamplesListener;
 import io.github.dsheirer.source.ISourceEventListener;
@@ -46,6 +45,7 @@ import io.github.dsheirer.source.SourceEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -53,7 +53,7 @@ import java.util.Map;
  * DMR decoder module.
  */
 public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener, ISourceEventProvider,
-        IComplexSamplesListener, Listener<ComplexSamples>, IReusableByteBufferProvider
+        IComplexSamplesListener, Listener<ComplexSamples>, IByteBufferProvider
 {
     private final static Logger mLog = LoggerFactory.getLogger(DMRDecoder.class);
     protected static final float SAMPLE_COUNTER_GAIN = 0.4f;
@@ -241,7 +241,7 @@ public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener,
      * Implements the IByteBufferProvider interface - delegates to the byte buffer assembler
      */
     @Override
-    public void setBufferListener(Listener<ReusableByteBuffer> listener)
+    public void setBufferListener(Listener<ByteBuffer> listener)
     {
         mByteBufferAssembler.setBufferListener(listener);
     }
@@ -250,7 +250,7 @@ public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener,
      * Implements the IByteBufferProvider interface - delegates to the byte buffer assembler
      */
     @Override
-    public void removeBufferListener(Listener<ReusableByteBuffer> listener)
+    public void removeBufferListener(Listener<ByteBuffer> listener)
     {
         mByteBufferAssembler.removeBufferListener(listener);
     }
@@ -308,14 +308,7 @@ public class DMRDecoder extends FeedbackDecoder implements ISourceEventListener,
     @Override
     public Listener<SourceEvent> getSourceEventListener()
     {
-        return new Listener<SourceEvent>()
-        {
-            @Override
-            public void receive(SourceEvent sourceEvent)
-            {
-                process(sourceEvent);
-            }
-        };
+        return sourceEvent -> process(sourceEvent);
     }
 
     /**

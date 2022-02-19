@@ -20,6 +20,7 @@ package io.github.dsheirer.dsp.filter.channelizer;
 
 import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.buffer.INativeBufferProvider;
+import io.github.dsheirer.buffer.NativeBufferPoisonPill;
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.filter.channelizer.output.IPolyphaseChannelOutputProcessor;
 import io.github.dsheirer.dsp.filter.channelizer.output.OneChannelOutputProcessor;
@@ -35,6 +36,7 @@ import io.github.dsheirer.source.SourceException;
 import io.github.dsheirer.source.tuner.TunerController;
 import io.github.dsheirer.source.tuner.channel.TunerChannel;
 import io.github.dsheirer.source.tuner.channel.TunerChannelSource;
+import io.github.dsheirer.util.Dispatcher;
 import org.apache.commons.math3.util.FastMath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,8 +81,8 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
     private ChannelCalculator mChannelCalculator;
     private ComplexPolyphaseChannelizerM2 mPolyphaseChannelizer;
     private ChannelSourceEventListener mChannelSourceEventListener = new ChannelSourceEventListener();
-    private BufferSourceEventMonitor mBufferSourceEventMonitor = new BufferSourceEventMonitor();
-    private ContinuousBufferProcessor<INativeBuffer> mBufferProcessor;
+    private NativeBufferReceiver mNativeBufferReceiver = new NativeBufferReceiver();
+    private Dispatcher mBufferDispatcher;
     private Map<Integer,float[]> mOutputProcessorFilters = new HashMap<>();
 
     /**
@@ -109,9 +111,9 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
         }
 
         mChannelCalculator = new ChannelCalculator(sampleRate, channelCount, frequency, CHANNEL_OVERSAMPLING);
-
-        mBufferProcessor = new ContinuousBufferProcessor(200, 50);
-        mBufferProcessor.setListener(mBufferSourceEventMonitor);
+        mBufferDispatcher = new Dispatcher(500, "sdrtrunk polyphase buffer processor",
+                new NativeBufferPoisonPill());
+        mBufferDispatcher.setListener(mNativeBufferReceiver);
     }
 
     /**
@@ -226,7 +228,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
      */
     private void startChannelSource(PolyphaseChannelSource channelSource)
     {
-        synchronized(mBufferProcessor)
+        synchronized(mBufferDispatcher)
         {
             //Note: the polyphase channel source has already been added to the mChannelSources in getChannel() method
 
@@ -238,9 +240,9 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
             //If this is the first channel, register to start the sample buffers flowing
             if(mPolyphaseChannelizer.getRegisteredChannelCount() == 1)
             {
-                mNativeBufferProvider.addBufferListener(mBufferProcessor);
+                mNativeBufferProvider.addBufferListener(mBufferDispatcher);
                 mPolyphaseChannelizer.start();
-                mBufferProcessor.start();
+                mBufferDispatcher.start();
             }
         }
     }
@@ -253,7 +255,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
      */
     private void stopChannelSource(PolyphaseChannelSource channelSource)
     {
-        synchronized(mBufferProcessor)
+        synchronized(mBufferDispatcher)
         {
             mChannelSources.remove(channelSource);
             mPolyphaseChannelizer.removeChannel(channelSource);
@@ -262,8 +264,8 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
             //If this is the last/only channel, deregister to stop the sample buffers
             if(mPolyphaseChannelizer.getRegisteredChannelCount() == 0)
             {
-                mNativeBufferProvider.removeBufferListener(mBufferProcessor);
-                mBufferProcessor.stop();
+                mNativeBufferProvider.removeBufferListener(mBufferDispatcher);
+                mBufferDispatcher.stop();
                 mPolyphaseChannelizer.stop();
             }
         }
@@ -295,7 +297,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
                 mChannelCalculator.setCenterFrequency(sourceEvent.getValue().longValue());
 
                 //Defer channelizer configuration changes to be handled on the buffer processor thread
-                mBufferSourceEventMonitor.receive(sourceEvent);
+                mNativeBufferReceiver.receive(sourceEvent);
                 break;
             case NOTIFICATION_SAMPLE_RATE_CHANGE:
                 //Update channel calculator immediately so that channels can be allocated
@@ -562,7 +564,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
      * that they can be processed on the buffer processor calling thread, avoiding unnecessary locks on the channelizer
      * and/or the channel sources and output processors.
      */
-    public class BufferSourceEventMonitor implements Listener<List<INativeBuffer>>
+    public class NativeBufferReceiver implements Listener<INativeBuffer>
     {
         private Queue<SourceEvent> mQueuedSourceEvents = new ConcurrentLinkedQueue<>();
 
@@ -576,7 +578,7 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
         }
 
         @Override
-        public void receive(List<INativeBuffer> nativeBufferList)
+        public void receive(INativeBuffer nativeBuffer)
         {
             try
             {
@@ -596,16 +598,13 @@ public class PolyphaseChannelManager implements ISourceEventProcessor
                     queuedSourceEvent = mQueuedSourceEvents.poll();
                 }
 
-                for(INativeBuffer nativeBuffer: nativeBufferList)
+                if(mPolyphaseChannelizer != null)
                 {
-                    if(mPolyphaseChannelizer != null)
-                    {
-                        Iterator<InterleavedComplexSamples> iterator = nativeBuffer.iteratorInterleaved();
+                    Iterator<InterleavedComplexSamples> iterator = nativeBuffer.iteratorInterleaved();
 
-                        while(iterator.hasNext())
-                        {
-                            mPolyphaseChannelizer.receive(iterator.next());
-                        }
+                    while(iterator.hasNext())
+                    {
+                        mPolyphaseChannelizer.receive(iterator.next());
                     }
                 }
             }

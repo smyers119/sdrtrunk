@@ -36,6 +36,8 @@ import javafx.scene.layout.Priority;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
+
 public class P25Phase2HDQPSKPane extends ComplexDecoderPane
 {
     private final static Logger mLog = LoggerFactory.getLogger(P25Phase2HDQPSKPane.class);
@@ -65,7 +67,15 @@ public class P25Phase2HDQPSKPane extends ComplexDecoderPane
 
     private void init()
     {
-        addListener(getDecoder());
+        addListener(nativeBuffer ->
+        {
+            Iterator<ComplexSamples> iterator = nativeBuffer.iterator();
+
+            while(iterator.hasNext())
+            {
+                getDecoder().receive(iterator.next());
+            }
+        });
 
         getDecoder().getDemodulator().setFilteredGainAppliedComplexBufferListener(getSampleXYChart());
 

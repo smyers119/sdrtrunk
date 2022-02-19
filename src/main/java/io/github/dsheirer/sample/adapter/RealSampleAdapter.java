@@ -18,25 +18,12 @@
  */
 package io.github.dsheirer.sample.adapter;
 
-import io.github.dsheirer.sample.buffer.ReusableBufferQueue;
-import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
-
-public abstract class RealSampleAdapter implements ISampleAdapter<ReusableFloatBuffer>
+public abstract class RealSampleAdapter implements ISampleAdapter<float[]>
 {
-    private ReusableBufferQueue mReusableBufferQueue;
-
     /**
      * Constructs a real sample adapter
-     *
-     * @param debugName to use for debug logging
      */
-    public RealSampleAdapter(String debugName)
+    public RealSampleAdapter()
     {
-        mReusableBufferQueue = new ReusableBufferQueue(debugName);
-    }
-
-    protected ReusableFloatBuffer getBuffer(int size)
-    {
-        return mReusableBufferQueue.getBuffer(size);
     }
 }

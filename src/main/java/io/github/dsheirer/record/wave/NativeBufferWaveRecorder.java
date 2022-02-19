@@ -19,13 +19,14 @@
 package io.github.dsheirer.record.wave;
 
 import io.github.dsheirer.buffer.INativeBuffer;
-import io.github.dsheirer.dsp.filter.channelizer.ContinuousBufferProcessor;
+import io.github.dsheirer.buffer.NativeBufferPoisonPill;
 import io.github.dsheirer.module.Module;
 import io.github.dsheirer.sample.ConversionUtils;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.SourceEvent;
+import io.github.dsheirer.util.Dispatcher;
 import io.github.dsheirer.util.ThreadPool;
 import io.github.dsheirer.util.TimeStamp;
 import org.slf4j.Logger;
@@ -36,7 +37,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -47,8 +47,8 @@ public class NativeBufferWaveRecorder extends Module implements Listener<INative
 {
     private final static Logger mLog = LoggerFactory.getLogger(ComplexSamplesWaveRecorder.class);
 
-    private ContinuousBufferProcessor<INativeBuffer> mBufferProcessor =
-                            new ContinuousBufferProcessor<>(500, 50);
+    private Dispatcher<INativeBuffer> mBufferProcessor = new Dispatcher<>(500,
+            "sdrtrunk-native buffer wave recorder", new NativeBufferPoisonPill());
 
     private AtomicBoolean mRunning = new AtomicBoolean();
     private INativeBufferWaveWriter mWriter;
@@ -177,7 +177,7 @@ public class NativeBufferWaveRecorder extends Module implements Listener<INative
     /**
      * Wave writer implementation for complex samples delivered from buffer processor
      */
-    public class INativeBufferWaveWriter extends WaveWriter implements Listener<List<INativeBuffer>>
+    public class INativeBufferWaveWriter extends WaveWriter implements Listener<INativeBuffer>
     {
         public INativeBufferWaveWriter(AudioFormat format, Path file) throws IOException
         {
@@ -185,26 +185,23 @@ public class NativeBufferWaveRecorder extends Module implements Listener<INative
         }
 
         @Override
-        public void receive(List<INativeBuffer> nativeBufferList)
+        public void receive(INativeBuffer nativeBuffer)
         {
             boolean error = false;
 
-            for(INativeBuffer nativeBuffer: nativeBufferList)
-            {
-                Iterator<InterleavedComplexSamples> iterator = nativeBuffer.iteratorInterleaved();
+            Iterator<InterleavedComplexSamples> iterator = nativeBuffer.iteratorInterleaved();
 
-                while(iterator.hasNext() & !error)
+            while(iterator.hasNext() & !error)
+            {
+                try
                 {
-                    try
-                    {
-                        mWriter.writeData(ConversionUtils.convertToSigned16BitSamples(iterator.next()));
-                    }
-                    catch(IOException ioe)
-                    {
-                        mLog.error("IOException while writing I/Q buffers to wave recorder - stopping recorder", ioe);
-                        error = true;
-                        stop();
-                    }
+                    mWriter.writeData(ConversionUtils.convertToSigned16BitSamples(iterator.next()));
+                }
+                catch(IOException ioe)
+                {
+                    mLog.error("IOException while writing I/Q buffers to wave recorder - stopping recorder", ioe);
+                    error = true;
+                    stop();
                 }
             }
         }

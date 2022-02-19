@@ -1,18 +1,21 @@
-/*******************************************************************************
- * sdr-trunk
- * Copyright (C) 2014-2018 Dennis Sheirer
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by  the Free Software Foundation, either version 3 of the License, or  (at your option) any
- * later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,  but WITHOUT ANY WARRANTY; without even the implied
- * warranty of  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License  along with this program.
- * If not, see <http://www.gnu.org/licenses/>
- *
- ******************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
 package io.github.dsheirer.module.demodulate.am;
 
 import io.github.dsheirer.dsp.am.AMDemodulator;
@@ -25,11 +28,9 @@ import io.github.dsheirer.dsp.gain.AutomaticGainControl;
 import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.module.Module;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.IReusableBufferProvider;
-import io.github.dsheirer.sample.buffer.ReusableBufferQueue;
-import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.sample.complex.IComplexSamplesListener;
+import io.github.dsheirer.sample.real.IRealBufferProvider;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.SourceEvent;
 import org.slf4j.Logger;
@@ -43,7 +44,7 @@ import org.slf4j.LoggerFactory;
  * internal filters and the resampler.
  */
 public class AMDemodulatorModule extends Module
-        implements ISourceEventListener, IComplexSamplesListener, IReusableBufferProvider, Listener<ComplexSamples>
+        implements ISourceEventListener, IComplexSamplesListener, IRealBufferProvider, Listener<ComplexSamples>
 {
     private final static Logger mLog = LoggerFactory.getLogger(AMDemodulatorModule.class);
     private IRealFilter mIBasebandFilter;
@@ -55,9 +56,8 @@ public class AMDemodulatorModule extends Module
     private double mChannelBandwidth;
     private double mOutputSampleRate;
     private RealResampler mResampler;
-    private Listener<ReusableFloatBuffer> mResampledReusableBufferListener;
+    private Listener<float[]> mResampledReusableBufferListener;
     private SourceEventProcessor mSourceEventProcessor = new SourceEventProcessor();
-    private ReusableBufferQueue mReusableBufferQueue = new ReusableBufferQueue("AM Demod Audio Buffers");
 
     /**
      * Constructs an AM demodulator module
@@ -109,21 +109,13 @@ public class AMDemodulatorModule extends Module
      *
      * @param resampledAudio buffer to process.
      */
-    private void processResampledAudio(ReusableFloatBuffer resampledAudio)
+    private void processResampledAudio(float[] resampledAudio)
     {
         if(mResampledReusableBufferListener != null)
         {
-            float[] filtered = mLowPassFilter.filter(resampledAudio.getSamples());
-            resampledAudio.decrementUserCount();
+            float[] filtered = mLowPassFilter.filter(resampledAudio);
             float[] amplified = mAGC.process(filtered);
-
-            //TODO: eventually remove this reusable buffer processing
-            ReusableFloatBuffer processed = mReusableBufferQueue.getBuffer(amplified, System.currentTimeMillis());
-            mResampledReusableBufferListener.receive(processed);
-        }
-        else
-        {
-            resampledAudio.decrementUserCount();
+            mResampledReusableBufferListener.receive(amplified);
         }
     }
 
@@ -144,7 +136,7 @@ public class AMDemodulatorModule extends Module
     {
     }
 
-    @Override public void setBufferListener(Listener<ReusableFloatBuffer> listener)
+    @Override public void setBufferListener(Listener<float[]> listener)
     {
         mResampledReusableBufferListener = listener;
     }
@@ -215,7 +207,7 @@ public class AMDemodulatorModule extends Module
                 mIBasebandFilter = FilterFactory.getRealFilter(coefficients);
                 mQBasebandFilter = FilterFactory.getRealFilter(coefficients);
                 mResampler = new RealResampler(sampleRate, mOutputSampleRate, 2000, 1000);
-                mResampler.setListener(resampledAudioBuffer -> processResampledAudio(resampledAudioBuffer));
+                mResampler.setListener(resampledBuffer -> processResampledAudio(resampledBuffer));
             }
         }
     }

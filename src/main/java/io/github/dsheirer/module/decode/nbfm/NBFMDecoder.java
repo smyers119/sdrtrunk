@@ -34,10 +34,9 @@ import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.module.decode.DecoderType;
 import io.github.dsheirer.module.decode.PrimaryDecoder;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.IReusableBufferProvider;
-import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.sample.complex.IComplexSamplesListener;
+import io.github.dsheirer.sample.real.IRealBufferProvider;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.ISourceEventProvider;
 import io.github.dsheirer.source.SourceEvent;
@@ -48,7 +47,7 @@ import org.slf4j.LoggerFactory;
  * Decoder module with integrated narrowband FM (12.5 or 25.0 kHz channel) demodulator
  */
 public class NBFMDecoder extends PrimaryDecoder implements ISourceEventListener, ISourceEventProvider,
-		IComplexSamplesListener, Listener<ComplexSamples>, IReusableBufferProvider,
+		IComplexSamplesListener, Listener<ComplexSamples>, IRealBufferProvider,
 		IDecoderStateEventProvider
 {
 	private final static Logger mLog = LoggerFactory.getLogger(NBFMDecoder.class);
@@ -64,7 +63,7 @@ public class NBFMDecoder extends PrimaryDecoder implements ISourceEventListener,
 	private ISquelchingFmDemodulator mDemodulator;
 	private RealResampler mResampler;
 	private SourceEventProcessor mSourceEventProcessor = new SourceEventProcessor();
-	private Listener<ReusableFloatBuffer> mResampledReusableBufferListener;
+	private Listener<float[]> mResampledBufferListener;
 	private Listener<DecoderStateEvent> mDecoderStateEventListener;
 	private double mChannelBandwidth;
 	private double mOutputSampleRate = DEMODULATED_AUDIO_SAMPLE_RATE;
@@ -118,15 +117,15 @@ public class NBFMDecoder extends PrimaryDecoder implements ISourceEventListener,
 	}
 
 	@Override
-	public void setBufferListener(Listener<ReusableFloatBuffer> listener)
+	public void setBufferListener(Listener<float[]> listener)
 	{
-		mResampledReusableBufferListener = listener;
+		mResampledBufferListener = listener;
 	}
 
 	@Override
 	public void removeBufferListener()
 	{
-		mResampledReusableBufferListener = null;
+		mResampledBufferListener = null;
 	}
 
 	@Override
@@ -348,15 +347,11 @@ public class NBFMDecoder extends PrimaryDecoder implements ISourceEventListener,
 
 				mResampler = new RealResampler(decimatedSampleRate, mOutputSampleRate, 2000, 1000);
 
-				mResampler.setListener(reusableFloatBuffer ->
+				mResampler.setListener(resampled ->
 				{
-					if(mResampledReusableBufferListener != null)
+					if(mResampledBufferListener != null)
 					{
-						mResampledReusableBufferListener.receive(reusableFloatBuffer);
-					}
-					else
-					{
-						reusableFloatBuffer.decrementUserCount();
+						mResampledBufferListener.receive(resampled);
 					}
 				});
 			}

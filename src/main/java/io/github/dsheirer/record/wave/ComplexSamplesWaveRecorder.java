@@ -1,21 +1,23 @@
-/*******************************************************************************
- * sdr-trunk
- * Copyright (C) 2014-2018 Dennis Sheirer
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by  the Free Software Foundation, either version 3 of the License, or  (at your option) any
- * later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,  but WITHOUT ANY WARRANTY; without even the implied
- * warranty of  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License  along with this program.
- * If not, see <http://www.gnu.org/licenses/>
- *
- ******************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
 package io.github.dsheirer.record.wave;
 
-import io.github.dsheirer.dsp.filter.channelizer.ContinuousBufferProcessor;
 import io.github.dsheirer.module.Module;
 import io.github.dsheirer.sample.ConversionUtils;
 import io.github.dsheirer.sample.Listener;
@@ -23,6 +25,7 @@ import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.sample.complex.IComplexSamplesListener;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.SourceEvent;
+import io.github.dsheirer.util.Dispatcher;
 import io.github.dsheirer.util.ThreadPool;
 import io.github.dsheirer.util.TimeStamp;
 import org.slf4j.Logger;
@@ -32,7 +35,6 @@ import javax.sound.sampled.AudioFormat;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -44,8 +46,8 @@ public class ComplexSamplesWaveRecorder extends Module implements IComplexSample
 {
     private final static Logger mLog = LoggerFactory.getLogger(ComplexSamplesWaveRecorder.class);
 
-    private ContinuousBufferProcessor<ComplexSamples> mBufferProcessor =
-            new ContinuousBufferProcessor<>(500, 50);
+    private Dispatcher<ComplexSamples> mBufferProcessor = new Dispatcher<>(500,
+            "sdrtrunk-complex samples wave recorder", new ComplexSamples(new float[0], new float[0]));
 
     private AtomicBoolean mRunning = new AtomicBoolean();
     private BufferWaveWriter mWriter;
@@ -175,7 +177,7 @@ public class ComplexSamplesWaveRecorder extends Module implements IComplexSample
     /**
      * Wave writer implementation for complex buffers delivered from buffer processor
      */
-    public class BufferWaveWriter extends WaveWriter implements Listener<List<ComplexSamples>>
+    public class BufferWaveWriter extends WaveWriter implements Listener<ComplexSamples>
     {
         public BufferWaveWriter(AudioFormat format, Path file) throws IOException
         {
@@ -183,24 +185,21 @@ public class ComplexSamplesWaveRecorder extends Module implements IComplexSample
         }
 
         @Override
-        public void receive(List<ComplexSamples> reusableComplexBuffers)
+        public void receive(ComplexSamples complexSamples)
         {
             boolean error = false;
 
-            for(ComplexSamples complexSamples: reusableComplexBuffers)
+            if(!error)
             {
-                if(!error)
+                try
                 {
-                    try
-                    {
-                        mWriter.writeData(ConversionUtils.convertToSigned16BitSamples(complexSamples));
-                    }
-                    catch(IOException ioe)
-                    {
-                        mLog.error("IOException while writing I/Q buffers to wave recorder - stopping recorder", ioe);
-                        error = true;
-                        stop();
-                    }
+                    mWriter.writeData(ConversionUtils.convertToSigned16BitSamples(complexSamples));
+                }
+                catch(IOException ioe)
+                {
+                    mLog.error("IOException while writing I/Q buffers to wave recorder - stopping recorder", ioe);
+                    error = true;
+                    stop();
                 }
             }
         }

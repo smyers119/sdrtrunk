@@ -19,18 +19,20 @@
 package io.github.dsheirer.spectrum;
 
 import io.github.dsheirer.buffer.INativeBuffer;
+import io.github.dsheirer.controller.NamingThreadFactory;
 import io.github.dsheirer.dsp.window.WindowFactory;
 import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.properties.SystemProperties;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.spectrum.converter.DFTResultsConverter;
-import io.github.dsheirer.util.ThreadPool;
 import org.jtransforms.fft.FloatFFT_1D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,6 +55,7 @@ public class ComplexDftProcessor<T extends INativeBuffer> implements Listener<T>
     private int mFrameRate;
     private AtomicBoolean mRunning = new AtomicBoolean();
     private ScheduledFuture<?> mProcessorTaskHandle;
+    private ScheduledExecutorService mExecutorService = Executors.newSingleThreadScheduledExecutor(new NamingThreadFactory("sdrtrunk dft processor"));
     private CopyOnWriteArrayList<DFTResultsConverter> mListeners = new CopyOnWriteArrayList<>();
     private NativeBufferManager mDftBufferManager = new NativeBufferManager(mDFTSize.getSize() * 2);
     private float[] mPreviousSamples = new float[mDFTSize.getSize() * 2];
@@ -128,7 +131,7 @@ public class ComplexDftProcessor<T extends INativeBuffer> implements Listener<T>
             int initialDelay = 0;
             int period = (int) (1000 / mFrameRate);
 
-            mProcessorTaskHandle = ThreadPool.SCHEDULED.scheduleAtFixedRate(new DFTCalculationTask(), initialDelay, period,
+            mProcessorTaskHandle = mExecutorService.scheduleAtFixedRate(new DFTCalculationTask(), initialDelay, period,
                 TimeUnit.MILLISECONDS);
         }
     }

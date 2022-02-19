@@ -20,7 +20,6 @@ package io.github.dsheirer.source.mixer;
 
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.adapter.ISampleAdapter;
-import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
 import io.github.dsheirer.source.RealSource;
 import io.github.dsheirer.source.SourceEvent;
 
@@ -104,7 +103,7 @@ public class RealMixerSource extends RealSource
     /**
      * Sets the listener to receive sample data in reusable buffers.
      */
-    public void setListener(Listener<ReusableFloatBuffer> listener)
+    public void setListener(Listener<float[]> listener)
     {
         mMixerReader.setBufferListener(listener);
     }
@@ -113,7 +112,7 @@ public class RealMixerSource extends RealSource
      * Removes the listener from receiving sample data.
      * @param listener
      */
-    public void removeListener(Listener<ReusableFloatBuffer> listener)
+    public void removeListener(Listener<float[]> listener)
     {
         mMixerReader.removeBufferListener();
     }

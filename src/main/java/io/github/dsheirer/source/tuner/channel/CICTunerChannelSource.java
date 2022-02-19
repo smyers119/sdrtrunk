@@ -26,8 +26,8 @@ import io.github.dsheirer.dsp.mixer.ComplexMixerFactory;
 import io.github.dsheirer.sample.IOverflowListener;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.OverflowableTransferQueue;
-import io.github.dsheirer.sample.buffer.ComplexSamplesRepackager;
 import io.github.dsheirer.sample.complex.ComplexSamples;
+import io.github.dsheirer.sample.complex.ComplexSamplesRepackager;
 import io.github.dsheirer.source.SourceEvent;
 
 import java.util.ArrayList;

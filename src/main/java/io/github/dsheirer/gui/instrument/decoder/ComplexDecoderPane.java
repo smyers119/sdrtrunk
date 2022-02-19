@@ -18,16 +18,16 @@
  */
 package io.github.dsheirer.gui.instrument.decoder;
 
+import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.module.decode.DecoderType;
 import io.github.dsheirer.sample.Broadcaster;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.sample.SampleType;
-import io.github.dsheirer.sample.complex.ComplexSamples;
 import javafx.scene.text.Text;
 
-public class ComplexDecoderPane extends AbstractDecoderPane<ComplexSamples>
+public class ComplexDecoderPane extends AbstractDecoderPane<INativeBuffer>
 {
-    private Broadcaster<ComplexSamples> mComplexSamplesBroadcaster = new Broadcaster();
+    private Broadcaster<INativeBuffer> mBufferBroadcaster = new Broadcaster();
     private DecoderType mDecoderType;
 
     public ComplexDecoderPane(DecoderType decoderType)
@@ -50,18 +50,18 @@ public class ComplexDecoderPane extends AbstractDecoderPane<ComplexSamples>
     }
 
     @Override
-    public void receive(ComplexSamples complexSamples)
+    public void receive(INativeBuffer nativeBuffer)
     {
-        mComplexSamplesBroadcaster.broadcast(complexSamples);
+        mBufferBroadcaster.broadcast(nativeBuffer);
     }
 
-    public void addListener(Listener<ComplexSamples> listener)
+    public void addListener(Listener<INativeBuffer> listener)
     {
-        mComplexSamplesBroadcaster.addListener(listener);
+        mBufferBroadcaster.addListener(listener);
     }
 
-    public void removeListener(Listener<ComplexSamples> listener)
+    public void removeListener(Listener<INativeBuffer> listener)
     {
-        mComplexSamplesBroadcaster.removeListener(listener);
+        mBufferBroadcaster.removeListener(listener);
     }
 }

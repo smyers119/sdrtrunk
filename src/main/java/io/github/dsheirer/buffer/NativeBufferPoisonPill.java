@@ -16,15 +16,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  * ****************************************************************************
  */
-package io.github.dsheirer.sample.buffer;
 
-import io.github.dsheirer.sample.Listener;
+package io.github.dsheirer.buffer;
+
+import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 
+import java.util.Iterator;
+
 /**
- * Interface for listener of interleaved complex samples
+ * Poison pill implementation for use with Dispatcher.
  */
-public interface IInterleavedComplexSamplesListener
+public class NativeBufferPoisonPill implements INativeBuffer
 {
-	Listener<InterleavedComplexSamples> getReusableComplexBufferListener();
+    @Override
+    public Iterator<ComplexSamples> iterator()
+    {
+        return null;
+    }
+
+    @Override
+    public Iterator<InterleavedComplexSamples> iteratorInterleaved()
+    {
+        return null;
+    }
+
+    @Override
+    public int sampleCount()
+    {
+        return 0;
+    }
+
+    @Override
+    public long getTimestamp()
+    {
+        return 0;
+    }
 }

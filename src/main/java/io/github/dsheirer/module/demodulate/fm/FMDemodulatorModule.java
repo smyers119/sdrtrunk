@@ -1,18 +1,21 @@
-/*******************************************************************************
- * sdr-trunk
- * Copyright (C) 2014-2018 Dennis Sheirer
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by  the Free Software Foundation, either version 3 of the License, or  (at your option) any
- * later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,  but WITHOUT ANY WARRANTY; without even the implied
- * warranty of  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License  along with this program.
- * If not, see <http://www.gnu.org/licenses/>
- *
- ******************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
 package io.github.dsheirer.module.demodulate.fm;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
@@ -25,10 +28,9 @@ import io.github.dsheirer.dsp.squelch.PowerMonitor;
 import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.module.Module;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.IReusableBufferProvider;
-import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
 import io.github.dsheirer.sample.complex.ComplexSamples;
 import io.github.dsheirer.sample.complex.IComplexSamplesListener;
+import io.github.dsheirer.sample.real.IRealBufferProvider;
 import io.github.dsheirer.source.ISourceEventListener;
 import io.github.dsheirer.source.ISourceEventProvider;
 import io.github.dsheirer.source.SourceEvent;
@@ -41,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * Note: no filtering is applied to the demodulated audio.
  */
 public class FMDemodulatorModule extends Module implements ISourceEventListener, ISourceEventProvider,
-        IComplexSamplesListener, Listener<ComplexSamples>, IReusableBufferProvider
+        IComplexSamplesListener, Listener<ComplexSamples>, IRealBufferProvider
 {
     private final static Logger mLog = LoggerFactory.getLogger(FMDemodulatorModule.class);
 
@@ -51,7 +53,7 @@ public class FMDemodulatorModule extends Module implements ISourceEventListener,
     private PowerMonitor mPowerMonitor = new PowerMonitor();
     private RealResampler mResampler;
     private SourceEventProcessor mSourceEventProcessor = new SourceEventProcessor();
-    private Listener<ReusableFloatBuffer> mResampledReusableBufferListener;
+    private Listener<float[]> mResampledBufferListener;
     private double mChannelBandwidth;
     private double mOutputSampleRate;
 
@@ -104,15 +106,15 @@ public class FMDemodulatorModule extends Module implements ISourceEventListener,
     }
 
     @Override
-    public void setBufferListener(Listener<ReusableFloatBuffer> listener)
+    public void setBufferListener(Listener<float[]> listener)
     {
-        mResampledReusableBufferListener = listener;
+        mResampledBufferListener = listener;
     }
 
     @Override
     public void removeBufferListener()
     {
-        mResampledReusableBufferListener = null;
+        mResampledBufferListener = null;
     }
 
     @Override
@@ -208,14 +210,10 @@ public class FMDemodulatorModule extends Module implements ISourceEventListener,
                 mQBasebandFilter = FilterFactory.getRealFilter(coefficients);
                 mResampler = new RealResampler(sampleRate, mOutputSampleRate, 2000, 1000);
 
-                mResampler.setListener(reusableFloatBuffer -> {
-                    if(mResampledReusableBufferListener != null)
+                mResampler.setListener(resampledBuffer -> {
+                    if(mResampledBufferListener != null)
                     {
-                        mResampledReusableBufferListener.receive(reusableFloatBuffer);
-                    }
-                    else
-                    {
-                        reusableFloatBuffer.decrementUserCount();
+                        mResampledBufferListener.receive(resampledBuffer);
                     }
                 });
             }

@@ -19,25 +19,10 @@
 package io.github.dsheirer.sample.buffer;
 
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.complex.InterleavedComplexSamples;
 
-/**
- * Interface for a provider of interleaved complex samples
- */
-public interface IInterleavedComplexSamplesProvider
+import java.nio.ByteBuffer;
+
+public interface IByteBufferListener
 {
-    /**
-     * Adds the listener to receive interleaved complex samples
-     */
-    void addBufferListener(Listener<InterleavedComplexSamples> listener);
-
-    /**
-     * Removes the listener from receiving interleaved complex samples
-     */
-    void removeBufferListener(Listener<InterleavedComplexSamples> listener);
-
-    /**
-     * Indicates if there are any complex buffer listeners registered
-     */
-    boolean hasBufferListeners();
+	Listener<ByteBuffer> getByteBufferListener();
 }

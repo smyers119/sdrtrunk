@@ -16,9 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  * ****************************************************************************
  */
-package io.github.dsheirer.sample.buffer;
+package io.github.dsheirer.buffer;
 
-import io.github.dsheirer.buffer.INativeBuffer;
 import io.github.dsheirer.sample.Broadcaster;
 import io.github.dsheirer.sample.Listener;
 import org.slf4j.Logger;
@@ -44,9 +43,9 @@ import java.util.concurrent.LinkedTransferQueue;
  * so as not to delay the stream of sample buffers.  Channel listeners are expected to implement buffer queue processing
  * on another thread.
  */
-public class INativeSampleDelayBuffer implements Listener<INativeBuffer>
+public class NativeSampleDelayBuffer implements Listener<INativeBuffer>
 {
-    private final static Logger mLog = LoggerFactory.getLogger(INativeSampleDelayBuffer.class);
+    private final static Logger mLog = LoggerFactory.getLogger(NativeSampleDelayBuffer.class);
 
     private Broadcaster<INativeBuffer> mBroadcaster = new Broadcaster<>();
     private LinkedTransferQueue<ActionRequest> mActionQueue = new LinkedTransferQueue<>();
@@ -60,7 +59,7 @@ public class INativeSampleDelayBuffer implements Listener<INativeBuffer>
      * @param size of the delay queue
      * @param bufferDuration in milliseconds for each complex buffer processed by this instance
      */
-    public INativeSampleDelayBuffer(int size, long bufferDuration)
+    public NativeSampleDelayBuffer(int size, long bufferDuration)
     {
         mDelayBuffer = new INativeBuffer[size];
         mBufferDuration = bufferDuration;

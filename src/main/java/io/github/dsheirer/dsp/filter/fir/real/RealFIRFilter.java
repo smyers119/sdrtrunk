@@ -20,8 +20,6 @@ package io.github.dsheirer.dsp.filter.fir.real;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
 import io.github.dsheirer.dsp.window.WindowType;
-import io.github.dsheirer.sample.buffer.ReusableBufferQueue;
-import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.text.DecimalFormat;
@@ -35,7 +33,6 @@ import java.util.Random;
  */
 public class RealFIRFilter implements IRealFilter
 {
-    private ReusableBufferQueue mReusableBufferQueue = new ReusableBufferQueue("RealFIRFilter");
     private float[] mBuffer;
     private float[] mCoefficients;
     private int mBufferOverlap;
@@ -93,24 +90,6 @@ public class RealFIRFilter implements IRealFilter
         }
 
         return filtered;
-    }
-
-    /**
-     * Filters the samples contained in the unfilteredBuffer and returns a new reusable buffer with the
-     * filtered samples.
-     *
-     * Note: user count on the returned (new) buffer is set to one and the user count is decremented on
-     * the unfiltered buffer argument.
-     *
-     * @param unfilteredBuffer containing a sample array to be filtered
-     * @return a new reusable buffer with the filtered samples.
-     */
-    public ReusableFloatBuffer filter(ReusableFloatBuffer unfilteredBuffer)
-    {
-        float[] filtered = filter(unfilteredBuffer.getSamples());
-        ReusableFloatBuffer filteredBuffer = mReusableBufferQueue.getBuffer(filtered, unfilteredBuffer.getTimestamp());
-        unfilteredBuffer.decrementUserCount();
-        return filteredBuffer;
     }
 
     public static void main(String[] args)

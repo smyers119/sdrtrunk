@@ -17,9 +17,7 @@
  * ****************************************************************************
  */
 
-package io.github.dsheirer.sample.buffer;
-
-import io.github.dsheirer.sample.complex.ComplexSamples;
+package io.github.dsheirer.sample.complex;
 
 import java.util.ArrayList;
 import java.util.Arrays;
