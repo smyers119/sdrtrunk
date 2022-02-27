@@ -24,8 +24,6 @@ import io.github.dsheirer.vector.calibrate.airspy.AirspyUnpackedCalibration;
 import io.github.dsheirer.vector.calibrate.airspy.AirspyUnpackedInterleavedCalibration;
 import io.github.dsheirer.vector.calibrate.demodulator.FmDemodulatorCalibration;
 import io.github.dsheirer.vector.calibrate.demodulator.SquelchingFmDemodulatorCalibration;
-import io.github.dsheirer.vector.calibrate.filter.ComplexHalfBand11TapFilterCalibration;
-import io.github.dsheirer.vector.calibrate.filter.ComplexHalfBand15TapFilterCalibration;
 import io.github.dsheirer.vector.calibrate.filter.FirFilterCalibration;
 import io.github.dsheirer.vector.calibrate.filter.RealDcRemovalCalibration;
 import io.github.dsheirer.vector.calibrate.filter.RealHalfBand11TapFilterCalibration;
@@ -42,6 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,27 +60,6 @@ public class CalibrationManager
      */
     private CalibrationManager()
     {
-        add(new AirspySampleConverterCalibration());
-        add(new AirspyUnpackedCalibration());
-        add(new AirspyUnpackedInterleavedCalibration());
-        add(new ComplexGainCalibration());
-        add(new ComplexGainControlCalibration());
-        add(new ComplexHalfBand11TapFilterCalibration());
-        add(new ComplexHalfBand15TapFilterCalibration());
-        add(new ComplexOscillatorCalibration());
-        add(new ComplexMixerCalibration());
-        add(new FirFilterCalibration());
-        add(new FmDemodulatorCalibration());
-//        add(new HilbertCalibration()); //Not currently used
-        add(new RealDcRemovalCalibration());
-        add(new RealHalfBand11TapFilterCalibration());
-        add(new RealHalfBand15TapFilterCalibration());
-        add(new RealHalfBand23TapFilterCalibration());
-        add(new RealHalfBand63TapFilterCalibration());
-        add(new RealHalfBandDefaultFilterCalibration());
-        add(new RealOscillatorCalibration());
-        add(new SquelchingFmDemodulatorCalibration());
-//        add(new WindowCalibration()); //Not currently used
     }
 
     /**
@@ -91,6 +70,27 @@ public class CalibrationManager
         if(sInstance == null)
         {
             sInstance = new CalibrationManager();
+
+            sInstance.add(new AirspySampleConverterCalibration());
+            sInstance.add(new AirspyUnpackedCalibration());
+            sInstance.add(new AirspyUnpackedInterleavedCalibration());
+            sInstance.add(new ComplexGainCalibration());
+            sInstance.add(new ComplexGainControlCalibration());
+            sInstance.add(new ComplexOscillatorCalibration());
+            sInstance.add(new ComplexMixerCalibration());
+            sInstance.add(new FirFilterCalibration());
+            sInstance.add(new FmDemodulatorCalibration());
+            sInstance.add(new RealDcRemovalCalibration());
+            sInstance.add(new RealHalfBand11TapFilterCalibration());
+            sInstance.add(new RealHalfBand15TapFilterCalibration());
+            sInstance.add(new RealHalfBand23TapFilterCalibration());
+            sInstance.add(new RealHalfBand63TapFilterCalibration());
+            sInstance.add(new RealHalfBandDefaultFilterCalibration());
+            sInstance.add(new RealOscillatorCalibration());
+            sInstance.add(new SquelchingFmDemodulatorCalibration());
+
+//            sInstance.add(new HilbertCalibration()); //Not currently used
+//            sInstance.add(new WindowCalibration()); //Not currently used
         }
 
         return sInstance;
@@ -102,6 +102,12 @@ public class CalibrationManager
      */
     private void add(Calibration calibration)
     {
+        if(mCalibrationMap.containsKey(calibration.getType()))
+        {
+            throw new IllegalStateException("Calibration Type [" + calibration.getType() +
+                    "] is already registered for [" + mCalibrationMap.get(calibration.getType()).getClass());
+        }
+
         mCalibrationMap.put(calibration.getType(), calibration);
     }
 
@@ -221,15 +227,23 @@ public class CalibrationManager
             }
         }
 
+        //Sort by calibration type
+        Collections.sort(uncalibrated, new Comparator<Calibration>()
+        {
+            @Override
+            public int compare(Calibration o1, Calibration o2)
+            {
+                return o1.getType().compareTo(o2.getType());
+            }
+        });
+
         return uncalibrated;
     }
 
     public static void main(String[] args)
     {
         CalibrationManager manager = getInstance();
-
-        manager.reset(CalibrationType.WINDOW);
-//        manager.reset();
+        manager.reset();
 
         if(!manager.isCalibrated())
         {

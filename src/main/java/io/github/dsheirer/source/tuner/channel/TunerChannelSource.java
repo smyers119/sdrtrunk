@@ -118,7 +118,6 @@ public abstract class TunerChannelSource extends ComplexSource implements ISourc
         //Broadcast current frequency and sample rate so consumer can configure correctly
         broadcastConsumerSourceEvent(SourceEvent.frequencyChange(this, getFrequency(), "Startup"));
         broadcastProducerSourceEvent(SourceEvent.startSampleStreamRequest(this));
-//        mScheduledIntervalProcessor.start();
     }
 
     /**
@@ -129,7 +128,6 @@ public abstract class TunerChannelSource extends ComplexSource implements ISourc
     {
         broadcastProducerSourceEvent(SourceEvent.stopSampleStreamRequest(this));
         broadcastProducerSourceEvent(SourceEvent.sourceDisposeRequest(this));
-//        mScheduledIntervalProcessor.stop();
     }
 
     @Override

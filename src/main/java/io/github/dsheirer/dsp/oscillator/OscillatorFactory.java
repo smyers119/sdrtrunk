@@ -49,10 +49,7 @@ public class OscillatorFactory
             case VECTOR_SIMD_PREFERRED:
                 return new VectorRealOscillator(frequency, sampleRate);
             case SCALAR:
-                return new ScalarRealOscillator(frequency, sampleRate);
             default:
-                mLog.info("Calibration not available for Real Oscillator.  Using default SCALAR implementation.  "
-                        + "Perform calibration to identify optimal implementation type");
                 return new ScalarRealOscillator(frequency, sampleRate);
         }
     }
@@ -72,10 +69,7 @@ public class OscillatorFactory
             case VECTOR_SIMD_PREFERRED:
                 return new VectorComplexOscillator(frequency, sampleRate);
             case SCALAR:
-                return new ScalarComplexOscillator(frequency, sampleRate);
             default:
-                mLog.info("Calibration not available for Complex Oscillator.  Using default SCALAR implementation.  "
-                        + "Perform calibration to identify optimal implementation type");
                 return new ScalarComplexOscillator(frequency, sampleRate);
         }
     }

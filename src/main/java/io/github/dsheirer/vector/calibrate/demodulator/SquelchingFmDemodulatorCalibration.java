@@ -1,11 +1,32 @@
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
+
 package io.github.dsheirer.vector.calibrate.demodulator;
 
-import io.github.dsheirer.dsp.fm.SquelchingFMDemodulator;
+import io.github.dsheirer.dsp.fm.IFmDemodulator;
+import io.github.dsheirer.dsp.fm.ScalarSquelchingFMDemodulator;
 import io.github.dsheirer.dsp.fm.VectorSquelchingFMDemodulator;
 import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,12 +36,18 @@ import org.slf4j.LoggerFactory;
 public class SquelchingFmDemodulatorCalibration extends Calibration
 {
     private static final Logger mLog = LoggerFactory.getLogger(SquelchingFmDemodulatorCalibration.class);
-    private static final int SAMPLE_BUFFER_SIZE = 2048;
-    private static final int ITERATIONS = 100_000;
     private static final float POWER_SQUELCH_ALPHA_DECAY = 0.0004f;
     private static final float POWER_SQUELCH_THRESHOLD_DB = -78.0f;
     private static final int POWER_SQUELCH_RAMP = 4;
+    private static final int BUFFER_SIZE = 2048;
+    private static final int BUFFER_ITERATIONS = 400;
+    private static final int WARMUP_ITERATIONS = 50;
+    private static final int TEST_ITERATIONS = 50;
 
+    private IFmDemodulator mScalar = new ScalarSquelchingFMDemodulator(POWER_SQUELCH_ALPHA_DECAY,
+            POWER_SQUELCH_THRESHOLD_DB, POWER_SQUELCH_RAMP);
+    private IFmDemodulator mVector = new VectorSquelchingFMDemodulator(POWER_SQUELCH_ALPHA_DECAY,
+            POWER_SQUELCH_THRESHOLD_DB, POWER_SQUELCH_RAMP);
 
     /**
      * Constructs an instance
@@ -32,76 +59,89 @@ public class SquelchingFmDemodulatorCalibration extends Calibration
 
     @Override public void calibrate() throws CalibrationException
     {
-        long scalarScore = calculateScalar(SAMPLE_BUFFER_SIZE, ITERATIONS);
-        mLog.info("SQUELCHING FM DEMODULATOR SCALAR:" + scalarScore);
-        Implementation operation = Implementation.SCALAR;
+        float[] i = getFloatSamples(BUFFER_SIZE);
+        float[] q = getFloatSamples(BUFFER_SIZE);
 
-        long vectorScore = calculateVector(SAMPLE_BUFFER_SIZE, ITERATIONS);
-        mLog.info("SQUELCHING FM DEMODULATOR VECTOR PREFERRED:" + vectorScore);
+        Mean scalarMean = new Mean();
 
-        if(vectorScore < scalarScore)
+        for(int x = 0; x < WARMUP_ITERATIONS; x++)
         {
-            setImplementation(Implementation.VECTOR_SIMD_PREFERRED);
+            long elapsed = testScalar(i, q);
+            scalarMean.increment(elapsed);
         }
-        else
+
+        mLog.info("SQUELCHING FM DEMODULATOR WARMUP - SCALAR:" + DECIMAL_FORMAT.format(scalarMean.getResult()));
+
+        Mean vectorMean = new Mean();
+
+        for(int x = 0; x < WARMUP_ITERATIONS; x++)
+        {
+            long elapsed = testVector(i, q);
+            vectorMean.increment(elapsed);
+        }
+
+        mLog.info("SQUELCHING FM DEMODULATOR WARMUP - VECTOR:" + DECIMAL_FORMAT.format(vectorMean.getResult()));
+
+        //Test begins ...
+        scalarMean.clear();
+
+        for(int x = 0; x < TEST_ITERATIONS; x++)
+        {
+            long elapsed = testScalar(i, q);
+            scalarMean.increment(elapsed);
+        }
+
+        mLog.info("SQUELCHING FM DEMODULATOR - SCALAR:" + DECIMAL_FORMAT.format(scalarMean.getResult()));
+
+        vectorMean.clear();
+
+        for(int x = 0; x < TEST_ITERATIONS; x++)
+        {
+            long elapsed = testVector(i, q);
+            vectorMean.increment(elapsed);
+        }
+
+        mLog.info("SQUELCHING FM DEMODULATOR - VECTOR:" + DECIMAL_FORMAT.format(vectorMean.getResult()));
+
+        if(scalarMean.getResult() < vectorMean.getResult())
         {
             setImplementation(Implementation.SCALAR);
         }
+        else
+        {
+            setImplementation(Implementation.VECTOR_SIMD_PREFERRED);
+        }
 
-        mLog.info("SQUELCHING FM DEMODULATOR - SETTING OPTIMAL OPERATION TO:" + getImplementation());
+        mLog.info("SQUELCHING FM DEMODULATOR - SET OPTIMAL IMPLEMENTATION TO:" + getImplementation());
     }
 
-    /**
-     * Calculates the time duration to process the sample buffer using scalar implementation.
-     * @param sampleSize of buffers
-     * @param iterations count of how many times to (re)filter the samples buffer
-     * @return time duration in milliseconds
-     */
-    private long calculateScalar(int sampleSize, int iterations)
+    private long testScalar(float[] i, float[] q)
     {
-        float accumulator = 0.0f;
-
-        SquelchingFMDemodulator demodulator = new SquelchingFMDemodulator(POWER_SQUELCH_ALPHA_DECAY,
-                POWER_SQUELCH_THRESHOLD_DB, POWER_SQUELCH_RAMP);
-
-        float[] iSamples = getFloatSamples(sampleSize);
-        float[] qSamples = getFloatSamples(sampleSize);
+        double accumulator = 0.0;
 
         long start = System.currentTimeMillis();
 
-        for(int i = 0; i < iterations; i++)
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
         {
-            float[] demodulated = demodulator.demodulate(iSamples, qSamples);
-            accumulator += demodulated[0];
+            float[] demodulated = mScalar.demodulate(i, q);
+            accumulator += demodulated[1];
         }
 
-        return System.currentTimeMillis() - start;
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
     }
 
-    /**
-     * Calculates the time duration to process the sample buffer using scalar implementation.
-     * @param sampleSize of buffers
-     * @param iterations count of how many times to (re)filter the samples buffer
-     * @return time duration in milliseconds
-     */
-    private long calculateVector(int sampleSize, int iterations)
+    private long testVector(float[] i, float[] q)
     {
-        float accumulator = 0.0f;
-
-        VectorSquelchingFMDemodulator demodulator = new VectorSquelchingFMDemodulator(POWER_SQUELCH_ALPHA_DECAY,
-                POWER_SQUELCH_THRESHOLD_DB, POWER_SQUELCH_RAMP);
-
-        float[] iSamples = getFloatSamples(sampleSize);
-        float[] qSamples = getFloatSamples(sampleSize);
+        double accumulator = 0.0;
 
         long start = System.currentTimeMillis();
 
-        for(int i = 0; i < iterations; i++)
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
         {
-            float[] demodulated = demodulator.demodulate(iSamples, qSamples);
-            accumulator += demodulated[0];
+            float[] demodulated = mVector.demodulate(i, q);
+            accumulator += demodulated[1];
         }
 
-        return System.currentTimeMillis() - start;
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
     }
 }

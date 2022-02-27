@@ -1,3 +1,22 @@
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
+
 package io.github.dsheirer.vector.calibrate.gain;
 
 import io.github.dsheirer.dsp.gain.complex.ComplexGainControl;
@@ -8,6 +27,7 @@ import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,51 +37,68 @@ import org.slf4j.LoggerFactory;
 public class ComplexGainControlCalibration extends Calibration
 {
     private static final Logger mLog = LoggerFactory.getLogger(ComplexGainControlCalibration.class);
-    private static final int ITERATIONS = 5_000_000;
-    private static final int SAMPLE_BUFFER_SIZE = 2048;
+    private static final int BUFFER_SIZE = 2048;
+    private static final int BUFFER_ITERATIONS = 5_000;
+    private static final int WARMUP_ITERATIONS = 50;
+    private static final int TEST_ITERATIONS = 50;
+
+    private IComplexGainControl mScalarGainControl = new ComplexGainControl();
+    private IComplexGainControl mVectorGainControl = new VectorComplexGainControl();
 
     /**
      * Constructs an instance
      */
     public ComplexGainControlCalibration()
     {
-        super(CalibrationType.COMPLEX_GAIN_CONTROL);
+        super(CalibrationType.GAIN_CONTROL_COMPLEX);
     }
 
     @Override public void calibrate() throws CalibrationException
     {
-        float[] i = getFloatSamples(SAMPLE_BUFFER_SIZE);
-        float[] q = getFloatSamples(SAMPLE_BUFFER_SIZE);
+        float[] i = getFloatSamples(BUFFER_SIZE);
+        float[] q = getFloatSamples(BUFFER_SIZE);
 
-        float accumulator = 0.0f;
+        Mean scalarMean = new Mean();
 
-        IComplexGainControl scalar = new ComplexGainControl();
-        IComplexGainControl vector = new VectorComplexGainControl();
-
-        long start = System.currentTimeMillis();
-
-        for(int scalarCount = 0; scalarCount < ITERATIONS; scalarCount++)
+        for(int x = 0; x < WARMUP_ITERATIONS; x++)
         {
-            ComplexSamples amplified = scalar.process(i, q);
-            accumulator += amplified.i()[2];
+            long elapsed = testScalar(i, q);
+            scalarMean.increment(elapsed);
         }
 
-        long scalarDuration = System.currentTimeMillis() - start;
-        mLog.info("COMPLEX GAIN CONTROL - SCALAR:" + scalarDuration);
+        mLog.info("COMPLEX GAIN CONTROL WARMUP - SCALAR:" + DECIMAL_FORMAT.format(scalarMean.getResult()));
 
-        start = System.currentTimeMillis();
-        accumulator = 0.0f;
+        Mean vectorMean = new Mean();
 
-        for(int vectorCount = 0; vectorCount < ITERATIONS; vectorCount++)
+        for(int x = 0; x < WARMUP_ITERATIONS; x++)
         {
-            ComplexSamples amplified = vector.process(i, q);
-            accumulator += amplified.i()[2];
+            long elapsed = testVector(i, q);
+            vectorMean.increment(elapsed);
         }
 
-        long vectorDuration = System.currentTimeMillis() - start;
-        mLog.info("COMPLEX GAIN CONTROL - VECTOR:" + vectorDuration);
+        mLog.info("COMPLEX GAIN CONTROL WARMUP - VECTOR:" + DECIMAL_FORMAT.format(vectorMean.getResult()));
 
-        if(scalarDuration < vectorDuration)
+        scalarMean.clear();
+
+        for(int x = 0; x < TEST_ITERATIONS; x++)
+        {
+            long elapsed = testScalar(i, q);
+            scalarMean.increment(elapsed);
+        }
+
+        mLog.info("COMPLEX GAIN CONTROL - SCALAR:" + DECIMAL_FORMAT.format(scalarMean.getResult()));
+
+        vectorMean.clear();
+
+        for(int x = 0; x < TEST_ITERATIONS; x++)
+        {
+            long elapsed = testVector(i, q);
+            vectorMean.increment(elapsed);
+        }
+
+        mLog.info("COMPLEX GAIN CONTROL - VECTOR:" + DECIMAL_FORMAT.format(vectorMean.getResult()));
+
+        if(scalarMean.getResult() < vectorMean.getResult())
         {
             setImplementation(Implementation.SCALAR);
         }
@@ -70,6 +107,36 @@ public class ComplexGainControlCalibration extends Calibration
             setImplementation(Implementation.VECTOR_SIMD_PREFERRED);
         }
 
-        mLog.info("COMPLEX GAIN CONTROL - SETTING IMPLEMENTATION TO:" + getImplementation());
+        mLog.info("COMPLEX GAIN CONTROL - SET IMPLEMENTATION TO:" + getImplementation());
+    }
+
+    private long testScalar(float[] i, float[] q)
+    {
+        float accumulator = 0.0f;
+
+        long start = System.currentTimeMillis();
+
+        for(int scalarCount = 0; scalarCount < BUFFER_ITERATIONS; scalarCount++)
+        {
+            ComplexSamples amplified = mScalarGainControl.process(i, q);
+            accumulator += amplified.i()[2];
+        }
+
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
+    }
+
+    private long testVector(float[] i, float[] q)
+    {
+        float accumulator = 0.0f;
+
+        long start = System.currentTimeMillis();
+
+        for(int scalarCount = 0; scalarCount < BUFFER_ITERATIONS; scalarCount++)
+        {
+            ComplexSamples amplified = mVectorGainControl.process(i, q);
+            accumulator += amplified.i()[2];
+        }
+
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
     }
 }

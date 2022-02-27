@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 public class VectorUtilities
 {
     private static final Logger mLog = LoggerFactory.getLogger(VectorUtilities.class);
+    private static boolean mSpeciesMismatchLogged = false;
 
     /**
      * Checks the species to determine if it is compatible with the preferred species for the runtime CPU
@@ -44,9 +45,12 @@ public class VectorUtilities
     {
         if(FloatVector.SPECIES_PREFERRED.length() < species.length())
         {
-            mLog.warn("CPU does not support SIMD instructions of at least " + species +
-                    ".  This filter WILL perform poorly -- consider using a filter implementation that is matched to " +
-                    " this CPU: " + FloatVector.SPECIES_PREFERRED);
+            if(!mSpeciesMismatchLogged)
+            {
+                mLog.warn("CPU does not support SIMD instructions of " + species + ".  Max SIMD for this CPU: " +
+                        FloatVector.SPECIES_PREFERRED);
+                mSpeciesMismatchLogged = true;
+            }
         }
     }
 

@@ -200,6 +200,12 @@ public class HalfBandTunerChannelSource<T extends INativeBuffer> extends TunerCh
     @Override
     public void setListener(Listener<ComplexSamples> listener)
     {
+        if(listener == null)
+        {
+            //Wait for the native buffer processor thread to die before we nullify the listener
+            stop();
+        }
+
         mListener = listener;
     }
 
@@ -219,7 +225,9 @@ public class HalfBandTunerChannelSource<T extends INativeBuffer> extends TunerCh
         {
             getHeartbeatManager().broadcast();
 
-            if(mListener != null)
+            Listener<ComplexSamples> listener = mListener;
+
+            if(listener != null)
             {
                 Iterator<ComplexSamples> iterator = nativeBuffer.iterator();
 
@@ -228,7 +236,7 @@ public class HalfBandTunerChannelSource<T extends INativeBuffer> extends TunerCh
                     ComplexSamples basebanded = mFrequencyCorrectionMixer.mix(iterator.next());
                     float[] i = mIDecimationFilter.decimateReal(basebanded.i());
                     float[] q = mQDecimationFilter.decimateReal(basebanded.q());
-                    mListener.receive(new ComplexSamples(i, q));
+                    listener.receive(new ComplexSamples(i, q));
                 }
             }
         }

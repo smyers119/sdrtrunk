@@ -33,14 +33,25 @@ import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class HilbertCalibration extends Calibration
 {
     private static final Logger mLog = LoggerFactory.getLogger(HilbertCalibration.class);
-    private static final int ITERATIONS = 1_000_000;
-    private static final int SAMPLE_BUFFER_SIZE = 2048;
+    private static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_PREFERRED;
+    private static final int BUFFER_SIZE = 2048;
+    private static final int BUFFER_ITERATIONS = 3_000;
+    private static final int WARMUP_ITERATIONS = 50;
+    private static final int TEST_ITERATIONS = 50;
+
+    private HilbertTransform mScalar = new ScalarHilbertTransform();
+    private HilbertTransform mVectorPreferred = new VectorHilbertTransformDefaultBits();
+    private HilbertTransform mVector512 = new VectorHilbertTransform512Bits();
+    private HilbertTransform mVector256 = new VectorHilbertTransform256Bits();
+    private HilbertTransform mVector128 = new VectorHilbertTransform128Bits();
+    private HilbertTransform mVector64 = new VectorHilbertTransform64Bits();
 
     /**
      * Constructs an instance
@@ -56,127 +67,275 @@ public class HilbertCalibration extends Calibration
      */
     @Override public void calibrate() throws CalibrationException
     {
-        float[] samples = getFloatSamples(SAMPLE_BUFFER_SIZE);
+        float[] samples = getFloatSamples(BUFFER_SIZE);
 
-        long bestScore = calculateScalar(samples, ITERATIONS);
-        mLog.info("HILBERT SCALAR:" + bestScore);
-        Implementation operation = Implementation.SCALAR;
+        Mean scalarMean = new Mean();
 
-        long vectorPreferred = calculateVector(FloatVector.SPECIES_PREFERRED, samples, ITERATIONS);
-        mLog.info("HILBERT VECTOR PREFERRED:" + vectorPreferred);
-
-        if(vectorPreferred < bestScore)
+        for(int x = 0; x < WARMUP_ITERATIONS; x++)
         {
-            bestScore = vectorPreferred;
-            operation = Implementation.VECTOR_SIMD_PREFERRED;
+            long elapsed = testScalar(samples);
+            scalarMean.increment(elapsed);
         }
 
-        switch(FloatVector.SPECIES_PREFERRED.length())
+        mLog.info("HILBERT WARMUP - SCALAR: " + DECIMAL_FORMAT.format(scalarMean.getResult()));
+
+        Mean vectorPreferredMean = new Mean();
+
+        for(int x = 0; x < WARMUP_ITERATIONS; x++)
         {
-            //Fall through for each switch case is the intended behavior
-            case 16:
-                long vector512 = calculateVector(FloatVector.SPECIES_512, samples, ITERATIONS);
-                mLog.info("HILBERT VECTOR 512:" + vector512);
-                if(vector512 < bestScore)
-                {
-                    bestScore = vector512;
-                    operation = Implementation.VECTOR_SIMD_512;
-                }
-            case 8:
-                long vector256 = calculateVector(FloatVector.SPECIES_256, samples, ITERATIONS);
-                mLog.info("HILBERT VECTOR 256:" + vector256);
-                if(vector256 < bestScore)
-                {
-                    bestScore = vector256;
-                    operation = Implementation.VECTOR_SIMD_256;
-                }
-            case 4:
-                long vector128 = calculateVector(FloatVector.SPECIES_128, samples, ITERATIONS);
-                mLog.info("HILBERT VECTOR 128:" + vector128);
-                if(vector128 < bestScore)
-                {
-                    bestScore = vector128;
-                    operation = Implementation.VECTOR_SIMD_128;
-                }
-            case 2:
-                long vector64 = calculateVector(FloatVector.SPECIES_64, samples, ITERATIONS);
-                mLog.info("HILBERT VECTOR 64:" + vector64);
-                if(vector64 < bestScore)
-                {
-                    operation = Implementation.VECTOR_SIMD_64;
-                }
+            long elapsed = testVectorPreferred(samples);
+            vectorPreferredMean.increment(elapsed);
         }
 
-        mLog.info("HILBERT - SETTING OPTIMAL OPERATION TO: " + operation);
-        setImplementation(operation);
+        mLog.info("HILBERT WARMUP - VECTOR PREFERRED: " + DECIMAL_FORMAT.format(vectorPreferredMean.getResult()));
+
+        Mean vector512Mean = new Mean();
+
+        if(VECTOR_SPECIES.length() >= 16)
+        {
+            for(int x = 0; x < WARMUP_ITERATIONS; x++)
+            {
+                long elapsed = testVector512(samples);
+                vector512Mean.increment(elapsed);
+            }
+
+            mLog.info("HILBERT WARMUP - VECTOR 512: " + DECIMAL_FORMAT.format(vector512Mean.getResult()));
+        }
+
+        Mean vector256Mean = new Mean();
+
+        if(VECTOR_SPECIES.length() >= 8)
+        {
+            for(int x = 0; x < WARMUP_ITERATIONS; x++)
+            {
+                long elapsed = testVector256(samples);
+                vector256Mean.increment(elapsed);
+            }
+
+            mLog.info("HILBERT WARMUP - VECTOR 256: " + DECIMAL_FORMAT.format(vector256Mean.getResult()));
+        }
+
+        Mean vector128Mean = new Mean();
+
+        if(VECTOR_SPECIES.length() >= 4)
+        {
+            for(int x = 0; x < WARMUP_ITERATIONS; x++)
+            {
+                long elapsed = testVector128(samples);
+                vector128Mean.increment(elapsed);
+            }
+
+            mLog.info("HILBERT WARMUP - VECTOR 128: " + DECIMAL_FORMAT.format(vector128Mean.getResult()));
+        }
+
+        Mean vector64Mean = new Mean();
+
+        if(VECTOR_SPECIES.length() >= 2)
+        {
+            for(int x = 0; x < WARMUP_ITERATIONS; x++)
+            {
+                long elapsed = testVector64(samples);
+                vector64Mean.increment(elapsed);
+            }
+
+            mLog.info("HILBERT WARMUP - VECTOR 64: " + DECIMAL_FORMAT.format(vector64Mean.getResult()));
+        }
+
+        //Test starts ...
+        scalarMean.clear();
+
+        for(int x = 0; x < TEST_ITERATIONS; x++)
+        {
+            long elapsed = testScalar(samples);
+            scalarMean.increment(elapsed);
+        }
+
+        mLog.info("HILBERT - SCALAR: " + DECIMAL_FORMAT.format(scalarMean.getResult()));
+
+        double bestScore = scalarMean.getResult();
+        setImplementation(Implementation.SCALAR);
+
+        vectorPreferredMean.clear();
+
+        for(int x = 0; x < TEST_ITERATIONS; x++)
+        {
+            long elapsed = testVectorPreferred(samples);
+            vectorPreferredMean.increment(elapsed);
+        }
+
+        mLog.info("HILBERT - VECTOR PREFERRED: " + DECIMAL_FORMAT.format(vectorPreferredMean.getResult()));
+
+        if(vectorPreferredMean.getResult() < bestScore)
+        {
+            bestScore = vectorPreferredMean.getResult();
+            setImplementation(Implementation.VECTOR_SIMD_PREFERRED);
+        }
+
+        if(VECTOR_SPECIES.length() >= 16)
+        {
+            vector512Mean.clear();
+
+            for(int x = 0; x < TEST_ITERATIONS; x++)
+            {
+                long elapsed = testVector512(samples);
+                vector512Mean.increment(elapsed);
+            }
+
+            mLog.info("HILBERT - VECTOR 512: " + DECIMAL_FORMAT.format(vector512Mean.getResult()));
+
+            if(vector512Mean.getResult() < bestScore)
+            {
+                bestScore = vector512Mean.getResult();
+                setImplementation(Implementation.VECTOR_SIMD_512);
+            }
+        }
+
+        if(VECTOR_SPECIES.length() >= 8)
+        {
+            vector256Mean.clear();
+
+            for(int x = 0; x < TEST_ITERATIONS; x++)
+            {
+                long elapsed = testVector256(samples);
+                vector256Mean.increment(elapsed);
+            }
+
+            mLog.info("HILBERT - VECTOR 256: " + DECIMAL_FORMAT.format(vector256Mean.getResult()));
+
+            if(vector256Mean.getResult() < bestScore)
+            {
+                bestScore = vector256Mean.getResult();
+                setImplementation(Implementation.VECTOR_SIMD_256);
+            }
+        }
+
+        if(VECTOR_SPECIES.length() >= 4)
+        {
+            vector128Mean.clear();
+
+            for(int x = 0; x < TEST_ITERATIONS; x++)
+            {
+                long elapsed = testVector128(samples);
+                vector128Mean.increment(elapsed);
+            }
+
+            mLog.info("HILBERT - VECTOR 128: " + DECIMAL_FORMAT.format(vector128Mean.getResult()));
+
+            if(vector128Mean.getResult() < bestScore)
+            {
+                bestScore = vector128Mean.getResult();
+                setImplementation(Implementation.VECTOR_SIMD_128);
+            }
+        }
+
+        if(VECTOR_SPECIES.length() >= 2)
+        {
+            vector64Mean.clear();
+
+            for(int x = 0; x < TEST_ITERATIONS; x++)
+            {
+                long elapsed = testVector64(samples);
+                vector64Mean.increment(elapsed);
+            }
+
+            mLog.info("HILBERT - VECTOR 64: " + DECIMAL_FORMAT.format(vector64Mean.getResult()));
+
+            if(vector64Mean.getResult() < bestScore)
+            {
+                setImplementation(Implementation.VECTOR_SIMD_64);
+            }
+        }
+
+        mLog.info("HILBERT - SET OPTIMAL IMPLEMENTATION TO: " + getImplementation());
     }
 
-    /**
-     * Calculates the time duration to process the sample buffer.
-     * @param samples buffer
-     * @param iterations count of how many times to process the samples buffer
-     * @return time duration in milliseconds
-     */
-    private static long calculateScalar(float[] samples, int iterations)
+    private long testScalar(float[] samples)
     {
-        float accumulator = 0.0f;
-
-        ScalarHilbertTransform scalar = new ScalarHilbertTransform();
+        double accumulator = 0.0;
 
         long start = System.currentTimeMillis();
 
-        for(int i = 0; i < iterations; i++)
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
         {
-            ComplexSamples filtered = scalar.filter(samples);
-            accumulator += filtered.i()[0];
+            ComplexSamples complex = mScalar.filter(samples);
+            accumulator += complex.i()[0];
         }
 
-        return System.currentTimeMillis() - start;
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
     }
 
-    /**
-     * Calculates the time duration to process the sample buffer.
-     * @param species of vector for the SIMD instruction lane width
-     * @param samples buffer
-     * @param iterations count of how many times to (re)filter the samples buffer
-     * @return time duration in milliseconds
-     */
-    private static long calculateVector(VectorSpecies<Float> species, float[] samples, int iterations)
+    private long testVectorPreferred(float[] samples)
     {
-        float accumulator = 0.0f;
-
-        HilbertTransform vector = getFilter(species);
+        double accumulator = 0.0;
 
         long start = System.currentTimeMillis();
 
-        for(int i = 0; i < iterations; i++)
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
         {
-            ComplexSamples filtered = vector.filter(samples);
-            accumulator += filtered.i()[0];
+            ComplexSamples complex = mVectorPreferred.filter(samples);
+            accumulator += complex.i()[0];
         }
 
-        return System.currentTimeMillis() - start;
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
     }
 
-    private static HilbertTransform getFilter(VectorSpecies<Float> species)
+    private long testVector512(float[] samples)
     {
-        if(species.equals(FloatVector.SPECIES_PREFERRED))
+        double accumulator = 0.0;
+
+        long start = System.currentTimeMillis();
+
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
         {
-            return new VectorHilbertTransformDefaultBits();
+            ComplexSamples complex = mVector512.filter(samples);
+            accumulator += complex.i()[0];
         }
 
-        switch(species.length())
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
+    }
+
+    private long testVector256(float[] samples)
+    {
+        double accumulator = 0.0;
+
+        long start = System.currentTimeMillis();
+
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
         {
-            case 16:
-                return new VectorHilbertTransform512Bits();
-            case 8:
-                return new VectorHilbertTransform256Bits();
-            case 4:
-                return new VectorHilbertTransform128Bits();
-            case 2:
-                return new VectorHilbertTransform64Bits();
+            ComplexSamples complex = mVector256.filter(samples);
+            accumulator += complex.i()[0];
         }
 
-        throw new IllegalArgumentException("Unrecognized vector species:" + species);
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
+    }
+
+    private long testVector128(float[] samples)
+    {
+        double accumulator = 0.0;
+
+        long start = System.currentTimeMillis();
+
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
+        {
+            ComplexSamples complex = mVector128.filter(samples);
+            accumulator += complex.i()[0];
+        }
+
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
+    }
+
+    private long testVector64(float[] samples)
+    {
+        double accumulator = 0.0;
+
+        long start = System.currentTimeMillis();
+
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
+        {
+            ComplexSamples complex = mVector64.filter(samples);
+            accumulator += complex.i()[0];
+        }
+
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
     }
 }

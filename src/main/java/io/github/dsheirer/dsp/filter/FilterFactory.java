@@ -18,7 +18,6 @@
  */
 package io.github.dsheirer.dsp.filter;
 
-import io.github.dsheirer.dsp.filter.decimate.IComplexDecimationFilter;
 import io.github.dsheirer.dsp.filter.decimate.IRealDecimationFilter;
 import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.dsp.filter.fir.FIRFilterSpecification;
@@ -31,37 +30,27 @@ import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilter64Bit;
 import io.github.dsheirer.dsp.filter.fir.real.VectorRealFIRFilterDefaultBit;
 import io.github.dsheirer.dsp.filter.fir.remez.RemezFIRFilterDesigner;
 import io.github.dsheirer.dsp.filter.fir.remez.RemezFIRFilterDesignerWithLagrange;
-import io.github.dsheirer.dsp.filter.halfband.complex.ScalarComplexHalfBandDecimationFilter;
-import io.github.dsheirer.dsp.filter.halfband.complex.VectorComplexHalfBandDecimationFilter11Tap128Bit;
-import io.github.dsheirer.dsp.filter.halfband.complex.VectorComplexHalfBandDecimationFilter11Tap256Bit;
-import io.github.dsheirer.dsp.filter.halfband.complex.VectorComplexHalfBandDecimationFilter11Tap512Bit;
-import io.github.dsheirer.dsp.filter.halfband.complex.VectorComplexHalfBandDecimationFilter15Tap128Bit;
-import io.github.dsheirer.dsp.filter.halfband.complex.VectorComplexHalfBandDecimationFilter15Tap256Bit;
-import io.github.dsheirer.dsp.filter.halfband.complex.VectorComplexHalfBandDecimationFilter15Tap512Bit;
-import io.github.dsheirer.dsp.filter.halfband.complex.VectorComplexHalfBandDecimationFilter23Tap128Bit;
-import io.github.dsheirer.dsp.filter.halfband.complex.VectorComplexHalfBandDecimationFilter23Tap256Bit;
-import io.github.dsheirer.dsp.filter.halfband.complex.VectorComplexHalfBandDecimationFilter23Tap512Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.RealHalfBandDecimationFilter;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter11Tap128Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter11Tap256Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter11Tap512Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter11Tap64Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter128Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter15Tap128Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter15Tap256Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter15Tap512Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter15Tap64Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter23Tap128Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter23Tap256Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter23Tap512Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter23Tap64Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter256Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter512Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter63Tap128Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter63Tap256Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter63Tap512Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter63Tap64Bit;
-import io.github.dsheirer.dsp.filter.halfband.real.VectorRealHalfBandDecimationFilter64Bit;
+import io.github.dsheirer.dsp.filter.halfband.RealHalfBandDecimationFilter;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter11Tap128Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter11Tap256Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter11Tap512Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter11Tap64Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter128Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter15Tap128Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter15Tap256Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter15Tap512Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter15Tap64Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter23Tap128Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter23Tap256Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter23Tap512Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter23Tap64Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter256Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter512Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter63Tap128Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter63Tap256Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter63Tap512Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter63Tap64Bit;
+import io.github.dsheirer.dsp.filter.halfband.VectorRealHalfBandDecimationFilter64Bit;
 import io.github.dsheirer.dsp.window.WindowFactory;
 import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.vector.calibrate.CalibrationManager;
@@ -1202,64 +1191,6 @@ public class FilterFactory
                     default:
                         return new RealHalfBandDecimationFilter(coefficients);
                 }
-        }
-    }
-
-    /**
-     * Constructs the optimal decimation filter implementation for filter length and window type
-     * using calibration data to select among scalar and vector implementation options.
-     * @param length of decimation filter
-     * @param windowType for designing the filter
-     * @return filter implementation
-     */
-    public static IComplexDecimationFilter getComplexDecimationFilter(int length, WindowType windowType)
-    {
-        float[] coefficients = getHalfBand(length, windowType);
-
-        switch(length)
-        {
-            case 11:
-                switch(CalibrationManager.getInstance().getImplementation(CalibrationType.FILTER_HALF_BAND_COMPLEX_11_TAP))
-                {
-                    case VECTOR_SIMD_128:
-                        return new VectorComplexHalfBandDecimationFilter11Tap128Bit(coefficients);
-                    case VECTOR_SIMD_256:
-                        return new VectorComplexHalfBandDecimationFilter11Tap256Bit(coefficients);
-                    case VECTOR_SIMD_512:
-                        return new VectorComplexHalfBandDecimationFilter11Tap512Bit(coefficients);
-                    case SCALAR:
-                    default:
-                        return new ScalarComplexHalfBandDecimationFilter(coefficients);
-                }
-            case 15:
-                switch(CalibrationManager.getInstance().getImplementation(CalibrationType.FILTER_HALF_BAND_COMPLEX_15_TAP))
-                {
-                    case VECTOR_SIMD_128:
-                        return new VectorComplexHalfBandDecimationFilter15Tap128Bit(coefficients);
-                    case VECTOR_SIMD_256:
-                        return new VectorComplexHalfBandDecimationFilter15Tap256Bit(coefficients);
-                    case VECTOR_SIMD_512:
-                        return new VectorComplexHalfBandDecimationFilter15Tap512Bit(coefficients);
-                    case SCALAR:
-                    default:
-                        return new ScalarComplexHalfBandDecimationFilter(coefficients);
-                }
-            case 23:
-                switch(CalibrationManager.getInstance().getImplementation(CalibrationType.FILTER_HALF_BAND_COMPLEX_23_TAP))
-                {
-                    case VECTOR_SIMD_128:
-                        return new VectorComplexHalfBandDecimationFilter23Tap128Bit(coefficients);
-                    case VECTOR_SIMD_256:
-                        return new VectorComplexHalfBandDecimationFilter23Tap256Bit(coefficients);
-                    case VECTOR_SIMD_512:
-                        return new VectorComplexHalfBandDecimationFilter23Tap512Bit(coefficients);
-                    case SCALAR:
-                    default:
-                        return new ScalarComplexHalfBandDecimationFilter(coefficients);
-                }
-            case 63:
-            default:
-                return new ScalarComplexHalfBandDecimationFilter(coefficients);
         }
     }
 

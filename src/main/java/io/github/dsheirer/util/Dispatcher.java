@@ -83,9 +83,16 @@ public class Dispatcher<E> implements Listener<E>
      */
     public void receive(E e)
     {
-        if(!mQueue.offer(e))
+        if(mRunning.get())
         {
-            mLog.warn("Buffer overflow in threaded continuous buffer processor");
+            if(!mQueue.offer(e))
+            {
+                mLog.warn("Buffer overflow in Dispatcher [" + mThreadName + "] - this many be temporary");
+            }
+        }
+        else
+        {
+            mLog.error("Dispatcher [" + mThreadName + "] received an element when not in a running state - element:" + e.getClass());
         }
     }
 

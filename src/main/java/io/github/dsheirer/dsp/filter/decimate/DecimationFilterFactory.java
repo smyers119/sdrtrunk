@@ -70,45 +70,6 @@ public class DecimationFilterFactory
     }
 
     /**
-     * Creates a complex-valued decimation filter for float array sample buffers providing greater than 100 dB of
-     * attenuation for out of band signal aliases.  Supports power of 2 decimation rates up to 1024.
-     *
-     * @param decimationRate requested @see SUPPORTED_RATES
-     * @return constructed decimation filter
-     */
-    public static IComplexDecimationFilter getComplexDecimationFilter(int decimationRate)
-    {
-        switch(decimationRate)
-        {
-            case 0:
-                return new ComplexDecimateX0Filter();
-            case 2:
-                return new ComplexDecimateX2Filter();
-            case 4:
-                return new ComplexDecimateX4Filter();
-            case 8:
-                return new ComplexDecimateX8Filter();
-            case 16:
-                return new ComplexDecimateX16Filter();
-            case 32:
-                return new ComplexDecimateX32Filter();
-            case 64:
-                return new ComplexDecimateX64Filter();
-            case 128:
-                return new ComplexDecimateX128Filter();
-            case 256:
-                return new ComplexDecimateX256Filter();
-            case 512:
-                return new ComplexDecimateX512Filter();
-            case 1024:
-                return new ComplexDecimateX1024Filter();
-            default:
-                throw new IllegalArgumentException("Unsupported decimation rate: " + decimationRate +
-                        ".  Supported decimation rates are:" + SUPPORTED_RATES);
-        }
-    }
-
-    /**
      * Finds the greatest factor of 2 decimation rate that is less than the requested rate.
      * @param requestedRate for decimation
      * @return factor of 2 decimation rate that is closest to the requested rate

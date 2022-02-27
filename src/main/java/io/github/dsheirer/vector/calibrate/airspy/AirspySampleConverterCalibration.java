@@ -25,6 +25,7 @@ import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,9 @@ public class AirspySampleConverterCalibration extends Calibration
 {
     private static final Logger mLog = LoggerFactory.getLogger(AirspySampleConverterCalibration.class);
     private static final int BUFFER_SIZE = 262144;
-    private static final int ITERATIONS = 100_000;
+    private static final int BUFFER_ITERATIONS = 100;
+    private static final int WARM_UP_ITERATIONS = 50;
+    private static final int TEST_ITERATIONS = 50;
 
     /**
      * Constructs an instance
@@ -47,33 +50,48 @@ public class AirspySampleConverterCalibration extends Calibration
     @Override
     public void calibrate() throws CalibrationException
     {
+        Mean scalarMean = new Mean();
+        Mean vectorMean = new Mean();
+
         byte[] samples = new byte[BUFFER_SIZE];
         ByteBuffer buffer = ByteBuffer.wrap(samples);
 
-        ScalarUnpackedSampleConverter scalor = new ScalarUnpackedSampleConverter();
-        long start = System.currentTimeMillis();
-        long accumulator = 0;
-        for(int x = 0; x < ITERATIONS; x++)
+        for(int scalarTest = 0; scalarTest < WARM_UP_ITERATIONS; scalarTest++)
         {
-            short[] converted = scalor.convert(buffer);
-            accumulator += converted[2];
+            long scalarElapsed = testScalar(buffer);
+            scalarMean.increment(scalarElapsed);
         }
-        long scalorElapsed = System.currentTimeMillis() - start;
 
-        mLog.info("AIRSPY CONVERTER - SCALAR: " + scalorElapsed);
+        mLog.info("AIRSPY CONVERTER WARMUP - SCALAR: " + DECIMAL_FORMAT.format(scalarMean.getResult()));
 
-        VectorUnpackedSampleConverter vector = new VectorUnpackedSampleConverter();
-        start = System.currentTimeMillis();
-        accumulator = 0;
-        for(int x = 0; x < ITERATIONS; x++)
+        for(int vectorTest = 0; vectorTest < WARM_UP_ITERATIONS; vectorTest++)
         {
-            short[] converted = vector.convert(buffer);
-            accumulator += converted[2];
+            long vectorElapsed = testVector(buffer);
+            vectorMean.increment(vectorElapsed);
         }
-        long vectorElapsed = System.currentTimeMillis() - start;
 
-        mLog.info("AIRSPY CONVERTER - VECTOR: " + vectorElapsed);
-        if(scalorElapsed < vectorElapsed)
+        mLog.info("AIRSPY CONVERTER WARMUP - VECTOR: " + DECIMAL_FORMAT.format(vectorMean.getResult()));
+
+        scalarMean.clear();
+        vectorMean.clear();
+
+        for(int scalarTest = 0; scalarTest < TEST_ITERATIONS; scalarTest++)
+        {
+            long scalarElapsed = testScalar(buffer);
+            scalarMean.increment(scalarElapsed);
+        }
+
+        mLog.info("AIRSPY CONVERTER - SCALAR: " + DECIMAL_FORMAT.format(scalarMean.getResult()));
+
+        for(int vectorTest = 0; vectorTest < TEST_ITERATIONS; vectorTest++)
+        {
+            long vectorElapsed = testVector(buffer);
+            vectorMean.increment(vectorElapsed);
+        }
+
+        mLog.info("AIRSPY CONVERTER - VECTOR: " + DECIMAL_FORMAT.format(vectorMean.getResult()));
+
+        if(scalarMean.getResult() < vectorMean.getResult())
         {
             setImplementation(Implementation.SCALAR);
         }
@@ -82,6 +100,34 @@ public class AirspySampleConverterCalibration extends Calibration
             setImplementation(Implementation.VECTOR_SIMD_PREFERRED);
         }
 
-        mLog.info("AIRSPY CONVERTER - SETTING OPTIMAL OPERATION TO: " + getImplementation());
+        mLog.info("AIRSPY CONVERTER - SETTING OPTIMAL IMPLEMENTATION TO: " + getImplementation());
+    }
+
+    private long testScalar(ByteBuffer buffer)
+    {
+        ScalarUnpackedSampleConverter scalor = new ScalarUnpackedSampleConverter();
+        long start = System.currentTimeMillis();
+        long accumulator = 0;
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
+        {
+            short[] converted = scalor.convert(buffer);
+            accumulator += converted[2];
+        }
+
+        return System.currentTimeMillis() - start + (accumulator * 0);
+    }
+
+    private long testVector(ByteBuffer buffer)
+    {
+        VectorUnpackedSampleConverter vector = new VectorUnpackedSampleConverter();
+        long start = System.currentTimeMillis();
+        long accumulator = 0;
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
+        {
+            short[] converted = vector.convert(buffer);
+            accumulator += converted[2];
+        }
+
+        return System.currentTimeMillis() - start + (accumulator * 0);
     }
 }

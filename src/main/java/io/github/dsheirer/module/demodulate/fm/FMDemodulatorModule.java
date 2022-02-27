@@ -23,7 +23,7 @@ import io.github.dsheirer.dsp.filter.design.FilterDesignException;
 import io.github.dsheirer.dsp.filter.fir.FIRFilterSpecification;
 import io.github.dsheirer.dsp.filter.fir.real.IRealFilter;
 import io.github.dsheirer.dsp.filter.resample.RealResampler;
-import io.github.dsheirer.dsp.fm.FMDemodulator;
+import io.github.dsheirer.dsp.fm.ScalarFMDemodulator;
 import io.github.dsheirer.dsp.squelch.PowerMonitor;
 import io.github.dsheirer.dsp.window.WindowType;
 import io.github.dsheirer.module.Module;
@@ -49,7 +49,7 @@ public class FMDemodulatorModule extends Module implements ISourceEventListener,
 
     private IRealFilter mIBasebandFilter;
     private IRealFilter mQBasebandFilter;
-    private FMDemodulator mDemodulator = new FMDemodulator();
+    private ScalarFMDemodulator mDemodulator = new ScalarFMDemodulator();
     private PowerMonitor mPowerMonitor = new PowerMonitor();
     private RealResampler mResampler;
     private SourceEventProcessor mSourceEventProcessor = new SourceEventProcessor();

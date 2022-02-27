@@ -30,6 +30,7 @@ import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import jdk.incubator.vector.FloatVector;
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,9 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
 {
     private static final Logger mLog = LoggerFactory.getLogger(AirspyUnpackedInterleavedCalibration.class);
     private static final int BUFFER_SIZE = 131072;
-    private static final int ITERATIONS = 10_000;
+    private static final int BUFFER_ITERATIONS = 40;
+    private static final int WARMUP_ITERATIONS = 60;
+    private static final int TEST_ITERATIONS = 60;
 
     /**
      * Constructs an instance
@@ -57,9 +60,16 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
         short[] residualI = getShortSamples(AirspyBufferIterator.I_OVERLAP);
         short[] residualQ = getShortSamples(AirspyBufferIterator.Q_OVERLAP);
 
-        long bestScore = calibrateScalar(samples, residualI, residualQ);
-        Implementation bestImplementation = Implementation.SCALAR;
-        mLog.info("AIRSPY UNPACKED INTERLEAVED - SCALAR: " + bestScore);
+        //Warm-Up Phase ....
+        Mean scalarMean = new Mean();
+
+        for(int x = 0; x < WARMUP_ITERATIONS; x++)
+        {
+            long elapsed = calibrateScalar(samples, residualI, residualQ);
+            scalarMean.increment(elapsed);
+        }
+
+        mLog.info("AIRSPY UNPACKED INTERLEAVED WARMUP - SCALAR: " + DECIMAL_FORMAT.format(scalarMean.getResult()));
 
         switch(FloatVector.SPECIES_PREFERRED.length())
         {
@@ -67,54 +77,152 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
             //SIMD lane width supported by hardware down to the smallest SIMD lane width.
             case 16:
             {
-                long vector512 = calibrateVector512(samples, residualI, residualQ);
-                mLog.info("AIRSPY UNPACKED INTERLEAVED - VECTOR 512: " + vector512);
-                if(vector512 < bestScore)
+                Mean vectorMean = new Mean();
+
+                for(int x = 0; x < WARMUP_ITERATIONS; x++)
                 {
-                    bestScore = vector512;
-                    bestImplementation = Implementation.VECTOR_SIMD_512;
+                    long elapsed = calibrateVector512(samples, residualI, residualQ);
+                    vectorMean.increment(elapsed);
                 }
+
+                mLog.info("AIRSPY UNPACKED INTERLEAVED WARMUP - VECTOR 512: " + DECIMAL_FORMAT.format(vectorMean.getResult()));
             }
             case 8:
             {
-                long vector256 = calibrateVector256(samples, residualI, residualQ);
-                mLog.info("AIRSPY UNPACKED INTERLEAVED - VECTOR 256: " + vector256);
-                if(vector256 < bestScore)
+                Mean vectorMean = new Mean();
+
+                for(int x = 0; x < WARMUP_ITERATIONS; x++)
                 {
-                    bestScore = vector256;
-                    bestImplementation = Implementation.VECTOR_SIMD_256;
+                    long elapsed = calibrateVector256(samples, residualI, residualQ);
+                    vectorMean.increment(elapsed);
                 }
+
+                mLog.info("AIRSPY UNPACKED INTERLEAVED WARMUP - VECTOR 256: " + DECIMAL_FORMAT.format(vectorMean.getResult()));
             }
             case 4:
             {
-                long vector128 = calibrateVector128(samples, residualI, residualQ);
-                mLog.info("AIRSPY UNPACKED INTERLEAVED - VECTOR 128: " + vector128);
-                if(vector128 < bestScore)
+                Mean vectorMean = new Mean();
+
+                for(int x = 0; x < WARMUP_ITERATIONS; x++)
                 {
-                    bestScore = vector128;
-                    bestImplementation = Implementation.VECTOR_SIMD_128;
+                    long elapsed = calibrateVector128(samples, residualI, residualQ);
+                    vectorMean.increment(elapsed);
                 }
+
+                mLog.info("AIRSPY UNPACKED INTERLEAVED WARMUP - VECTOR 128: " + DECIMAL_FORMAT.format(vectorMean.getResult()));
             }
             case 2:
             {
-                long vector64 = calibrateVector64(samples, residualI, residualQ);
-                mLog.info("AIRSPY UNPACKED INTERLEAVED - VECTOR 64: " + vector64);
-                if(vector64 < bestScore)
+                Mean vectorMean = new Mean();
+
+                for(int x = 0; x < WARMUP_ITERATIONS; x++)
                 {
-                    bestImplementation = Implementation.VECTOR_SIMD_64;
+                    long elapsed = calibrateVector64(samples, residualI, residualQ);
+                    vectorMean.increment(elapsed);
+                }
+
+                mLog.info("AIRSPY UNPACKED INTERLEAVED WARMUP - VECTOR 64: " + DECIMAL_FORMAT.format(vectorMean.getResult()));
+            }
+
+            //Test Phase ....
+            scalarMean.clear();
+            for(int x = 0; x < TEST_ITERATIONS; x++)
+            {
+                long elapsed = calibrateScalar(samples, residualI, residualQ);
+                scalarMean.increment(elapsed);
+            }
+
+            double bestScore = scalarMean.getResult();
+            setImplementation(Implementation.SCALAR);
+
+            mLog.info("AIRSPY UNPACKED INTERLEAVED - SCALAR: " + DECIMAL_FORMAT.format(scalarMean.getResult()));
+
+            switch(FloatVector.SPECIES_PREFERRED.length())
+            {
+                //Deliberate fall-through of each case statement so that we can test the largest
+                //SIMD lane width supported by hardware down to the smallest SIMD lane width.
+                case 16:
+                {
+                    Mean vectorMean = new Mean();
+
+                    for(int x = 0; x < TEST_ITERATIONS; x++)
+                    {
+                        long elapsed = calibrateVector512(samples, residualI, residualQ);
+                        vectorMean.increment(elapsed);
+                    }
+
+                    if(vectorMean.getResult() < bestScore)
+                    {
+                        bestScore = vectorMean.getResult();
+                        setImplementation(Implementation.VECTOR_SIMD_512);
+                    }
+
+                    mLog.info("AIRSPY UNPACKED INTERLEAVED - VECTOR 512: " + DECIMAL_FORMAT.format(vectorMean.getResult()));
+                }
+                case 8:
+                {
+                    Mean vectorMean = new Mean();
+
+                    for(int x = 0; x < TEST_ITERATIONS; x++)
+                    {
+                        long elapsed = calibrateVector256(samples, residualI, residualQ);
+                        vectorMean.increment(elapsed);
+                    }
+
+                    if(vectorMean.getResult() < bestScore)
+                    {
+                        bestScore = vectorMean.getResult();
+                        setImplementation(Implementation.VECTOR_SIMD_256);
+                    }
+
+                    mLog.info("AIRSPY UNPACKED INTERLEAVED - VECTOR 256: " + DECIMAL_FORMAT.format(vectorMean.getResult()));
+                }
+                case 4:
+                {
+                    Mean vectorMean = new Mean();
+
+                    for(int x = 0; x < TEST_ITERATIONS; x++)
+                    {
+                        long elapsed = calibrateVector128(samples, residualI, residualQ);
+                        vectorMean.increment(elapsed);
+                    }
+
+                    if(vectorMean.getResult() < bestScore)
+                    {
+                        bestScore = vectorMean.getResult();
+                        setImplementation(Implementation.VECTOR_SIMD_128);
+                    }
+
+                    mLog.info("AIRSPY UNPACKED INTERLEAVED - VECTOR 128: " + DECIMAL_FORMAT.format(vectorMean.getResult()));
+                }
+                case 2:
+                {
+                    Mean vectorMean = new Mean();
+
+                    for(int x = 0; x < TEST_ITERATIONS; x++)
+                    {
+                        long elapsed = calibrateVector64(samples, residualI, residualQ);
+                        vectorMean.increment(elapsed);
+                    }
+
+                    if(vectorMean.getResult() < bestScore)
+                    {
+                        setImplementation(Implementation.VECTOR_SIMD_64);
+                    }
+
+                    mLog.info("AIRSPY UNPACKED INTERLEAVED - VECTOR 64: " + DECIMAL_FORMAT.format(vectorMean.getResult()));
                 }
             }
         }
 
-        mLog.info("AIRSPY UNPACKED INTERLEAVED - SETTING OPTIMAL OPERATION TO: " + bestImplementation);
-        setImplementation(bestImplementation);
+        mLog.info("AIRSPY UNPACKED INTERLEAVED - SET OPTIMAL IMPLEMENTATION TO: " + getImplementation());
     }
 
     private long calibrateScalar(short[] samples, short[] residualI, short[] residualQ)
     {
         long start = System.currentTimeMillis();
         long accumulator = 0;
-        for(int x = 0; x < ITERATIONS; x++)
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
         {
             AirspyInterleavedBufferIteratorScalar iterator = new AirspyInterleavedBufferIteratorScalar(samples, residualI,
                     residualQ, 0.0f, System.currentTimeMillis());
@@ -132,7 +240,7 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
     {
         long start = System.currentTimeMillis();
         long accumulator = 0;
-        for(int x = 0; x < ITERATIONS; x++)
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
         {
             AirspyInterleavedBufferIteratorVector64Bits iterator = new AirspyInterleavedBufferIteratorVector64Bits(samples, residualI,
                     residualQ, 0.0f, System.currentTimeMillis());
@@ -150,7 +258,7 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
     {
         long start = System.currentTimeMillis();
         long accumulator = 0;
-        for(int x = 0; x < ITERATIONS; x++)
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
         {
             AirspyInterleavedBufferIteratorVector128Bits iterator = new AirspyInterleavedBufferIteratorVector128Bits(samples, residualI,
                     residualQ, 0.0f, System.currentTimeMillis());
@@ -168,7 +276,7 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
     {
         long start = System.currentTimeMillis();
         long accumulator = 0;
-        for(int x = 0; x < ITERATIONS; x++)
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
         {
             AirspyInterleavedBufferIteratorVector256Bits iterator =
                     new AirspyInterleavedBufferIteratorVector256Bits(samples, residualI, residualQ, 0.0f, System.currentTimeMillis());
@@ -186,7 +294,7 @@ public class AirspyUnpackedInterleavedCalibration extends Calibration
     {
         long start = System.currentTimeMillis();
         long accumulator = 0;
-        for(int x = 0; x < ITERATIONS; x++)
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
         {
             AirspyInterleavedBufferIteratorVector512Bits iterator =
                     new AirspyInterleavedBufferIteratorVector512Bits(samples, residualI, residualQ, 0.0f, System.currentTimeMillis());

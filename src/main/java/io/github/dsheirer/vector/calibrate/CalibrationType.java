@@ -19,41 +19,74 @@
 
 package io.github.dsheirer.vector.calibrate;
 
+/**
+ * Calibrations used by the system
+ *
+ * Version numbers in each calibration can be incremented any time the calibration changes
+ * so that the calibration will automatically run.
+ */
 public enum CalibrationType
 {
-    AIRSPY_SAMPLE_CONVERTER("Airspy Sample Converter"),
-    AIRSPY_UNPACKED_INTERLEAVED_ITERATOR("Airspy Unpacked Interleaved Iterator"),
-    AIRSPY_UNPACKED_ITERATOR("Airspy Unpacked Iterator"),
-    COMPLEX_GAIN_CONTROL("Complex Gain Control"),
-    COMPLEX_GAIN("Complex Gain"),
-    COMPLEX_MIXER("Complex Mixer"),
-    DC_REMOVAL_REAL("Real DC Removal Filter"),
-    FILTER_FIR("FIR Filter"),
-    FILTER_HALF_BAND_COMPLEX_11_TAP("Complex Half-Band Decimation Filter - 11 Tap"),
-    FILTER_HALF_BAND_COMPLEX_15_TAP("Complex Half-Band Decimation Filter - 15 Tap"),
-    FILTER_HALF_BAND_COMPLEX_23_TAP("Complex Half-Band Decimation Filter - 23 Tap"),
-    FILTER_HALF_BAND_COMPLEX_63_TAP("Complex Half-Band Decimation Filter - 63 Tap"),
-    FILTER_HALF_BAND_REAL_11_TAP("Real Half-Band Decimation Filter - 11 Tap"),
-    FILTER_HALF_BAND_REAL_15_TAP("Real Half-Band Decimation Filter - 15 Tap"),
-    FILTER_HALF_BAND_REAL_23_TAP("Real Half-Band Decimation Filter - 23 Tap"),
-    FILTER_HALF_BAND_REAL_63_TAP("Real Half-Band Decimation Filter - 63 Tap"),
-    FILTER_HALF_BAND_REAL_DEFAULT("Real Half-Band Decimation Filter - Default"),
-    FM_DEMODULATOR("FM Demodulator"),
-    HILBERT_TRANSFORM("Hilbert Transform"),
-    OSCILLATOR_COMPLEX("Complex Oscillator"),
-    OSCILLATOR_REAL("Real Oscillator"),
-    SQUELCHING_FM_DEMODULATOR("Squelching FM Demodulator"),
-    WINDOW("Window");
+    //There's an oddity with these two vector implementations where it takes ~30x longer when it runs
+    //after any other calibrations ... so we always sort to top to run this one first
+    OSCILLATOR_COMPLEX("Complex Oscillator", 1),
+    GAIN_COMPLEX("Complex Gain", 1),
+
+    AIRSPY_SAMPLE_CONVERTER("Airspy Sample Converter", 1),
+    AIRSPY_UNPACKED_INTERLEAVED_ITERATOR("Airspy Unpacked Interleaved Iterator", 1),
+    AIRSPY_UNPACKED_ITERATOR("Airspy Unpacked Iterator", 1),
+    DC_REMOVAL_REAL("Real DC Removal Filter", 1),
+    FILTER_FIR("FIR Filter", 1),
+    FILTER_HALF_BAND_REAL_11_TAP("Real Half-Band Decimation Filter - 11 Tap", 1),
+    FILTER_HALF_BAND_REAL_15_TAP("Real Half-Band Decimation Filter - 15 Tap", 1),
+    FILTER_HALF_BAND_REAL_23_TAP("Real Half-Band Decimation Filter - 23 Tap", 1),
+    FILTER_HALF_BAND_REAL_63_TAP("Real Half-Band Decimation Filter - 63 Tap", 1),
+    FILTER_HALF_BAND_REAL_DEFAULT("Real Half-Band Decimation Filter - Default", 1),
+    FM_DEMODULATOR("FM Demodulator", 1),
+    GAIN_CONTROL_COMPLEX("Complex Gain Control", 1),
+    HILBERT_TRANSFORM("Hilbert Transform", 1),
+    MIXER_COMPLEX("Complex Mixer", 1),
+    OSCILLATOR_REAL("Real Oscillator", 1),
+    SQUELCHING_FM_DEMODULATOR("Squelching FM Demodulator", 1),
+    WINDOW("Window", 1);
 
     private String mDescription;
+    private int mVersion;
 
-    CalibrationType(String description)
+    /**
+     * Constructs an instance
+     * @param description
+     * @param version of the calibration.
+     */
+    CalibrationType(String description, int version)
     {
         mDescription = description;
+        mVersion = version;
+    }
+
+    /**
+     * Formulates a unique value for the entry for use as a key value.
+     */
+    public String getPreferenceKey()
+    {
+        return name() + " - V" + getVersion();
+    }
+
+    public String getDescription()
+    {
+        return mDescription;
+    }
+
+    /**
+     * Version of the calibration
+     */
+    public int getVersion()
+    {
+        return mVersion;
     }
 
     @Override public String toString()
     {
-        return mDescription;
+        return getDescription();
     }
 }

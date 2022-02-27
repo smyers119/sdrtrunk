@@ -1,5 +1,25 @@
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
+
 package io.github.dsheirer.vector.calibrate;
 
+import java.text.DecimalFormat;
 import java.util.Random;
 import java.util.prefs.Preferences;
 
@@ -8,6 +28,7 @@ import java.util.prefs.Preferences;
  */
 public abstract class Calibration
 {
+    protected static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.0");
     private Preferences mPreferences = Preferences.userNodeForPackage(Calibration.class);
     private CalibrationType mType;
     private Implementation mImplementation;
@@ -45,11 +66,6 @@ public abstract class Calibration
         setImplementation(Implementation.UNCALIBRATED);
     }
 
-    private String getImplementationKey()
-    {
-        return getType() + "-implementation";
-    }
-
     /**
      * Optimal implementation for this plugin
      * @return implementation or uncalibrated if this plugin has not yet been calibrated
@@ -58,12 +74,11 @@ public abstract class Calibration
     {
         if(mImplementation == null)
         {
-            String implementation = mPreferences.get(getImplementationKey(), Implementation.UNCALIBRATED.name());
+            String implementation = mPreferences.get(getType().getPreferenceKey(), Implementation.UNCALIBRATED.name());
             mImplementation = Implementation.valueOf(implementation);
         }
 
         return mImplementation;
-
     }
 
     /**
@@ -73,7 +88,7 @@ public abstract class Calibration
     protected void setImplementation(Implementation implementation)
     {
         mImplementation = implementation;
-        mPreferences.put(getImplementationKey(), implementation.name());
+        mPreferences.put(getType().getPreferenceKey(), implementation.name());
     }
 
     /**

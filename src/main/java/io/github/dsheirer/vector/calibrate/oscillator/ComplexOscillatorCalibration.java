@@ -26,6 +26,7 @@ import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,10 +36,16 @@ import org.slf4j.LoggerFactory;
 public class ComplexOscillatorCalibration extends Calibration
 {
     private static final Logger mLog = LoggerFactory.getLogger(ComplexOscillatorCalibration.class);
-    private static final int ITERATIONS = 500_000;
-    private static final int BUFFER_SIZE = 2048;
     private static final double FREQUENCY = 5.0d;
     private static final double SAMPLE_RATE = 100.0d;
+    private static final int BUFFER_SIZE = 2048;
+    private static final int BUFFER_ITERATIONS = 2_000;
+    private static final int WARMUP_ITERATIONS = 50;
+    private static final int TEST_ITERATIONS = 50;
+
+    private IComplexOscillator mScalarOscillator = new ScalarComplexOscillator(FREQUENCY, SAMPLE_RATE);
+    private IComplexOscillator mVectorOscillator = new VectorComplexOscillator(FREQUENCY, SAMPLE_RATE);
+
 
     /**
      * Constructs an instance
@@ -54,12 +61,47 @@ public class ComplexOscillatorCalibration extends Calibration
      */
     @Override public void calibrate() throws CalibrationException
     {
-        long scalar = calculateScalar(BUFFER_SIZE, ITERATIONS);
-        mLog.info("COMPLEX OSCILLATOR SCALAR:" + scalar);
-        long vector = calculateVector(BUFFER_SIZE, ITERATIONS);
-        mLog.info("COMPLEX OSCILLATOR VECTOR:" + vector);
+        Mean scalarMean = new Mean();
 
-        if(scalar < vector)
+        for(int x = 0; x < WARMUP_ITERATIONS; x++)
+        {
+            long elapsed = testScalar();
+            scalarMean.increment(elapsed);
+        }
+
+        mLog.info("COMPLEX OSCILLATOR SCALAR WARMUP:" + DECIMAL_FORMAT.format(scalarMean.getResult()));
+
+        Mean vectorMean = new Mean();
+
+        for(int x = 0; x < WARMUP_ITERATIONS; x++)
+        {
+            long elapsed = testVector();
+            vectorMean.increment(elapsed);
+        }
+
+        mLog.info("COMPLEX OSCILLATOR VECTOR WARMUP:" + DECIMAL_FORMAT.format(vectorMean.getResult()));
+
+        scalarMean.clear();
+
+        for(int x = 0; x < TEST_ITERATIONS; x++)
+        {
+            long elapsed = testScalar();
+            scalarMean.increment(elapsed);
+        }
+
+        mLog.info("COMPLEX OSCILLATOR SCALAR:" + DECIMAL_FORMAT.format(scalarMean.getResult()));
+
+        vectorMean.clear();
+
+        for(int x = 0; x < TEST_ITERATIONS; x++)
+        {
+            long elapsed = testVector();
+            vectorMean.increment(elapsed);
+        }
+
+        mLog.info("COMPLEX OSCILLATOR VECTOR:" + DECIMAL_FORMAT.format(vectorMean.getResult()));
+
+        if(scalarMean.getResult() < vectorMean.getResult())
         {
             setImplementation(Implementation.SCALAR);
         }
@@ -73,47 +115,39 @@ public class ComplexOscillatorCalibration extends Calibration
 
     /**
      * Calculates the time duration needed to generate the sample buffers of the specified size and iteration count
-     * @param bufferSize for size of buffer.
-     * @param iterations for number of buffers to generate
      * @return time duration in milliseconds
      */
-    private static long calculateScalar(int bufferSize, int iterations)
+    private long testScalar()
     {
         float accumulator = 0.0f;
 
         long start = System.currentTimeMillis();
 
-        IComplexOscillator oscillator = new ScalarComplexOscillator(FREQUENCY, SAMPLE_RATE);
-
-        for(int i = 0; i < iterations; i++)
+        for(int i = 0; i < BUFFER_ITERATIONS; i++)
         {
-            float[] generated = oscillator.generate(BUFFER_SIZE);
+            float[] generated = mScalarOscillator.generate(BUFFER_SIZE);
             accumulator += generated[0];
         }
 
-        return System.currentTimeMillis() - start;
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
     }
 
     /**
      * Calculates the time duration to process the sample buffer with the filter coefficients.
-     * @param bufferSize size of each sample buffer
-     * @param iterations count of how many times to generate the samples buffer
      * @return time duration in milliseconds
      */
-    private static long calculateVector(int bufferSize, int iterations)
+    private long testVector()
     {
         float accumulator = 0.0f;
 
-        IComplexOscillator oscillator = new VectorComplexOscillator(FREQUENCY, SAMPLE_RATE);
-
         long start = System.currentTimeMillis();
 
-        for(int i = 0; i < iterations; i++)
+        for(int i = 0; i < BUFFER_ITERATIONS; i++)
         {
-            float[] generated = oscillator.generate(bufferSize);
+            float[] generated = mVectorOscillator.generate(BUFFER_SIZE);
             accumulator += generated[0];
         }
 
-        return System.currentTimeMillis() - start;
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
     }
 }

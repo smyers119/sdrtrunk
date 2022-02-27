@@ -19,12 +19,14 @@
 
 package io.github.dsheirer.vector.calibrate.filter;
 
+import io.github.dsheirer.dsp.filter.dc.IDcRemovalFilter;
 import io.github.dsheirer.dsp.filter.dc.ScalarDcRemovalFilter;
 import io.github.dsheirer.dsp.filter.dc.VectorDcRemovalFilter;
 import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +36,14 @@ import org.slf4j.LoggerFactory;
 public class RealDcRemovalCalibration extends Calibration
 {
     private static final Logger mLog = LoggerFactory.getLogger(RealDcRemovalCalibration.class);
-    private static final int BUFFER_SIZE = 8192;
-    private static final int ITERATIONS = 1_000_000;
     private static final float GAIN = 0.15f;
+    private static final int BUFFER_SIZE = 8192;
+    private static final int BUFFER_ITERATIONS = 3_000;
+    private static final int TEST_ITERATIONS = 50;
+    private static final int WARMUP_ITERATIONS = 50;
+
+    private IDcRemovalFilter mScalar = new ScalarDcRemovalFilter(GAIN);
+    private IDcRemovalFilter mVector = new VectorDcRemovalFilter(GAIN);
 
     /**
      * Constructs an instance
@@ -51,33 +58,48 @@ public class RealDcRemovalCalibration extends Calibration
     {
         float[] samples = getFloatSamples(BUFFER_SIZE);
 
-        ScalarDcRemovalFilter scalar = new ScalarDcRemovalFilter(GAIN);
+        Mean scalarMean = new Mean();
 
-        long start = System.currentTimeMillis();
-
-        for(int iteration = 0; iteration < ITERATIONS; iteration++)
+        for(int x = 0; x < WARMUP_ITERATIONS; x++)
         {
-            scalar.filter(samples);
+            long elapsed = testScalar(samples);
+            scalarMean.increment(elapsed);
         }
 
-        long scalarElapsed = System.currentTimeMillis() - start;
-        mLog.info("REAL DC REMOVAL SCALAR:" + scalarElapsed);
+        mLog.info("REAL DC REMOVAL WARMUP - SCALAR:" + DECIMAL_FORMAT.format(scalarMean.getResult()));
 
+        Mean vectorMean = new Mean();
 
-        VectorDcRemovalFilter vector = new VectorDcRemovalFilter(GAIN);
-        samples = getFloatSamples(BUFFER_SIZE);
-
-        start = System.currentTimeMillis();
-
-        for(int iteration = 0; iteration < ITERATIONS; iteration++)
+        for(int x = 0; x < WARMUP_ITERATIONS; x++)
         {
-            vector.filter(samples);
+            long elapsed = testVector(samples);
+            vectorMean.increment(elapsed);
         }
 
-        long vectorElapsed = System.currentTimeMillis() - start;
-        mLog.info("REAL DC REMOVAL VECTOR:" + vectorElapsed);
+        mLog.info("REAL DC REMOVAL WARMUP - VECTOR:" + DECIMAL_FORMAT.format(vectorMean.getResult()));
 
-        if(scalarElapsed < vectorElapsed)
+        scalarMean.clear();
+
+        for(int x = 0; x < TEST_ITERATIONS; x++)
+        {
+            long elapsed = testScalar(samples);
+            scalarMean.increment(elapsed);
+        }
+
+        mLog.info("REAL DC REMOVAL - SCALAR:" + DECIMAL_FORMAT.format(scalarMean.getResult()));
+
+        vectorMean.clear();
+
+        for(int x = 0; x < TEST_ITERATIONS; x++)
+        {
+            long elapsed = testVector(samples);
+            vectorMean.increment(elapsed);
+        }
+
+        mLog.info("REAL DC REMOVAL - VECTOR:" + DECIMAL_FORMAT.format(vectorMean.getResult()));
+
+
+        if(scalarMean.getResult() < vectorMean.getResult())
         {
             setImplementation(Implementation.SCALAR);
         }
@@ -86,6 +108,36 @@ public class RealDcRemovalCalibration extends Calibration
             setImplementation(Implementation.VECTOR_SIMD_PREFERRED);
         }
 
-        mLog.info("REAL DC REMOVAL - SETTING OPTIMAL OPERATION TO: " + getImplementation());
+        mLog.info("REAL DC REMOVAL - SET OPTIMAL IMPLEMENTATION TO: " + getImplementation());
+    }
+
+    private long testScalar(float[] samples)
+    {
+        double accumulator = 0.0;
+
+        long start = System.currentTimeMillis();
+
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
+        {
+            float[] filtered = mScalar.filter(samples);
+            accumulator += filtered[0];
+        }
+
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
+    }
+
+    private long testVector(float[] samples)
+    {
+        double accumulator = 0.0;
+
+        long start = System.currentTimeMillis();
+
+        for(int x = 0; x < BUFFER_ITERATIONS; x++)
+        {
+            float[] filtered = mVector.filter(samples);
+            accumulator += filtered[0];
+        }
+
+        return System.currentTimeMillis() - start + (long)(accumulator * 0);
     }
 }

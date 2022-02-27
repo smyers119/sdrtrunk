@@ -1,9 +1,28 @@
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
+
 package io.github.dsheirer.dsp.fm;
 
-import io.github.dsheirer.vector.VectorUtilities;
 import io.github.dsheirer.dsp.squelch.PowerSquelch;
 import io.github.dsheirer.sample.Listener;
 import io.github.dsheirer.source.SourceEvent;
+import io.github.dsheirer.vector.VectorUtilities;
 import jdk.incubator.vector.FloatVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -168,9 +187,9 @@ public class VectorSquelchingFMDemodulator extends VectorFMDemodulator
         float POWER_SQUELCH_THRESHOLD_DB = -78.0f;
         int POWER_SQUELCH_RAMP = 4;
 
-        FMDemodulator fm = new FMDemodulator();
+        ScalarFMDemodulator fm = new ScalarFMDemodulator();
         VectorFMDemodulator vectorFM = new VectorFMDemodulator();
-        SquelchingFMDemodulator sqLegacy = new SquelchingFMDemodulator(POWER_SQUELCH_ALPHA_DECAY, POWER_SQUELCH_THRESHOLD_DB, POWER_SQUELCH_RAMP);
+        ScalarSquelchingFMDemodulator sqLegacy = new ScalarSquelchingFMDemodulator(POWER_SQUELCH_ALPHA_DECAY, POWER_SQUELCH_THRESHOLD_DB, POWER_SQUELCH_RAMP);
         VectorSquelchingFMDemodulator vectorSq = new VectorSquelchingFMDemodulator(POWER_SQUELCH_ALPHA_DECAY, POWER_SQUELCH_THRESHOLD_DB, POWER_SQUELCH_RAMP);
 
         boolean validation = false;

@@ -1,3 +1,22 @@
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
+
 package io.github.dsheirer.dsp.fm;
 
 import io.github.dsheirer.vector.calibrate.CalibrationManager;
@@ -27,10 +46,10 @@ public class FmDemodulatorFactory
             case VECTOR_SIMD_PREFERRED:
                 return new VectorFMDemodulator();
             case SCALAR:
-                return new FMDemodulator();
+                return new ScalarFMDemodulator();
             default:
                 mLog.warn("Unrecognized optimal operation for FM demodulator: " + implementation.name());
-                return new FMDemodulator();
+                return new ScalarFMDemodulator();
         }
     }
 
@@ -48,10 +67,10 @@ public class FmDemodulatorFactory
             case VECTOR_SIMD_PREFERRED:
                 return new VectorSquelchingFMDemodulator(alpha, threshold, ramp);
             case SCALAR:
-                return new SquelchingFMDemodulator(alpha, threshold, ramp);
+                return new ScalarSquelchingFMDemodulator(alpha, threshold, ramp);
             default:
                 mLog.warn("Unrecognized optimal operation for Squelching FM demodulator: " + implementation.name());
-                return new SquelchingFMDemodulator(alpha, threshold, ramp);
+                return new ScalarSquelchingFMDemodulator(alpha, threshold, ramp);
         }
     }
 }
