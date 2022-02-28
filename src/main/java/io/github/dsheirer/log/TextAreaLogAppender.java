@@ -17,23 +17,34 @@
  * ****************************************************************************
  */
 
-package io.github.dsheirer.preference;
+package io.github.dsheirer.log;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.AppenderBase;
+import javafx.application.Platform;
+import javafx.scene.control.TextArea;
 
 /**
- * Types of preferences
+ * Logback Log Appender that continuously writes to a JavaFX text area
+ *
+ * Note: this appender doesn't trim/truncate the text in the text area.
  */
-public enum PreferenceType
+public class TextAreaLogAppender extends AppenderBase<ILoggingEvent>
 {
-    CALIBRATION,
-    DECODE_EVENT,
-    DIRECTORY,
-    DUPLICATE_CALL_DETECTION,
-    JMBE_LIBRARY,
-    MULTI_FREQUENCY,
-    PLAYLIST,
-    PLAYBACK,
-    RADIO_REFERENCE,
-    RECORD,
-    TALKGROUP_FORMAT,
-    TUNER;
+    private TextArea mTextArea;
+
+    public TextAreaLogAppender(TextArea textArea, String name)
+    {
+        mTextArea = textArea;
+        setName(name);
+    }
+
+    @Override
+    protected void append(ILoggingEvent eventObject)
+    {
+        Platform.runLater(() ->
+        {
+            mTextArea.appendText("\n" + eventObject.getMessage());
+        });
+    }
 }

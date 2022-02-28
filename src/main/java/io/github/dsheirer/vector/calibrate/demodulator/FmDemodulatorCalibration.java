@@ -27,15 +27,12 @@ import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Calibrates FM demodulator options
  */
 public class FmDemodulatorCalibration extends Calibration
 {
-    private static final Logger mLog = LoggerFactory.getLogger(FmDemodulatorCalibration.class);
     private static final int BUFFER_SIZE = 2048;
     private static final int BUFFER_ITERATIONS = 1_000;
     private static final int WARMUP_ITERATIONS = 50;

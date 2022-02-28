@@ -27,15 +27,12 @@ import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Determines optimal DC removal implementation
  */
 public class RealDcRemovalCalibration extends Calibration
 {
-    private static final Logger mLog = LoggerFactory.getLogger(RealDcRemovalCalibration.class);
     private static final float GAIN = 0.15f;
     private static final int BUFFER_SIZE = 8192;
     private static final int BUFFER_ITERATIONS = 3_000;

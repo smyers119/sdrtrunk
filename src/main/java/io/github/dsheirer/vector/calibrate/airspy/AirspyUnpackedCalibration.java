@@ -31,15 +31,12 @@ import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import jdk.incubator.vector.FloatVector;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Calculates optimal implementation (SCALAR vs VECTOR) for non-interleaved airspy native buffers.
  */
 public class AirspyUnpackedCalibration extends Calibration
 {
-    private static final Logger mLog = LoggerFactory.getLogger(AirspyUnpackedCalibration.class);
     private static final int BUFFER_SIZE = 131072;
     private static final int BUFFER_ITERATIONS = 30;
     private static final int WARMUP_ITERATIONS = 50;

@@ -28,15 +28,12 @@ import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Determines the optimal scalar vs vector implementation of complex gain.
  */
 public class ComplexGainCalibration extends Calibration
 {
-    private static final Logger mLog = LoggerFactory.getLogger(ComplexGainCalibration.class);
     private static final int BUFFER_SIZE = 2048;
     private static final int BUFFER_ITERATIONS = 100_000;
     private static final int WARMUP_ITERATIONS = 100;

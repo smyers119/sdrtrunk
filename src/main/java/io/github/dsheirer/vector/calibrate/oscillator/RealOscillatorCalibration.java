@@ -27,15 +27,12 @@ import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Calibration plugin for real oscillators
  */
 public class RealOscillatorCalibration extends Calibration
 {
-    private static final Logger mLog = LoggerFactory.getLogger(RealOscillatorCalibration.class);
     private static final double FREQUENCY = 5.0d;
     private static final double SAMPLE_RATE = 100.0d;
     private static final int BUFFER_SIZE = 2048;

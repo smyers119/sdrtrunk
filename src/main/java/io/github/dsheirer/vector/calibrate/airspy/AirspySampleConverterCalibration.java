@@ -26,14 +26,11 @@ import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 
 public class AirspySampleConverterCalibration extends Calibration
 {
-    private static final Logger mLog = LoggerFactory.getLogger(AirspySampleConverterCalibration.class);
     private static final int BUFFER_SIZE = 262144;
     private static final int BUFFER_ITERATIONS = 100;
     private static final int WARM_UP_ITERATIONS = 50;

@@ -19,6 +19,8 @@
 
 package io.github.dsheirer.vector.calibrate;
 
+import io.github.dsheirer.preference.UserPreferences;
+import io.github.dsheirer.preference.calibration.VectorCalibrationPreference;
 import io.github.dsheirer.vector.calibrate.airspy.AirspySampleConverterCalibration;
 import io.github.dsheirer.vector.calibrate.airspy.AirspyUnpackedCalibration;
 import io.github.dsheirer.vector.calibrate.airspy.AirspyUnpackedInterleavedCalibration;
@@ -54,6 +56,7 @@ public class CalibrationManager
     private static final Logger mLog = LoggerFactory.getLogger(CalibrationManager.class);
     private Map<CalibrationType, Calibration> mCalibrationMap = new HashMap<>();
     private static CalibrationManager sInstance;
+    private static VectorCalibrationPreference sVectorCalibrationPreference;
 
     /**
      * Uses the singleton pattern to construct a single instance.
@@ -63,12 +66,33 @@ public class CalibrationManager
     }
 
     /**
+     * Access a singleton instance of this class, initializing the instance with the
+     * specified User Preferences instance, if it hasn't already been intitialized.
+     *
+     * Note: invoke this method first with a preferences instance to ensure it is the one that is used.
+     */
+    public static CalibrationManager getInstance(UserPreferences userPreferences)
+    {
+        if(sVectorCalibrationPreference == null)
+        {
+            sVectorCalibrationPreference = userPreferences.getVectorCalibrationPreference();
+        }
+
+        return getInstance();
+    }
+
+    /**
      * Access a singleton instance of this class.
      */
     public static CalibrationManager getInstance()
     {
         if(sInstance == null)
         {
+            if(sVectorCalibrationPreference == null)
+            {
+                sVectorCalibrationPreference = new UserPreferences().getVectorCalibrationPreference();
+            }
+
             sInstance = new CalibrationManager();
 
             sInstance.add(new AirspySampleConverterCalibration());
@@ -112,6 +136,14 @@ public class CalibrationManager
     }
 
     /**
+     * List of calibration types available
+     */
+    public List<CalibrationType> getCalibrationTypes()
+    {
+        return List.copyOf(mCalibrationMap.keySet());
+    }
+
+    /**
      * Access a calibration by type
      * @param type of calibration
      * @return calibration instance, or null.
@@ -128,14 +160,19 @@ public class CalibrationManager
      */
     public Implementation getImplementation(CalibrationType type)
     {
-        Calibration calibration = getCalibration(type);
-
-        if(calibration != null)
+        if(sVectorCalibrationPreference.isVectorEnabled())
         {
-            return calibration.getImplementation();
+            Calibration calibration = getCalibration(type);
+
+            if(calibration != null)
+            {
+                return calibration.getImplementation();
+            }
+
+            return Implementation.UNCALIBRATED;
         }
 
-        return Implementation.UNCALIBRATED;
+        return Implementation.SCALAR;
     }
 
     /**
@@ -194,7 +231,7 @@ public class CalibrationManager
         else
         {
             mLog.info("Calibrating software for optimal performance on this computer.");
-            mLog.info("--> Please be patient, this may take a few minutes.");
+            mLog.info("*** Please be patient, this may take a few minutes ***");
 
             int calibrationCounter = 0;
 
@@ -202,7 +239,7 @@ public class CalibrationManager
             {
                 if(!calibration.isCalibrated())
                 {
-                    mLog.info("====> Calibrating [" + ++calibrationCounter + " of " + uncalibrated.size() +
+                    mLog.info("Calibrating [" + ++calibrationCounter + " of " + uncalibrated.size() +
                             "] Type: " + calibration.getType());
                     calibration.calibrate();
                 }
@@ -228,14 +265,7 @@ public class CalibrationManager
         }
 
         //Sort by calibration type
-        Collections.sort(uncalibrated, new Comparator<Calibration>()
-        {
-            @Override
-            public int compare(Calibration o1, Calibration o2)
-            {
-                return o1.getType().compareTo(o2.getType());
-            }
-        });
+        Collections.sort(uncalibrated, Comparator.comparing(Calibration::getType));
 
         return uncalibrated;
     }

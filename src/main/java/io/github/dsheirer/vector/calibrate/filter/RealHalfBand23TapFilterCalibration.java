@@ -34,15 +34,12 @@ import io.github.dsheirer.vector.calibrate.Implementation;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Base calibration plugin for real half-band filters
  */
 public class RealHalfBand23TapFilterCalibration extends Calibration
 {
-    private static final Logger mLog = LoggerFactory.getLogger(RealHalfBand23TapFilterCalibration.class);
     private static final VectorSpecies<Float> VECTOR_SPECIES = FloatVector.SPECIES_PREFERRED;
     private static final int BUFFER_SIZE = 2048;
     private static final int BUFFER_ITERATIONS = 5_000;

@@ -27,15 +27,12 @@ import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Calibration plugin for complex oscillators
  */
 public class ComplexOscillatorCalibration extends Calibration
 {
-    private static final Logger mLog = LoggerFactory.getLogger(ComplexOscillatorCalibration.class);
     private static final double FREQUENCY = 5.0d;
     private static final double SAMPLE_RATE = 100.0d;
     private static final int BUFFER_SIZE = 2048;
@@ -69,7 +66,7 @@ public class ComplexOscillatorCalibration extends Calibration
             scalarMean.increment(elapsed);
         }
 
-        mLog.info("COMPLEX OSCILLATOR SCALAR WARMUP:" + DECIMAL_FORMAT.format(scalarMean.getResult()));
+        mLog.info("COMPLEX OSCILLATOR WARMUP - SCALAR:" + DECIMAL_FORMAT.format(scalarMean.getResult()));
 
         Mean vectorMean = new Mean();
 
@@ -79,7 +76,7 @@ public class ComplexOscillatorCalibration extends Calibration
             vectorMean.increment(elapsed);
         }
 
-        mLog.info("COMPLEX OSCILLATOR VECTOR WARMUP:" + DECIMAL_FORMAT.format(vectorMean.getResult()));
+        mLog.info("COMPLEX OSCILLATOR WARMUP - VECTOR:" + DECIMAL_FORMAT.format(vectorMean.getResult()));
 
         scalarMean.clear();
 
@@ -89,7 +86,7 @@ public class ComplexOscillatorCalibration extends Calibration
             scalarMean.increment(elapsed);
         }
 
-        mLog.info("COMPLEX OSCILLATOR SCALAR:" + DECIMAL_FORMAT.format(scalarMean.getResult()));
+        mLog.info("COMPLEX OSCILLATOR - SCALAR:" + DECIMAL_FORMAT.format(scalarMean.getResult()));
 
         vectorMean.clear();
 
@@ -99,7 +96,7 @@ public class ComplexOscillatorCalibration extends Calibration
             vectorMean.increment(elapsed);
         }
 
-        mLog.info("COMPLEX OSCILLATOR VECTOR:" + DECIMAL_FORMAT.format(vectorMean.getResult()));
+        mLog.info("COMPLEX OSCILLATOR - VECTOR:" + DECIMAL_FORMAT.format(vectorMean.getResult()));
 
         if(scalarMean.getResult() < vectorMean.getResult())
         {

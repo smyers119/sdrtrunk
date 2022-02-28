@@ -26,15 +26,12 @@ import io.github.dsheirer.vector.calibrate.Calibration;
 import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Calculates the optimal (scalar vs vector) implementation for windowing samples.
  */
 public class WindowCalibration extends Calibration
 {
-    private static final Logger mLog = LoggerFactory.getLogger(WindowCalibration.class);
     private static final int WINDOW_SIZE = 8192;
     private static final int ITERATIONS = 10_000_000;
 

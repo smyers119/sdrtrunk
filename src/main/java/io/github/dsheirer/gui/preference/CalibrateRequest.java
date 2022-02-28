@@ -17,23 +17,15 @@
  * ****************************************************************************
  */
 
-package io.github.dsheirer.preference;
+package io.github.dsheirer.gui.preference;
 
 /**
- * Types of preferences
+ * View calibration preference and execute calibration request
  */
-public enum PreferenceType
+public class CalibrateRequest extends ViewUserPreferenceEditorRequest
 {
-    CALIBRATION,
-    DECODE_EVENT,
-    DIRECTORY,
-    DUPLICATE_CALL_DETECTION,
-    JMBE_LIBRARY,
-    MULTI_FREQUENCY,
-    PLAYLIST,
-    PLAYBACK,
-    RADIO_REFERENCE,
-    RECORD,
-    TALKGROUP_FORMAT,
-    TUNER;
+    public CalibrateRequest()
+    {
+        super(PreferenceEditorType.VECTOR_CALIBRATION);
+    }
 }

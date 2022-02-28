@@ -19,6 +19,9 @@
 
 package io.github.dsheirer.vector.calibrate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.text.DecimalFormat;
 import java.util.Random;
 import java.util.prefs.Preferences;
@@ -29,6 +32,7 @@ import java.util.prefs.Preferences;
 public abstract class Calibration
 {
     protected static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.0");
+    public static final Logger mLog = LoggerFactory.getLogger(Calibration.class);
     private Preferences mPreferences = Preferences.userNodeForPackage(Calibration.class);
     private CalibrationType mType;
     private Implementation mImplementation;
@@ -40,6 +44,11 @@ public abstract class Calibration
     public Calibration(CalibrationType type)
     {
         mType = type;
+    }
+
+    public Logger getLogger()
+    {
+        return mLog;
     }
 
     /**

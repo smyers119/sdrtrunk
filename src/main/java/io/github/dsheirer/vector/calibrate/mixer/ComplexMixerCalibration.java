@@ -27,15 +27,12 @@ import io.github.dsheirer.vector.calibrate.CalibrationException;
 import io.github.dsheirer.vector.calibrate.CalibrationType;
 import io.github.dsheirer.vector.calibrate.Implementation;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Calibrates the complex mixer implementations to determine the optimal instance.
  */
 public class ComplexMixerCalibration extends Calibration
 {
-    private Logger mLog = LoggerFactory.getLogger(ComplexMixerCalibration.class);
     private static final double FREQUENCY = 2.0;
     private static final double SAMPLE_RATE = 10.0;
     private static final int SAMPLE_SIZE = 2048;
