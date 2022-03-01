@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -32,13 +33,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Dispatcher<E> implements Listener<E>
 {
     private final static Logger mLog = LoggerFactory.getLogger(Dispatcher.class);
-
+    private static final long OVERFLOW_LOG_EVENT_WAIT_PERIOD = TimeUnit.SECONDS.toMillis(10);
     private LinkedBlockingQueue<E> mQueue;
     private Listener<E> mListener;
     private AtomicBoolean mRunning = new AtomicBoolean();
     private String mThreadName;
     private Thread mThread;
     private E mPoisonPill;
+    private long mLastOverflowLogEvent;
 
     /**
      * Constructs an instance
@@ -87,7 +89,11 @@ public class Dispatcher<E> implements Listener<E>
         {
             if(!mQueue.offer(e))
             {
-                mLog.warn("Buffer overflow in Dispatcher [" + mThreadName + "] - this many be temporary");
+                if(System.currentTimeMillis() > (mLastOverflowLogEvent + OVERFLOW_LOG_EVENT_WAIT_PERIOD))
+                {
+                    mLastOverflowLogEvent = System.currentTimeMillis();
+                    mLog.warn("Buffer overflow in Dispatcher [" + mThreadName + "] - this many be temporary");
+                }
             }
         }
         else
