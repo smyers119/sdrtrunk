@@ -44,7 +44,7 @@ public class HalfBandTunerChannelSource<T extends INativeBuffer> extends TunerCh
     private static final Logger mLog = LoggerFactory.getLogger(HalfBandTunerChannelSource.class);
 
     //Maximum number of filled buffers for the blocking queue
-    private static final int BUFFER_MAX_CAPACITY = 300;
+    private static final int BUFFER_MAX_CAPACITY = 600;
 
     private Dispatcher<T> mBufferDispatcher;
     private ComplexMixer mFrequencyCorrectionMixer;

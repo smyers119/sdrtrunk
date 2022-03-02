@@ -92,7 +92,7 @@ public class Dispatcher<E> implements Listener<E>
                 if(System.currentTimeMillis() > (mLastOverflowLogEvent + OVERFLOW_LOG_EVENT_WAIT_PERIOD))
                 {
                     mLastOverflowLogEvent = System.currentTimeMillis();
-                    mLog.warn("Buffer overflow in Dispatcher [" + mThreadName + "] - this many be temporary");
+                    mLog.warn("Temporary buffer overflow for thread [" + mThreadName + "] - throwing away samples");
                 }
             }
         }

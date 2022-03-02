@@ -220,18 +220,12 @@ public class HeterodyneChannelSourceManager extends ChannelSourceManager
         {
             int delayBufferSize = (int)(DELAY_BUFFER_DURATION_MILLISECONDS / mTunerController.getBufferDuration());
             mSampleDelayBuffer = new NativeSampleDelayBuffer(delayBufferSize, mTunerController.getBufferDuration());
-
-            mLog.debug("Created/registered complex sample delay buffer of size [" + delayBufferSize +
-                "] buffers and delay duration [" + DELAY_BUFFER_DURATION_MILLISECONDS +
-                "ms] for tuner controller [" + mTunerController.getClass().getName() +
-                "] with buffer duration [" + mTunerController.getBufferDuration() + "]");
-
             mTunerController.addBufferListener(mSampleDelayBuffer);
         }
     }
 
     /**
-     * Deregisters the complex sample delay buffer and disposes of any queued reusable buffers.
+     * De-registers the complex sample delay buffer and disposes of any queued reusable buffers.
      */
     private void stopDelayBuffer()
     {
