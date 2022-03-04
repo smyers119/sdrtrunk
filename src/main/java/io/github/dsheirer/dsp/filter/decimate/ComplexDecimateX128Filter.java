@@ -20,8 +20,8 @@
 package io.github.dsheirer.dsp.filter.decimate;
 
 import io.github.dsheirer.dsp.filter.FilterFactory;
-import io.github.dsheirer.dsp.filter.Window;
 import io.github.dsheirer.dsp.filter.halfband.complex.ComplexHalfBandDecimationFilter;
+import io.github.dsheirer.dsp.window.WindowType;
 
 /**
  * Decimate by 128 filter for complex valued sample buffers.
@@ -30,7 +30,7 @@ public class ComplexDecimateX128Filter extends ComplexDecimateX64Filter
 {
     private static final int VALIDATION_LENGTH = 128 * 2;
     private static final int DECIMATE_BY_128_FILTER_LENGTH = 11;
-    private static final Window.WindowType DECIMATE_BY_128_WINDOW_TYPE = Window.WindowType.BLACKMAN;
+    private static final WindowType DECIMATE_BY_128_WINDOW_TYPE = WindowType.BLACKMAN;
     private ComplexHalfBandDecimationFilter mFilter;
 
     /**

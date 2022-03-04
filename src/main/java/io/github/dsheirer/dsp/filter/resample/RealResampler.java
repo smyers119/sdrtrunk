@@ -1,25 +1,26 @@
-/*******************************************************************************
- * sdr-trunk
- * Copyright (C) 2014-2018 Dennis Sheirer
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
- * License as published by  the Free Software Foundation, either version 3 of the License, or  (at your option) any
- * later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,  but WITHOUT ANY WARRANTY; without even the implied
- * warranty of  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License  along with this program.
- * If not, see <http://www.gnu.org/licenses/>
- *
- ******************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
 package io.github.dsheirer.dsp.filter.resample;
 
 import com.laszlosystems.libresample4j.Resampler;
 import com.laszlosystems.libresample4j.SampleBuffers;
 import io.github.dsheirer.sample.Listener;
-import io.github.dsheirer.sample.buffer.ReusableBufferQueue;
-import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,9 +31,8 @@ public class RealResampler
 {
     protected static final Logger mLog = LoggerFactory.getLogger(RealResampler.class);
 
-    private ReusableBufferQueue mReusableBufferQueue = new ReusableBufferQueue("RealResampler");
     private Resampler mResampler;
-    private Listener<ReusableFloatBuffer> mResampledListener;
+    private Listener<float[]> mResampledListener;
     private BufferManager mBufferManager;
     private double mResampleFactor;
 
@@ -50,21 +50,21 @@ public class RealResampler
 
     /**
      * Primary input method to the resampler
-     * @param reusableFloatBuffer to resample
+     * @param samples to resample
      */
-    public void resample(ReusableFloatBuffer reusableFloatBuffer)
+    public void resample(float[] samples)
     {
-        mBufferManager.load(reusableFloatBuffer);
+        mBufferManager.load(samples);
         mResampler.process(mResampleFactor, mBufferManager, false);
     }
 
     /**
      * Registers the listener to receive the resampled buffer output
-     * @param resampledBufferListener to receive buffers
+     * @param listener to receive buffers
      */
-    public void setListener(Listener<ReusableFloatBuffer> resampledBufferListener)
+    public void setListener(Listener<float[]> listener)
     {
-        mResampledListener = resampledBufferListener;
+        mResampledListener = listener;
     }
 
     /**
@@ -89,10 +89,9 @@ public class RealResampler
         /**
          * Queues the buffer sample for resampling
          */
-        public void load(ReusableFloatBuffer reusableFloatBuffer)
+        public void load(float[] samples)
         {
-            mInputBuffer.put(reusableFloatBuffer.getSamples());
-            reusableFloatBuffer.decrementUserCount();
+            mInputBuffer.put(samples);
         }
 
         @Override
@@ -128,19 +127,15 @@ public class RealResampler
 
             while(mOutputBuffer.position() > mOutputBufferSize)
             {
-                ReusableFloatBuffer outputBuffer = mReusableBufferQueue.getBuffer(mOutputBufferSize);
+                float[] resampled = new float[mOutputBufferSize];
 
                 mOutputBuffer.flip();
-                mOutputBuffer.get(outputBuffer.getSamples());
+                mOutputBuffer.get(resampled);
                 mOutputBuffer.compact();
 
                 if(mResampledListener != null)
                 {
-                    mResampledListener.receive(outputBuffer);
-                }
-                else
-                {
-                    outputBuffer.decrementUserCount();
+                    mResampledListener.receive(resampled);
                 }
             }
         }

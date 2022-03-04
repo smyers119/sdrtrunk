@@ -1,34 +1,31 @@
-/*******************************************************************************
- *     SDR Trunk 
- *     Copyright (C) 2014,2015 Dennis Sheirer
+/*
+ * *****************************************************************************
+ * Copyright (C) 2014-2022 Dennis Sheirer
  *
- *     This program is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU General Public License as published by
- *     the Free Software Foundation, either version 3 of the License, or
- *     (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     This program is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *     You should have received a copy of the GNU General Public License
- *     along with this program.  If not, see <http://www.gnu.org/licenses/>
- ******************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * ****************************************************************************
+ */
 package io.github.dsheirer.dsp.fm;
 
-import io.github.dsheirer.sample.buffer.ReusableBufferQueue;
-import io.github.dsheirer.sample.buffer.ReusableComplexBuffer;
-import io.github.dsheirer.sample.buffer.ReusableFloatBuffer;
 import io.github.dsheirer.sample.complex.Complex;
 import org.apache.commons.math3.util.FastMath;
 
 /**
  * FM Demodulator for demodulating complex samples and producing demodulated floating point samples.
  */
-public class FMDemodulator
+public class FMDemodulator implements IFmDemodulator
 {
-    private ReusableBufferQueue mReusableBufferQueue = new ReusableBufferQueue("FMDemodulator");
     private float mPreviousI = 0.0f;
     private float mPreviousQ = 0.0f;
     protected float mGain;
@@ -94,6 +91,50 @@ public class FMDemodulator
         return (float)(angle * mGain);
     }
 
+    public float[] demodulate(float[] i, float[] q)
+    {
+        float[] demodulated = new float[i.length];
+
+        float demodI, demodQ;
+
+        //Demodulate the first sample
+        demodI = (i[0] * mPreviousI) - (q[0] * -mPreviousQ);
+        demodQ = (q[0] * mPreviousI) + (i[0] * -mPreviousQ);
+
+        //Check for divide by zero
+        if(demodI != 0)
+        {
+            demodulated[0] = (float)FastMath.atan(demodQ / demodI);
+        }
+        else
+        {
+            demodulated[0] = (float)FastMath.atan(demodQ / Float.MIN_VALUE);
+        }
+
+        //Store last sample to previous for processing with next sample buffer
+        mPreviousI = i[i.length - 1];
+        mPreviousQ = q[q.length - 1];
+
+        //Demodulate the remainder of the sample array
+        for(int x = 1; x < i.length; x++)
+        {
+            demodI = (i[x] * i[x - 1]) - (q[x] * -q[x - 1]);
+            demodQ = (q[x] * i[x - 1]) + (i[x] * -q[x - 1]);
+
+            //Check for divide by zero
+            if(demodI != 0)
+            {
+                demodulated[x] = (float)FastMath.atan(demodQ / demodI);
+            }
+            else
+            {
+                demodulated[x] = (float)FastMath.atan(demodQ / Float.MIN_VALUE);
+            }
+        }
+
+        return demodulated;
+    }
+
     /**
      * Demodulates the complex samples and returns the demodulated value.
      * @param previous
@@ -121,30 +162,6 @@ public class FMDemodulator
         }
 
         return angle;
-    }
-
-    /**
-     * Demodulates the complex baseband sample buffer and returns a demodulated reusable buffer with the user count
-     * set to 1.  The complex baseband buffer's user count is decremented after demodulation.
-     *
-     * @param basebandSampleBuffer containing samples to demodulate
-     * @return demodulated sample buffer.
-     */
-    public ReusableFloatBuffer demodulate(ReusableComplexBuffer basebandSampleBuffer)
-    {
-        ReusableFloatBuffer demodulatedBuffer = mReusableBufferQueue.getBuffer(basebandSampleBuffer.getSampleCount());
-
-        float[] basebandSamples = basebandSampleBuffer.getSamples();
-        float[] demodulatedSamples = demodulatedBuffer.getSamples();
-
-        for(int x = 0; x < basebandSamples.length; x += 2)
-        {
-            demodulatedSamples[x / 2] = demodulate(basebandSamples[x], basebandSamples[x + 1]);
-        }
-
-        basebandSampleBuffer.decrementUserCount();
-
-        return demodulatedBuffer;
     }
 
     public void dispose()

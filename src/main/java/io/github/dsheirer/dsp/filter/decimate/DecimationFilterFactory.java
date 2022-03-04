@@ -19,11 +19,15 @@
 
 package io.github.dsheirer.dsp.filter.decimate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Factory for creating real and complex decimation filters.
  */
 public class DecimationFilterFactory
 {
+    private static final Logger mLog = LoggerFactory.getLogger(DecimationFilterFactory.class);
     private static final int[] SUPPORTED_RATES = new int[]{0,2,4,8,16,32,64,128,256,512,1024};
 
     /**
