@@ -19,7 +19,7 @@
  *
  *
  */
-package io.github.dsheirer.module.decode.event;
+package io.github.dsheirer.module.decode.event.filter.lastseen;
 
 import com.google.common.base.Joiner;
 import com.google.common.eventbus.Subscribe;
@@ -36,6 +36,9 @@ import io.github.dsheirer.identifier.Identifier;
 import io.github.dsheirer.identifier.IdentifierCollection;
 import io.github.dsheirer.identifier.Role;
 import io.github.dsheirer.module.ProcessingChain;
+import io.github.dsheirer.module.decode.event.DecodeEventHistory;
+import io.github.dsheirer.module.decode.event.DecodeEventModel;
+import io.github.dsheirer.module.decode.event.IDecodeEvent;
 import io.github.dsheirer.module.decode.event.filter.EventClearButton;
 import io.github.dsheirer.module.decode.event.filter.EventClearHandler;
 import io.github.dsheirer.module.decode.event.filter.EventFilterButton;
@@ -57,44 +60,45 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-public class DecodeEventPanel extends JPanel implements Listener<ProcessingChain>
+public class LastSeenPanel extends JPanel implements Listener<ProcessingChain>
 {
     private static final long serialVersionUID = 1L;
-    private final static Logger mLog = LoggerFactory.getLogger(DecodeEventPanel.class);
-    private static final String TABLE_PREFERENCE_KEY = "decode.event.panel";
+    private final static Logger mLog = LoggerFactory.getLogger(LastSeenPanel.class);
+    private static final String TABLE_PREFERENCE_KEY = "decode.lastseen.panel";
 
     private JTable mTable;
     private JTableColumnWidthMonitor mTableColumnWidthMonitor;
-    private DecodeEventModel mEventModel = new DecodeEventModel();
+    private LastSeenModel mLastSeenModel;
     private DecodeEventHistory mCurrentEventHistory;
     private JScrollPane mEmptyScroller;
     private IconModel mIconModel;
     private AliasModel mAliasModel;
     private UserPreferences mUserPreferences;
     private TimestampCellRenderer mTimestampCellRenderer;
-    private EventManagementPanel mEventManagementPanel;
+    private LastSeenManagementPanel mLastSeenManagementPanel;
 
     /**
      * View for call event table
      * @param iconModel to display alias icons in table rows
      */
-    public DecodeEventPanel(IconModel iconModel, UserPreferences userPreferences, AliasModel aliasModel)
+    public LastSeenPanel(IconModel iconModel, UserPreferences userPreferences, AliasModel aliasModel)
     {
         MyEventBus.getGlobalEventBus().register(this);
 
         setLayout(new MigLayout("insets 0 0 0 0", "[grow,fill]", "[grow,fill]"));
         mIconModel = iconModel;
         mAliasModel = aliasModel;
+        mLastSeenModel = new LastSeenModel(aliasModel, iconModel);
         mUserPreferences = userPreferences;
         mTimestampCellRenderer = new TimestampCellRenderer();
-        mTable = new JTable(mEventModel);
+        mTable = new JTable(mLastSeenModel);
         mTable.setAutoCreateRowSorter(true);
         mTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-        mEventManagementPanel = new EventManagementPanel();
+        mLastSeenManagementPanel = new LastSeenManagementPanel();
         mTableColumnWidthMonitor = new JTableColumnWidthMonitor(mUserPreferences, mTable, TABLE_PREFERENCE_KEY);
         updateCellRenderers();
 
-        add(mEventManagementPanel, "span,growx");
+        add(mLastSeenManagementPanel, "span,growx");
 
         mEmptyScroller = new JScrollPane(mTable);
         add(mEmptyScroller);
@@ -133,9 +137,9 @@ public class DecodeEventPanel extends JPanel implements Listener<ProcessingChain
         mTable.getColumnModel().getColumn(DecodeEventModel.COLUMN_TO_ALIAS)
             .setCellRenderer(new AliasedIdentifierCellRenderer(Role.TO));
         mTable.getColumnModel().getColumn(DecodeEventModel.COLUMN_CHANNEL)
-            .setCellRenderer(new ChannelDescriptorCellRenderer());
+                .setCellRenderer(new ChannelDescriptorCellRenderer());
         mTable.getColumnModel().getColumn(DecodeEventModel.COLUMN_FREQUENCY)
-            .setCellRenderer(new FrequencyCellRenderer());
+                .setCellRenderer(new FrequencyCellRenderer());
     }
 
     @Override
@@ -143,34 +147,34 @@ public class DecodeEventPanel extends JPanel implements Listener<ProcessingChain
     {
         if(mCurrentEventHistory != null)
         {
-            mCurrentEventHistory.removeListener(mEventModel);
+            mCurrentEventHistory.removeListener(mLastSeenModel);
         }
 
         EventQueue.invokeLater(() -> {
             if(processingChain != null)
             {
                 mCurrentEventHistory = processingChain.getDecodeEventHistory();
-                mEventModel.clearAndSet(mCurrentEventHistory.getItems());
-                processingChain.getDecodeEventHistory().addListener(mEventModel);
-                mEventManagementPanel.enableButtons();
+                mLastSeenModel.clearAndSet(mCurrentEventHistory.getItems());
+                processingChain.getDecodeEventHistory().addListener(mLastSeenModel);
+                mLastSeenManagementPanel.enableButtons();
             }
             else
             {
                 mCurrentEventHistory = null;
-                mEventModel.clearAndSet(Collections.emptyList());
-                mEventManagementPanel.disableButtons();
+                mLastSeenModel.clearAndSet(Collections.emptyList());
+                mLastSeenManagementPanel.disableButtons();
             }
         });
     }
 
-    public class EventManagementPanel extends JPanel
+    public class LastSeenManagementPanel extends JPanel
     {
         private static final long serialVersionUID = 1L;
 
         private EventFilterButton<IDecodeEvent> mFilterButton;
         private EventClearButton mEventClearButton;
 
-        public EventManagementPanel()
+        public LastSeenManagementPanel()
         {
             setLayout(new MigLayout("insets 2 2 5 5", "[]5[left,grow]", ""));
 
@@ -201,22 +205,22 @@ public class DecodeEventPanel extends JPanel implements Listener<ProcessingChain
             if (filterProvider != null) {
                 filterSet = filterProvider.getFilterSet();
             }
-            mFilterButton = new EventFilterButton<>("Message Filter Editor", filterSet);
+            mFilterButton = new EventFilterButton<>("Last Seen From Radio Filter Editor", filterSet);
         }
 
         private void initializeClearButton() {
             mEventClearButton = new EventClearButton(
-                    ((DecodeEventModel) mTable.getModel()).getMaxMessageCount()
+                    ((LastSeenModel) mTable.getModel()).getMaxMessageCount()
             );
             mEventClearButton.setEventClearHandler(new EventClearHandler() {
                 @Override
                 public void onHistoryLimitChanged(int newHistoryLimit) {
-                    ((DecodeEventModel) mTable.getModel()).setMaxMessageCount(newHistoryLimit);
+                    ((LastSeenModel) mTable.getModel()).setMaxMessageCount(newHistoryLimit);
                 }
 
                 @Override
                 public void onClearHistoryClicked() {
-                    ((DecodeEventModel) mTable.getModel()).clear();
+                    ((LastSeenModel) mTable.getModel()).clear();
                 }
             });
         }

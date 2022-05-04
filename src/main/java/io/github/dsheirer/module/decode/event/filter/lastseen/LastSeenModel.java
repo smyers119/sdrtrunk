@@ -19,29 +19,28 @@
  *
  *
  */
-package io.github.dsheirer.module.decode.event;
+package io.github.dsheirer.module.decode.event.filter.lastseen;
 
 import com.google.common.eventbus.Subscribe;
+import io.github.dsheirer.alias.AliasModel;
 import io.github.dsheirer.channel.IChannelDescriptor;
 import io.github.dsheirer.eventbus.MyEventBus;
 import io.github.dsheirer.filter.FilterSet;
+import io.github.dsheirer.icon.IconModel;
 import io.github.dsheirer.identifier.IdentifierCollection;
-import io.github.dsheirer.module.decode.event.filter.DecodeEventFilterSet;
+import io.github.dsheirer.module.decode.event.IDecodeEvent;
 import io.github.dsheirer.module.decode.event.filter.EventFilterProvider;
 import io.github.dsheirer.preference.PreferenceType;
 import io.github.dsheirer.sample.Listener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class DecodeEventModel extends AbstractTableModel implements Listener<IDecodeEvent>, EventFilterProvider<IDecodeEvent>
+public class LastSeenModel extends AbstractTableModel implements Listener<IDecodeEvent>, EventFilterProvider<IDecodeEvent>
 {
     private static final long serialVersionUID = 1L;
-    private final static Logger mLog = LoggerFactory.getLogger(DecodeEventModel.class);
 
     public static final int COLUMN_TIME = 0;
     public static final int COLUMN_DURATION = 1;
@@ -57,12 +56,13 @@ public class DecodeEventModel extends AbstractTableModel implements Listener<IDe
     protected int mMaxMessages = 500;
 
     protected List<IDecodeEvent> mEvents = new ArrayList<>();
-    protected FilterSet<IDecodeEvent> mEventFilterSet = new DecodeEventFilterSet();
+    protected FilterSet<IDecodeEvent> mLastSeenFilterSet;
 
     protected String[] mHeaders = new String[]{"Time", "Duration", "Event", "From", "Alias", "To", "Alias", "Channel", "Frequency", "Details"};
 
-    public DecodeEventModel()
+    public LastSeenModel(AliasModel aliasModel, IconModel iconModel)
     {
+        mLastSeenFilterSet = new LastSeenFilterSet(aliasModel, iconModel);
         MyEventBus.getGlobalEventBus().register(this);
     }
 
@@ -149,7 +149,7 @@ public class DecodeEventModel extends AbstractTableModel implements Listener<IDe
      */
     public void receive(final IDecodeEvent event)
     {
-        if (!mEventFilterSet.passes(event))
+        if (mLastSeenFilterSet != null && !mLastSeenFilterSet.passes(event))
         {
             return;
         }
@@ -178,12 +178,12 @@ public class DecodeEventModel extends AbstractTableModel implements Listener<IDe
 
     @Override
     public FilterSet<IDecodeEvent> getFilterSet() {
-        return mEventFilterSet;
+        return mLastSeenFilterSet;
     }
 
     @Override
     public void setFilterSet(FilterSet<IDecodeEvent> filterSet) {
-        this.mEventFilterSet = filterSet;
+        this.mLastSeenFilterSet = filterSet;
     }
 
     @Override
@@ -284,7 +284,6 @@ public class DecodeEventModel extends AbstractTableModel implements Listener<IDe
             case COLUMN_CHANNEL:
                 return String.class;
         }
-
         return super.getColumnClass(columnIndex);
     }
 }
